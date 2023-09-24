@@ -1398,7 +1398,7 @@ class LinearAlgebra():
 			else:
 				this = f"Vector{count}"
 			count += 1
-			t = self.draw_vector(v,canonica,color,scale,head_height,axis,this)
+			t = self.draw_vector(v,canonica,color,scale,head_height,axis)
 		t = bpy.data.objects.get(name)
 		list = [t]
 		for count in range(1,len(vectors)+1):
