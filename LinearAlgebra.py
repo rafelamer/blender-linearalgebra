@@ -892,8 +892,14 @@ class LinearAlgebra():
 			#	print(i, o.name)
 			principled_bsdf.inputs['Base Color'].default_value = (r, g, b, 0.5)
 			principled_bsdf.inputs['IOR'].default_value = 0.0
-			principled_bsdf.inputs['Specular'].default_value = 1.0
-			principled_bsdf.inputs['Emission'].default_value = (r, g, b, 0.5)
+			if bpy.app.version[0] < 4:
+				principled_bsdf.inputs['Specular'].default_value = 1.0
+			else:
+				principled_bsdf.inputs['Specular IOR Level'].default_value = 1.0
+			if bpy.app.version[0] < 4:
+				principled_bsdf.inputs['Emission'].default_value = (r, g, b, 0.5)
+			else:
+				principled_bsdf.inputs['Emission Color'].default_value = (r, g, b, 0.5)
 			principled_bsdf.inputs['Emission Strength'].default_value = 0.0
 			if opacity < 1.0:
 				material.blend_method = 'BLEND'
