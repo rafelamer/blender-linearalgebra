@@ -892,6 +892,7 @@ class LinearAlgebra():
 			#	print(i, o.name)
 			principled_bsdf.inputs['Base Color'].default_value = (r, g, b, 0.5)
 			principled_bsdf.inputs['IOR'].default_value = 0.0
+			principled_bsdf.inputs['Metallic'].default_value = 1.0
 			if bpy.app.version[0] < 4:
 				principled_bsdf.inputs['Specular'].default_value = 1.0
 			else:
