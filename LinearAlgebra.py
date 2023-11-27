@@ -1,6 +1,6 @@
 # Filename:   LinearAlgebra.py
 # Author:     Rafel Amer (rafel.amer AT upc.edu)
-# Copyright:  Rafel Amer 2020-2022
+# Copyright:  Rafel Amer 2020-2023
 #
 #             This file contains code from the file add_mesh_3d_function_surface.py
 #             distributed with Blender
@@ -8,7 +8,7 @@
 # Disclaimer: This code is presented "as is" and it has been written to learn
 #             to use the python scripting language and the Blender sofware
 #             use them in the studies of Linear Algebra and Geometry
-#cos
+#
 # License:    This software is free software; you can redistribute it and/or
 #             modify it under the terms of either:
 #
@@ -4278,6 +4278,7 @@ class LinearAlgebra():
 		angle = 360/stepsr
 		if fun is None:
 			return None
+
 		if axis == 'X':
 			r = Rotation(angle,Vector([1,0,0]))
 			d1 = Vector([0,1,0])
@@ -4722,6 +4723,9 @@ class LinearAlgebra():
 			return curve
 
 		T = [diff(u,var) for u in fun]
+		#
+		# Here is sqrt from sympy
+		#
 		Tnorm = sqrt(sum([u**2 for u in T]))
 		A = [diff(u,var) for u in T]
 		p0 = Vector([u.subs(var,tmin) for u in fun])
@@ -5118,7 +5122,7 @@ class LinearAlgebra():
 
 			canonica: if True, draws the x, y and z axis
 		"""
-		self.draw_point(location=p0,color="Blue",radius=radius,name="Punt de la recta")
+		self.draw_point(location=p0,color="Blue",radius=radi,name="Punt de la recta")
 		self.set_origin(p0)
 		self.draw_vector(vector=v1,canonica=canonica,scale=scale,head_height=0.15,axis=20,name="Recta afí",color="Blue",positive=False)
 		self.set_origin()
@@ -5295,11 +5299,11 @@ class LinearAlgebra():
 		if not isinstance(center,Vector):
 			center = Vector(center)
 		if a >= b:
-			c = sqrt(a**2 - b**2)
+			c = math.sqrt(a**2 - b**2)
 			f1 = Vector([c,0,0])
 			f2 = Vector([-c,0,0])
 		else:
-			c = sqrt(b**2 - a**2)
+			c = math.sqrt(b**2 - a**2)
 			f1 = Vector([0,c,0])
 			f2 = Vector([0,-c,0])
 		if canonica:
@@ -5330,7 +5334,7 @@ class LinearAlgebra():
 			center = Vector(center)
 		u1 = Vector([a,b,0])
 		u2 = Vector([a,-b,0])
-		c = sqrt(a**2 + b**2)
+		c = math.sqrt(a**2 + b**2)
 		f1 = [c,0,0]
 		f2 = [-c,0,0]
 		if canonica:
@@ -5410,7 +5414,7 @@ class LinearAlgebra():
 		else:
 			F = lambda t: (b*sin(t),0,a*cos(t))
 		self.base_canonica()
-		self.animate_revolution_surface(F,tmin=0,tmax=pi,steps=128,axis=direccio,point=punt)
+		self.animate_revolution_surface(F,tmin=0,tmax=math.pi,steps=128,axis=direccio,point=punt)
 	#
 	# Hiperboloide d'una fulla de revolució
 	#
@@ -5461,7 +5465,7 @@ class LinearAlgebra():
 			F = lambda t: (t,0,a*math.sqrt(1+t**2/b**2))
 			s = 'X'
 		self.base_canonica()
-		self.animate_revolution_surface(F,tmin=-pmax,tmax=pmax,steps=128,axis=direccio,symmetry=s,point=punt)
+		self.animate_revolution_surface(F,tmin=0,tmax=pmax,steps=128,axis=direccio,symmetry=s,point=punt)
 	#
 	# Con de revolució
 	#
@@ -5629,7 +5633,7 @@ class LinearAlgebra():
 	#
 	# Tor
 	#
-	def tor(self,centre=Vector([8,0,3]),radi=3,punt=None):
+	def tor(self,centre=Vector([8,0,3]),radi=3,cmax=15,punt=None):
 		"""
 		Draws a torus of revolution from a circumference
 		Parameters:
@@ -5790,7 +5794,7 @@ class LinearAlgebra():
 	#
 	# Rotació afí i moviment helicoidal
 	#
-	def moviment_helicoidal_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([3,4,2]),opacity=1,origen=Vector([4,3,0]),eix='Z',translacio=0.0):
+	def moviment_helicoidal_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([3,4,2]),opacity=1,origen=Vector([4,3,0]),eix='Z',rounds=1,translacio=0.0):
 		"""
 		Draws an animation of the helical motion of an orthohedron around an affine line
 		Parameters:
@@ -5815,7 +5819,7 @@ class LinearAlgebra():
 		if not isinstance(origen,Vector):
 			origen = Vector(origen)
 		ortoedre = self.draw_cube(origin=centre,scale=costats,color="AzureBlueDark",opacity=opacity,thickness=0.015,scalelines=0.025,linecolor="Orange",name="Ortoedre")
-		self.rotate_object(ortoedre,axis=eix,origin=origen,helicoidal=translacio)
+		self.rotate_object(ortoedre,axis=eix,origin=origen,helicoidal=translacio,rounds=rounds)
 	#
 	# Gir en el pla d'un poligon
 	#
