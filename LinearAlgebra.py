@@ -1318,12 +1318,16 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def comp_times_vector(self,u,v):
+	def product_components(self,u,v):
 		"""
 		Computes the vectorial product u x v
 		Parameters:
 		   u, v: two Vectors
 		"""
+		if not isinstance(u,Vector):
+			u = Vector(u)
+		if not isinstance(v,Vector):
+			v = Vector(v)
 		return Vector([u.x * v.x,u.y * v.y,u.z * v.z])
 	#
 	#
@@ -1413,7 +1417,7 @@ class LinearAlgebra():
 		mat.transpose()
 		list = [[0,0,0],[1,0,0],[1,1,0],[0,1,0],[0,0,1],[1,0,1],[1,1,1],[0,1,1]]
 		lines = [[0,1],[1,2],[2,3],[0,3],[0,4],[1,5],[2,6],[3,7],[4,5],[5,6],[6,7],[4,7]]
-		vecs = [self.comp_times_vector(v,Vector(x)) for x in list]
+		vecs = [self.product_components(v,Vector(x)) for x in list]
 		count = 0
 		for first, last in lines:
 			if count == 0:
@@ -2373,7 +2377,7 @@ class LinearAlgebra():
 		vecs = None
 		s = 0.0
 		nodes = [[1,1,0],[-1,1,0],[-1,-1,0],[1,-1,0]]
-		nodes = [self.comp_times_vector(Vector([sizex / 2,sizey / 2,0]),Vector(x)) for x in nodes]
+		nodes = [self.product_components(Vector([sizex / 2,sizey / 2,0]),Vector(x)) for x in nodes]
 		edges = [[0,1],[1,2],[2,3],[3,0]]
 
 		if scalelines > 0.0:
@@ -2502,7 +2506,7 @@ class LinearAlgebra():
 		s = 0.0
 		nodes = [[1+s,1+s,1+s],[-1-s,1+s,1+s],[-1-s,-1-s,1+s],[1+s,-1-s,1+s],
 				[1+s,1+s,-1-s],[-1-s,1+s,-1-s],[-1-s,-1-s,-1-s],[1+s,-1-s,-1-s]]
-		nodes = [self.comp_times_vector(Vector(scale),Vector(x)) for x in nodes]
+		nodes = [self.product_components(Vector(scale),Vector(x)) for x in nodes]
 		edges =[[0,1],[1,2],[2,3],[3,0],[0,4],[1,5],[2,6],[3,7],[4,5],[5,6],[6,7],[7,4]]
 		if scalelines > 0.0:
 			objects = []
@@ -5006,7 +5010,10 @@ class LinearAlgebra():
 			opacicity: opacity of the plane
 		"""
 		if canonica:
-			self.base_canonica(length=length)
+			if length > 15:
+				self.base_canonica(length=length,scale=0.01)
+			else:
+				self.base_canonica(length=length)
 		self.draw_vectors([v1,v2],color="Blue")
 		self.draw_plane_surface(base=[v1,v2],color=color,sizex=sizex,sizey=sizey,opacity=opacity)
 	#
@@ -5035,7 +5042,10 @@ class LinearAlgebra():
 			opacicity: opacity of the plane
 		"""
 		if canonica:
-			self.base_canonica(length=length)
+			if length > 15:
+				self.base_canonica(length=length,scale=0.08)
+			else:
+				self.base_canonica(length=length)
 		if normal is not None:
 			if not isinstance(normal,Vector):
 				normal = Vector(normal)
@@ -5053,7 +5063,7 @@ class LinearAlgebra():
 	#
 	# Posició relativa de tres plans
 	#
-	def posicio_relativa_tres_plans(self,punts=None,normals=None,colors=None,canonica=False,length=15,sizex=35,sizey=30,opacity=0.8,elements=False):
+	def posicio_relativa_tres_plans(self,punts=None,normals=None,colors=None,canonica=True,length=25,sizex=45,sizey=40,opacity=1.0,elements=False):
 		"""
 		Draws threee planes
 		Parametres:
@@ -5074,14 +5084,14 @@ class LinearAlgebra():
 			elements: if True, draws the point and the normal vector for each plane
 		"""
 		punts = [p if isinstance(p,Vector) else Vector(p) for p in punts]
-		normals = [n if isinstance(n,Vector) else Vector(n) for n in punts]
+		normals = [n if isinstance(n,Vector) else Vector(n) for n in normals]
 		n = ("Primer pla","Segon pla","Tercer pla")
 		if canonica:
 			b = (True,False,False)
 		else:
 			b = (False,False,False)
 		for i in range(3):
-			self.pla_afi(punt=punts[i],normal=normal[i],canonica=b[i],name=n[i],length=length,color=colors[i],sizex=sizex,sizey=sizey,opacity=opacity,elements=elements):
+			self.pla_afi(punt=punts[i],normal=normals[i],canonica=b[i],name=n[i],length=length,color=colors[i],sizex=sizex,sizey=sizey,opacity=opacity,elements=elements)
 	#
 	# Recta afí
 	#
@@ -5106,7 +5116,10 @@ class LinearAlgebra():
 			scale: scale of the line
 		"""
 		if canonica:
-			self.base_canonica(length=length)
+			if length > 15:
+				self.base_canonica(length=length,scale=0.08)
+			else:
+				self.base_canonica(length=length)
 		if not isinstance(v,Vector):
 			v = Vector(v)
 		if not isinstance(punt,Vector):
