@@ -877,7 +877,7 @@ class LinearAlgebra():
 	#
 	def base_is_canonica(self):
 		"""
-		Returns True if sel.base is the canonical basis
+		Returns True if self.base is the canonical basis
 		"""
 		return Matrix(self.base).is_identity
 	#
@@ -1918,7 +1918,7 @@ class LinearAlgebra():
 		"""
 		Draws a parabolic cylinder from the parabola z=p*x^2 in the XZ plane
 		Parameters:
-		   p: coefficients of the parabola
+		   p: coefficient of the parabola
 
 		   xmin: minimum value of x
 
@@ -3126,7 +3126,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def ellipsoid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,c2=1,principal=True,canonica=True,color="AzureBlueDark",name="Ellipsoid",cmax=15,pmax=15,thickness=0.02,opacity=1.0):
+	def ellipsoid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,c2=1,principal=True,canonica=True,color="AzureBlueDark",name="Ellipsoid",cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws an ellipsoid
 		Parameters:
@@ -3156,6 +3156,8 @@ class LinearAlgebra():
 		   thickness: thickness of the ellipsoid
 
 		   opacity: opaccity of the ellipsoid
+
+		   preserve: Keep self.origin and self.base as the principal reference
 		"""
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
@@ -3178,10 +3180,13 @@ class LinearAlgebra():
 		b = math.sqrt(b2)
 		c = math.sqrt(c2)
 		self.draw_ellipsoid(radius=1,scale=[a,b,c],color=color,name=name,thickness=thickness,opacity=opacity)
+		if not preserve:
+			self.set_origin()
+			self.set_base()
 	#
 	#
 	#
-	def sphere(self,o=[0,0,0],r2=1,principal=True,canonica=True,color="AzureBlueDark",name="Sphere",cmax=15,pmax=15,thickness=0.02,opacity=1.0):
+	def sphere(self,o=[0,0,0],r2=1,principal=True,canonica=True,color="AzureBlueDark",name="Sphere",cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws a sphere of center 'o' and radius squared equal to 'r2'
 		Parameters:
@@ -3204,14 +3209,16 @@ class LinearAlgebra():
 		   thickness: thickness of the sphere
 
 		   opacity: opacity of the sphere
+
+		   preserve: Keep self.origin and self.base as the principal reference
 		"""
 		u1 = Vector([1,0,0])
 		u2 = Vector([0,1,0])
-		return self.ellipsoid(o=o,u1=u1,u2=u2,a2=r2,b2=r2,c2=r2,principal=principal,canonica=canonica,color=color,name=name,cmax=cmax,pmax=pmax,thickness=thickness,opacity=opacity)
+		return self.ellipsoid(o=o,u1=u1,u2=u2,a2=r2,b2=r2,c2=r2,principal=principal,canonica=canonica,color=color,name=name,cmax=cmax,pmax=pmax,thickness=thickness,opacity=opacity,preserve=preserve)
 	#
 	#
 	#
-	def one_sheet_hyperboloid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,c2=1,principal=True,canonica=True,color="AzureBlueDark",name="OneSheetHyperboloid",xmax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0):
+	def one_sheet_hyperboloid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,c2=1,principal=True,canonica=True,color="AzureBlueDark",name="OneSheetHyperboloid",xmax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws an one sheet hyperboloid
 		Parameters:
@@ -3238,6 +3245,8 @@ class LinearAlgebra():
 		   thickness: thickness of the hyperboloid
 
 		   opacity: opacity of the hyperboloid
+
+		   preserve: Keep self.origin and self.base as the principal reference
 		"""
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
@@ -3260,13 +3269,16 @@ class LinearAlgebra():
 		b = math.sqrt(b2)
 		c = math.sqrt(c2)
 		if xmax is None:
-			xmax=5.0/a + 2
+			xmax=10.0/a + 2
 		xmax /= a
 		self.draw_one_sheet_hyperboloid(a=1.0,b=1.0,xmin=1.0,xmax=xmax,scale=[a,b,c],color=color,name=name,thickness=thickness,opacity=opacity)
+		if not preserve:
+			self.set_origin()
+			self.set_base()
 	#
 	#
 	#
-	def two_sheets_hyperboloid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,c2=1,principal=True,canonica=True,color="AzureBlueDark",name="TwoSheetParaboloid",xmax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0):
+	def two_sheets_hyperboloid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,c2=1,principal=True,canonica=True,color="AzureBlueDark",name="TwoSheetParaboloid",xmax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws a two sheets hyperboloid
 		Parameters:
@@ -3293,6 +3305,8 @@ class LinearAlgebra():
 		   thickness: thickness of the hyperboloid
 
 		   opacity: opacity of the hyperboloid
+
+		   preserve: Keep self.origin and self.base as the principal reference
 		"""
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
@@ -3318,10 +3332,13 @@ class LinearAlgebra():
 			xmax = 5.0/a + 2
 		xmax /= a
 		self.draw_two_sheets_hyperboloid(a=1.0,b=1.0,xmin=0.0,xmax=xmax,color=color,scale=[a,b,c],name=name,thickness=thickness,opacity=opacity)
+		if not preserve:
+			self.set_origin()
+			self.set_base()
 	#
 	#
 	#
-	def cone(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,c2=1,half=False,principal=True,canonica=True,color="AzureBlueDark",name="Cone",xmax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0):
+	def cone(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,c2=1,half=False,principal=True,canonica=True,color="AzureBlueDark",name="Cone",xmax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws a cone
 		Parameters:
@@ -3350,6 +3367,8 @@ class LinearAlgebra():
 		   thickness: thickness of the cone
 
 		   opacity: opacity of the cone
+
+		   preserve: Keep self.origin and self.base as the principal reference
 		"""
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
@@ -3375,10 +3394,13 @@ class LinearAlgebra():
 			xmax = 10.0/a + 2
 		xmax /= a
 		self.draw_cone(a=1.0,xmin=0.0,xmax=xmax,steps=50,half=half,color=color,scale=[a,b,c],name=name,thickness=thickness,opacity=opacity)
+		if not preserve:
+			self.set_origin()
+			self.set_base()
 	#
 	#
 	#
-	def hyperbolic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color="AzureBlueDark",name="HyperbolicCylinder",xmax=None,zmax=20,cmax=15,pmax=15,thickness=0.02,opacity=1.0):
+	def hyperbolic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color="AzureBlueDark",name="Hyperbolic Cylinder",xmax=None,zmax=20,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws an hyperbolic cylinder
 		Parameters:
@@ -3407,6 +3429,8 @@ class LinearAlgebra():
 		   thickness: thickness of the hyperbolic cylinder
 
 		   opacity: opacity of the hyperbolic cylinder
+
+		   preserve: Keep self.origin and self.base as the principal reference
 		"""
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
@@ -3431,10 +3455,13 @@ class LinearAlgebra():
 			xmax = 5.0/a + 2
 		xmax /= a
 		obj = self.draw_hyperbolic_cylinder(a=1.0,b=1.0,xmin=1.0,xmax=xmax,length=zmax,steps=128,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
+		if not preserve:
+			self.set_origin()
+			self.set_base()
 	#
 	#
 	#
-	def elliptic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color="AzureBlueDark",name="EllipticCylinder",zmax=20,cmax=15,pmax=15,thickness=0.02,opacity=1.0,change=False):
+	def elliptic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color="AzureBlueDark",name="EllipticCylinder",zmax=20,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws an elliptic cylinder
 		Parameters:
@@ -3461,6 +3488,8 @@ class LinearAlgebra():
 		   thickness: thickness of the elliptic cylinder
 
 		   opacity: opacity of the elliptic cylinder
+
+		   preserve: Keep self.origin and self.base as the principal reference
 		"""
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
@@ -3482,13 +3511,13 @@ class LinearAlgebra():
 		a = math.sqrt(a2)
 		b = math.sqrt(b2)
 		self.draw_elliptic_cylinder(a=1.0,b=1.0,length=zmax,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
-		if not change:
+		if not preserve:
 			self.set_origin()
 			self.set_base()
 	#
 	#
 	#
-	def elliptic_paraboloid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color="AzureBlueDark",name="EllipticParaboloid",xmax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0):
+	def elliptic_paraboloid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color="AzureBlueDark",name="EllipticParaboloid",xmax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws an elliptic paraboloid
 		Parameters:
@@ -3515,6 +3544,8 @@ class LinearAlgebra():
 		   thickness: thickness of the elliptic paraboloid
 
 		   opacity: opacity of the elliptic paraboloid
+
+		   preserve: Keep self.origin and self.base as the principal reference
 		"""
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
@@ -3539,10 +3570,13 @@ class LinearAlgebra():
 			xmax = 10.0/a
 		xmax /= a
 		self.draw_elliptic_paraboloid(a=1.0,xmin=0.0,xmax=xmax,steps=50,scale=[a,b,1],color=color,name=name,opacity=opacity,thickness=thickness)
+		if not preserve:
+			self.set_origin()
+			self.set_base()
 	#
 	#
 	#
-	def hyperbolic_paraboloid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color="AzureBlueDark",name="HyperbolicParaboloid",xmax=None,ymax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0):
+	def hyperbolic_paraboloid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color="AzureBlueDark",name="HyperbolicParaboloid",xmax=None,ymax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws an hyperbolic paraboloid
 		Parameters:
@@ -3571,6 +3605,8 @@ class LinearAlgebra():
 		   thickness: thickness of the hyperbolic paraboloid
 
 		   opacity: opacity of the hyperbolic paraboloid
+
+		   preserve: Keep self.origin and self.base as the principal reference
 		"""
 		a = math.sqrt(a2)
 		b = math.sqrt(b2)
@@ -3604,10 +3640,13 @@ class LinearAlgebra():
 			obj.rotation_quaternion.rotate(self.rotation.quaternion)
 			obj.location.rotate(self.rotation.quaternion)
 		obj.location = o
+		if not preserve:
+			self.set_origin()
+			self.set_base()
 	#
 	#
 	#
-	def parabolic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a=1,principal=True,canonica=True,color="AzureBlueDark",name="ParabolicCylinder",xmax=None,ymax=30,cmax=20,pmax=20,thickness=0.02,opacity=1.0):
+	def parabolic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],p=1,principal=True,canonica=True,color="AzureBlueDark",name="ParabolicCylinder",xmax=12,ymax=30,cmax=20,pmax=20,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws an hyperbolic paraboloid
 		Parameters:
@@ -3615,7 +3654,7 @@ class LinearAlgebra():
 
 		   u1, u2: the principal basis {v1, v2, v3} is constructed from this vectors
 
-		   a: coefficient of the intial parabola
+		   p: Parameter of the cylinder z' = x'^2/(2*p)
 
 		   principal: if True, the principal axis are drawn
 
@@ -3636,6 +3675,8 @@ class LinearAlgebra():
 		   thickness: thickness of the hyperbolic paraboloid
 
 		   opacity: opacity of the hyperbolic paraboloid
+
+		   preserve: Keep self.origin and self.base as the principal reference
 		"""
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
@@ -3655,12 +3696,13 @@ class LinearAlgebra():
 		if principal:
 			self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
 		coef = 1.0
-		if a < 0:
+		if p < 0:
 			coef = -1
-		if xmax is None:
-			xmax = 5.0/a + 1.5
-		xmax /= a
-		self.draw_parabolic_cylinder(p=coef,xmin=0.0,xmax=xmax,length=ymax,color=color,name=name,scale=[a,1,1],thickness=thickness,opacity=opacity)
+		xmax /= 2*coef*p
+		self.draw_parabolic_cylinder(p=coef,xmin=0.0,xmax=xmax,length=ymax,color=color,name=name,scale=[2*coef*p,1,1],thickness=thickness,opacity=opacity)
+		if not preserve:
+			self.set_origin()
+			self.set_base()
 	#
 	#
 	#
@@ -5019,7 +5061,7 @@ class LinearAlgebra():
 	#
 	# Pla afí
 	#
-	def pla_afi(self,punt=Vector([0,0,0]),normal=None,v1=Vector([3,2,1]),v2=Vector([1,-2,0.5]),canonica=False,name="Pla afí",length=15,color="Cyan",sizex=25,sizey=20,opacity=0.8,elements=True):
+	def pla_afi(self,punt=Vector([0,0,0]),normal=None,v1=Vector([3,2,1]),v2=Vector([1,-2,0.5]),canonica=False,name="Pla afí",length=15,color="Cyan",sizex=25,sizey=20,opacity=0.9,elements=True):
 		"""
 		Draws the affine plane generated by two vectors passing through a point
 		Parameters:
@@ -5666,6 +5708,28 @@ class LinearAlgebra():
 		"""
 		self.hyperbolic_paraboloid(a2=a**2,b2=b**2,xmax=xmax,ymax=ymax,canonica=True,principal=False)
 	#
+	# Paraboloide elliptic
+	#
+	def paraboloide_elliptic_simple(self,a=3,b=4,direccio='Z',xmax=12):
+		"""
+		Draws the hyperbolic paraboloid of equation z = x^2/a^2 - y^2/b^2
+		Parameters:
+			a, b: constants the defines he hyperbolic paraboloid
+
+			xmax, ymax: maximun values of the x and y coordinates
+		"""
+		if direccio == 'X' or direccio == 'x':
+			u1 = Vector([0,0,1])
+			u2 = Vector([0,1,0])
+		elif direccio == 'Y' or direccio == 'y':
+			u1 = Vector([1,0,0])
+			u2 = Vector([0,0,-1])
+		else:
+			u1 = Vector([1,0,0])
+			u2 = Vector([0,1,0])
+		self.elliptic_paraboloid(a2=a**2,b2=b**2,u1=u1,u2=u2,xmax=xmax,cmax=xmax,canonica=True,principal=False)
+		self.reset()
+	#
 	# Cilindre el·líptic
 	#
 	def cilindre_elliptic_simple(self,a=10,b=6,direccio='Z',pmax=26):
@@ -5699,7 +5763,7 @@ class LinearAlgebra():
 		Parameters:
 			a, b: semiaxis of the hyperbole
 
-			direction: direction of translation of the hyperbole
+			direccio: direction of translation of the hyperbole
 
 			pmax = maximum value of the independent variable
 
@@ -5726,7 +5790,7 @@ class LinearAlgebra():
 		Parameters:
 			a: the initial parabola has equation of type z=\pm x^2/a^2
 
-			direction: direction of translation of the hyperbole
+			direccio: direction of translation of the hyperbole
 
 			pmax = maximum value of the independent variable
 
@@ -5755,6 +5819,39 @@ class LinearAlgebra():
 		self.parabolic_cylinder(a=a,u1=u1,u2=u2,xmax=pmax,canonica=True,principal=False)
 		self.draw_parabola(a=s/a**2,u1=v1,u2=v2,thickness=0.02,xmax=pmax,steps=128,axis=False)
 		self.reset()
+	#
+	# Con
+	#
+	def con_simple(self,a=4,b=3,c=2,direccio='Z',pmax=12):
+		"""
+		Draws a con with direction X, Y or Z
+		Parameters:
+			a, b, c: semiaxis of the cone
+
+			direccio: direction of the negative coefficient
+
+			pmax = maximum value of the independent variables
+
+			hmax = height of the cone
+		"""
+		if direccio == 'X' or direccio == 'x':
+			u1 = Vector([0,0,1])
+			u2 = Vector([0,-1,0])
+			v1 = Vector([0,0,1])
+			v2 = Vector([1,0,0])
+		elif direccio == 'Y' or direccio == 'y':
+			u1 = Vector([1,0,0])
+			u2 = Vector([0,0,-1])
+			v1 = Vector([1,0,0])
+			v2 = Vector([0,1,0])
+		else:
+			u1 = Vector([1,0,0])
+			u2 = Vector([0,1,0])
+			v1 = Vector([1,0,0])
+			v2 = Vector([0,0,1])
+		self.cone(a2=a**2,b2=b**2,c2=c**2,u1=u1,u2=u2,xmax=pmax,canonica=True,principal=False)
+		self.reset()
+
 	#
 	# Esfera
 	#
