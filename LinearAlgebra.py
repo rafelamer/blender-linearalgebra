@@ -2858,7 +2858,7 @@ class LinearAlgebra():
 
 		return obj
 	#
-	#
+	# Draw a polygon
 	#
 	def draw_polygon(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color="AzureBlueDark",linecolor="OrangeObscureDull",name='Polygon',opacity=1.0,thickness=0.0,vectors=None,scalevectors=0.01):
 		"""
@@ -2959,7 +2959,7 @@ class LinearAlgebra():
 
 		return obj
 	#
-	#
+	# Draw a regular polygon
 	#
 	def draw_regular_polygon(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],vertexs=5,radius=1,scalelines=0.075,color="AzureBlueDark",linecolor="OrangeObscureDull",name='RegularPolygon',opacity=1.0,thickness=0.0,vectors=None):
 		"""
@@ -2989,7 +2989,7 @@ class LinearAlgebra():
 		points = [[radius*math.cos(i*angle),radius*math.sin(i*angle)] for i in range(vertexs)]
 		return self.draw_polygon(origin=origin,u1=u1,u2=u2,points=points,scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness,vectors=vectors,scalevectors=radius/400)
 	#
-	#
+	# Draw a triangle
 	#
 	def draw_triangle(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color="AzureBlueDark",linecolor="OrangeObscureDull",name="Triangle",opacity=1.0,thickness=0.0):
 		"""
@@ -3018,7 +3018,7 @@ class LinearAlgebra():
 		self.draw_polygon(origin=origin,u1=u1,u2=u2,points=points,scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)
 
 	#
-	#
+	# Draw a list of points
 	#
 	def draw_points(self,points=[],name='Points',color="Blue",opacity=1):
 		"""
@@ -3044,7 +3044,7 @@ class LinearAlgebra():
 		self.scene.collection.objects.link(obj)
 		return obj
 	#
-	#
+	# Draw a mesh
 	#
 	def draw_mesh(self,mesh=None,name='Mesh',color="Blue",opacity=1):
 		"""
@@ -3078,7 +3078,7 @@ class LinearAlgebra():
 		self.scene.collection.objects.link(obj)
 		return obj
 	#
-	#
+	# Join a list a objects
 	#
 	def join(self,list):
 		"""
@@ -3096,7 +3096,7 @@ class LinearAlgebra():
 		bpy.ops.object.select_all(action='DESELECT')
 		return list[0]
 	#
-	#
+	# Vectors to quaternion
 	#
 	def vectors_to_quaternion(self,u1=Vector([1,0,0]),u2=Vector([0,1,0])):
 		"""
@@ -3124,7 +3124,7 @@ class LinearAlgebra():
 		mat.transpose()
 		return mat.to_quaternion()
 	#
-	#
+	# Draw an ellpsoid
 	#
 	def ellipsoid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,c2=1,principal=True,canonica=True,color="AzureBlueDark",name="Ellipsoid",cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
@@ -3159,6 +3159,8 @@ class LinearAlgebra():
 
 		   preserve: Keep self.origin and self.base as the principal reference
 		"""
+		axis1 = None
+		axis2 = None
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
 		orig = [0,0,0]
@@ -3171,18 +3173,19 @@ class LinearAlgebra():
 				self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
 				self.colors = Colors.colors(["Red","Green","Blue"])
 		elif canonica and not principal:
-			self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+			axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
 		self.set_origin(o)
 		self.set_rotation(quaternion=q)
 		if principal:
-			self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
+			axis2 = self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
 		a = math.sqrt(a2)
 		b = math.sqrt(b2)
 		c = math.sqrt(c2)
-		self.draw_ellipsoid(radius=1,scale=[a,b,c],color=color,name=name,thickness=thickness,opacity=opacity)
+		el = self.draw_ellipsoid(radius=1,scale=[a,b,c],color=color,name=name,thickness=thickness,opacity=opacity)
 		if not preserve:
 			self.set_origin()
 			self.set_base()
+		return axis1, axis2, el
 	#
 	#
 	#
@@ -3248,6 +3251,8 @@ class LinearAlgebra():
 
 		   preserve: Keep self.origin and self.base as the principal reference
 		"""
+		axis1 = None
+		axis2 = None
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
 		orig = [0,0,0]
@@ -3257,24 +3262,25 @@ class LinearAlgebra():
 					self.colors = Colors.colors(["White","White","White"])
 				else:
 					self.colors = Colors.colors(["Red","Green","Blue"])
-				self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+				axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
 				self.colors = Colors.colors(["Red","Green","Blue"])
 		elif canonica and not principal:
-			self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+			axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
 		self.set_origin(o)
 		self.set_rotation(quaternion=q)
 		if principal:
-			self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
+			axis2 = self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
 		a = math.sqrt(a2)
 		b = math.sqrt(b2)
 		c = math.sqrt(c2)
 		if xmax is None:
 			xmax=10.0/a + 2
 		xmax /= a
-		self.draw_one_sheet_hyperboloid(a=1.0,b=1.0,xmin=1.0,xmax=xmax,scale=[a,b,c],color=color,name=name,thickness=thickness,opacity=opacity)
+		hy = self.draw_one_sheet_hyperboloid(a=1.0,b=1.0,xmin=1.0,xmax=xmax,scale=[a,b,c],color=color,name=name,thickness=thickness,opacity=opacity)
 		if not preserve:
 			self.set_origin()
 			self.set_base()
+		return axis1, axis2, hy
 	#
 	#
 	#
@@ -3308,6 +3314,8 @@ class LinearAlgebra():
 
 		   preserve: Keep self.origin and self.base as the principal reference
 		"""
+		axis1 = None
+		axis2 = None
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
 		orig = [0,0,0]
@@ -3317,24 +3325,25 @@ class LinearAlgebra():
 					self.colors = Colors.colors(["White","White","White"])
 				else:
 					self.colors = Colors.colors(["Red","Green","Blue"])
-				self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+				axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
 				self.colors = Colors.colors(["Red","Green","Blue"])
 		elif canonica and not principal:
-			self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+			axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
 		self.set_origin(o)
 		self.set_rotation(quaternion=q)
 		if principal:
-			self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
+			axis2 = self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
 		a = math.sqrt(a2)
 		b = math.sqrt(b2)
 		c = math.sqrt(c2)
 		if xmax is None:
 			xmax = 5.0/a + 2
 		xmax /= a
-		self.draw_two_sheets_hyperboloid(a=1.0,b=1.0,xmin=0.0,xmax=xmax,color=color,scale=[a,b,c],name=name,thickness=thickness,opacity=opacity)
+		hy = self.draw_two_sheets_hyperboloid(a=1.0,b=1.0,xmin=0.0,xmax=xmax,color=color,scale=[a,b,c],name=name,thickness=thickness,opacity=opacity)
 		if not preserve:
 			self.set_origin()
 			self.set_base()
+		return axis1, axis2, hy
 	#
 	#
 	#
@@ -3370,6 +3379,8 @@ class LinearAlgebra():
 
 		   preserve: Keep self.origin and self.base as the principal reference
 		"""
+		axis1 = None
+		axis2 = None
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
 		orig = [0,0,0]
@@ -3379,10 +3390,10 @@ class LinearAlgebra():
 					self.colors = Colors.colors(["White","White","White"])
 				else:
 					self.colors = Colors.colors(["Red","Green","Blue"])
-				self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+				axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
 				self.colors = Colors.colors(["Red","Green","Blue"])
 		elif canonica and not principal:
-			self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+			axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
 		self.set_origin(o)
 		self.set_rotation(quaternion=q)
 		if principal:
@@ -3393,10 +3404,11 @@ class LinearAlgebra():
 		if xmax is None:
 			xmax = 10.0/a + 2
 		xmax /= a
-		self.draw_cone(a=1.0,xmin=0.0,xmax=xmax,steps=50,half=half,color=color,scale=[a,b,c],name=name,thickness=thickness,opacity=opacity)
+		co = self.draw_cone(a=1.0,xmin=0.0,xmax=xmax,steps=50,half=half,color=color,scale=[a,b,c],name=name,thickness=thickness,opacity=opacity)
 		if not preserve:
 			self.set_origin()
 			self.set_base()
+		return axis1, axis2, co
 	#
 	#
 	#
@@ -3432,6 +3444,8 @@ class LinearAlgebra():
 
 		   preserve: Keep self.origin and self.base as the principal reference
 		"""
+		axis1 = None
+		axis2 = None
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
 		orig = [0,0,0]
@@ -3441,23 +3455,24 @@ class LinearAlgebra():
 					self.colors = Colors.colors(["White","White","White"])
 				else:
 					self.colors = Colors.colors(["Red","Green","Blue"])
-				self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+				axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
 				self.colors = Colors.colors(["Red","Green","Blue"])
 		elif canonica and not principal:
-			self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+			axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
 		self.set_origin(o)
 		self.set_rotation(quaternion=q)
 		if principal:
-			self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
+			axis2 = self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
 		a = math.sqrt(a2)
 		b = math.sqrt(b2)
 		if xmax is None:
 			xmax = 5.0/a + 2
 		xmax /= a
-		obj = self.draw_hyperbolic_cylinder(a=1.0,b=1.0,xmin=1.0,xmax=xmax,length=zmax,steps=128,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
+		hy = self.draw_hyperbolic_cylinder(a=1.0,b=1.0,xmin=1.0,xmax=xmax,length=zmax,steps=128,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
 		if not preserve:
 			self.set_origin()
 			self.set_base()
+		return axis1, axis2, hy
 	#
 	#
 	#
@@ -3491,6 +3506,8 @@ class LinearAlgebra():
 
 		   preserve: Keep self.origin and self.base as the principal reference
 		"""
+		axis1 = None
+		axis2 = None
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
 		orig = [0,0,0]
@@ -3500,20 +3517,21 @@ class LinearAlgebra():
 					self.colors = Colors.colors(["White","White","White"])
 				else:
 					self.colors = Colors.colors(["Red","Green","Blue"])
-				self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+				axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
 				self.colors = Colors.colors(["Red","Green","Blue"])
 		elif canonica and not principal:
-			self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+			axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
 		self.set_origin(o)
 		self.set_rotation(quaternion=q)
 		if principal:
-			self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
+			axis2 = self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
 		a = math.sqrt(a2)
 		b = math.sqrt(b2)
-		self.draw_elliptic_cylinder(a=1.0,b=1.0,length=zmax,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
+		el = self.draw_elliptic_cylinder(a=1.0,b=1.0,length=zmax,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
 		if not preserve:
 			self.set_origin()
 			self.set_base()
+		return axis1, axis2, el
 	#
 	#
 	#
@@ -3547,6 +3565,8 @@ class LinearAlgebra():
 
 		   preserve: Keep self.origin and self.base as the principal reference
 		"""
+		axis1 = None
+		axis2 = None
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
 		orig = [0,0,0]
@@ -3556,23 +3576,24 @@ class LinearAlgebra():
 					self.colors = Colors.colors(["White","White","White"])
 				else:
 					self.colors = Colors.colors(["Red","Green","Blue"])
-				self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+				axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
 				self.colors = Colors.colors(["Red","Green","Blue"])
 		elif canonica and not principal:
-			self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+			axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
 		self.set_origin(o)
 		self.set_rotation(quaternion=q)
 		if principal:
-			self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
+			axis2 = self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
 		a = math.sqrt(a2)
 		b = math.sqrt(b2)
 		if xmax is None:
 			xmax = 10.0/a
 		xmax /= a
-		self.draw_elliptic_paraboloid(a=1.0,xmin=0.0,xmax=xmax,steps=50,scale=[a,b,1],color=color,name=name,opacity=opacity,thickness=thickness)
+		el = self.draw_elliptic_paraboloid(a=1.0,xmin=0.0,xmax=xmax,steps=50,scale=[a,b,1],color=color,name=name,opacity=opacity,thickness=thickness)
 		if not preserve:
 			self.set_origin()
 			self.set_base()
+		return axis1, axis2, el
 	#
 	#
 	#
@@ -3608,6 +3629,8 @@ class LinearAlgebra():
 
 		   preserve: Keep self.origin and self.base as the principal reference
 		"""
+		axis1 = None
+		axis2 = None
 		a = math.sqrt(a2)
 		b = math.sqrt(b2)
 		if xmax is None:
@@ -3616,7 +3639,7 @@ class LinearAlgebra():
 			ymax = 10.0/b + 1
 		xmax /= a
 		ymax /= b
-		obj = self.draw_hyperbolic_paraboloid(a=1.0,b=1.0,xmax=xmax,ymax=ymax,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
+		hy = self.draw_hyperbolic_paraboloid(a=1.0,b=1.0,xmax=xmax,ymax=ymax,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
 
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
@@ -3627,22 +3650,23 @@ class LinearAlgebra():
 					self.colors = Colors.colors(["White","White","White"])
 				else:
 					self.colors = Colors.colors(["Red","Green","Blue"])
-				self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+				axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
 				self.colors = Colors.colors(["Red","Green","Blue"])
 		elif canonica and not principal:
-			self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+			axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
 		self.set_origin(o)
 		self.set_rotation(quaternion=q)
 		if principal:
 			self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
-		obj.rotation_mode = 'QUATERNION'
+		hy.rotation_mode = 'QUATERNION'
 		if self.rotation is not None:
-			obj.rotation_quaternion.rotate(self.rotation.quaternion)
-			obj.location.rotate(self.rotation.quaternion)
-		obj.location = o
+			hy.rotation_quaternion.rotate(self.rotation.quaternion)
+			hy.location.rotate(self.rotation.quaternion)
+		hy.location = o
 		if not preserve:
 			self.set_origin()
 			self.set_base()
+		return axis1, axis2, hy
 	#
 	#
 	#
@@ -3678,6 +3702,8 @@ class LinearAlgebra():
 
 		   preserve: Keep self.origin and self.base as the principal reference
 		"""
+		axis1 = None
+		axis2 = None
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
 		orig = [0,0,0]
@@ -3687,22 +3713,23 @@ class LinearAlgebra():
 					self.colors = Colors.colors(["White","White","White"])
 				else:
 					self.colors = Colors.colors(["Red","Green","Blue"])
-				self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+				axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
 				self.colors = Colors.colors(["Red","Green","Blue"])
 		elif canonica and not principal:
-			self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+			axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
 		self.set_origin(o)
 		self.set_rotation(quaternion=q)
 		if principal:
-			self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
+			axis2 = self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
 		coef = 1.0
 		if p < 0:
 			coef = -1
-		xmax /= 2*coef*p
-		self.draw_parabolic_cylinder(p=coef,xmin=0.0,xmax=xmax,length=ymax,color=color,name=name,scale=[2*coef*p,1,1],thickness=thickness,opacity=opacity)
+		xmax /= sqrt(2*coef*p)
+		pa = self.draw_parabolic_cylinder(p=coef,xmin=0.0,xmax=xmax,length=ymax,color=color,name=name,scale=[sqrt(2*coef*p),1,1],thickness=thickness,opacity=opacity)
 		if not preserve:
 			self.set_origin()
 			self.set_base()
+		return axis1, axis2, pa
 	#
 	#
 	#
@@ -4414,22 +4441,24 @@ class LinearAlgebra():
 		bpy.context.scene.frame_set(0)
 		bpy.context.view_layer.update()
 	#
+	# Helical motion or rotation of objects
 	#
-	#
-	def rotate_object(self,obj=None,axis='Z',frames=1,origin=Vector([0,0,0]),localaxis=None,localangle=None,helicoidal=0.0,rounds=1,draw=True):
+	def rotate_objects(self,objs=[],axis='Z',angle=90,frames=1,origin=Vector([0,0,0]),translation=[0.0,0.0,0.0]):
 		"""
 		Rotates an object around the axis
 		Parameters:
-		   obj: the object
+		   objs: the list of objects
 
 		   axis: it must be 'X', 'Y', 'Z' or a Vector
 
 		   local: if True the center of rotation is the location of the object
 		"""
-		if obj is None:
+		if objs is None or (not isinstance(objs,list) and not isinstance(objs,tuple)):
 			return None
 		if not isinstance(origin,Vector):
 			origin = Vector(origin)
+		if not isinstance(translation,Vector):
+			translation = Vector(translation)
 		if isinstance(axis,str):
 			axis = axis.strip().upper()
 		if axis == 'X':
@@ -4443,49 +4472,29 @@ class LinearAlgebra():
 		else:
 			u = Vector(axis)
 
-		line = None
-		if localaxis is not None and localangle is not None:
-			old = self.origin
-			self.set_origin(obj.location)
-			l = obj.dimensions.length / 2
-			line = self.draw_vector(localaxis,axis=l,scale=0.1,arrow=False,positive=False,color="Orange",name="Eix rotació local")
-			line.select_set(True)
-			bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS', center='MEDIAN')
-			line.select_set(False)
-			self.set_origin(old)
-			lr = Rotation(localangle,localaxis)
-		if draw:
-			self.set_origin(origin)
-			self.draw_vector(u,axis=15/u.length,positive=False,color="White")
-			self.set_origin()
 		r = Rotation(1/int(frames),u)
-		axis, angle = r.to_axis_angle()
-		t = helicoidal * axis
+		t = translation / (int(frames) * angle)
 		bpy.context.scene.frame_set(self.frame)
-		obj.keyframe_insert(data_path="rotation_quaternion",index=-1)
-		obj.keyframe_insert(data_path="location",index=-1)
-		fn = self.frame + 1
-		for i in range(int(frames) * int(rounds) * 360):
-			bpy.context.scene.frame_set(fn)
-			if line is None:
-				obj.rotation_quaternion.rotate(r.quaternion)
-			else:
-				obj.rotation_quaternion.rotate(lr.quaternion)
+		for obj in objs:
 			obj.keyframe_insert(data_path="rotation_quaternion",index=-1)
-			w = obj.location - origin
-			w.rotate(r.quaternion)
-			obj.location = origin + w + t
-			if line is not None:
-				line.location = origin + w + t
-				line.keyframe_insert(data_path="location",index=-1)
 			obj.keyframe_insert(data_path="location",index=-1)
+		fn = self.frame + 1
+		for i in range(int(frames) * angle):
+			for obj in objs:
+				bpy.context.scene.frame_set(fn)
+				obj.rotation_quaternion.rotate(r.quaternion)
+				obj.keyframe_insert(data_path="rotation_quaternion",index=-1)
+				w = obj.location - origin
+				w.rotate(r.quaternion)
+				obj.location = origin + w + t
+				obj.keyframe_insert(data_path="location",index=-1)
 			fn += 1
 		self.frame = fn - frames
 		bpy.context.scene.frame_end = self.frame
 		bpy.context.scene.frame_set(0)
 		bpy.context.view_layer.update()
 	#
-	#
+	# Rotation of a vector
 	#
 	def rotate_vector(self,vector=None,axis='Z'):
 		"""
@@ -4529,7 +4538,7 @@ class LinearAlgebra():
 		Parameters:
 		   obj: the object
 
-		   axis: any non nul Vectors
+		   axis: any non nul Vector
 
 		   angle: the angle of rotation in degrees
 
@@ -4575,7 +4584,7 @@ class LinearAlgebra():
 		bpy.context.scene.frame_set(0)
 		bpy.context.view_layer.update()
 	#
-	#
+	# Rotation by Euler's angles
 	#
 	def rotate_euler(self,obj=None,psi=0.0,theta=0.0,phi=0.0,frames=3,axis='ZXZ',amax=15,scaleaxis=0.075,reverse=False,local=False,radians=False,canonica=True,positive=False):
 		"""
@@ -4710,6 +4719,77 @@ class LinearAlgebra():
 				obj.keyframe_insert(data_path="location",index=-1)
 			fn += frames
 
+		self.frame = fn - frames
+		bpy.context.scene.frame_end = self.frame
+		bpy.context.scene.frame_set(0)
+		bpy.context.view_layer.update()
+	#
+	# Rotate objects or helical motion
+	#
+	def rotate_object(self,obj=None,axis='Z',frames=1,origin=Vector([0,0,0]),localaxis=None,localangle=None,helical=0.0,rounds=1,draw=True):
+		"""
+		Rotates an object around the axis
+		Parameters:
+		   obj: the object
+
+		   axis: it must be 'X', 'Y', 'Z' or a Vector
+
+		   local: if True the center of rotation is the location of the object
+		"""
+		if obj is None:
+			return None
+		if not isinstance(origin,Vector):
+			origin = Vector(origin)
+		if isinstance(axis,str):
+			axis = axis.strip().upper()
+		if axis == 'X':
+			u = Vector([1,0,0])
+		elif axis == 'Y':
+			u = Vector([0,1,0])
+		elif axis == 'Z':
+			u = Vector([0,0,1])
+		elif isinstance(axis,Vector):
+			u = axis
+		else:
+			u = Vector(axis)
+
+		line = None
+		if localaxis is not None and localangle is not None:
+			old = self.origin
+			self.set_origin(obj.location)
+			l = obj.dimensions.length / 2
+			line = self.draw_vector(localaxis,axis=l,scale=0.1,arrow=False,positive=False,color="Orange",name="Eix rotació local")
+			line.select_set(True)
+			bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS', center='MEDIAN')
+			line.select_set(False)
+			self.set_origin(old)
+			lr = Rotation(localangle,localaxis)
+		if draw:
+			self.set_origin(origin)
+			self.draw_vector(u,axis=15/u.length,positive=False,color="White")
+			self.set_origin()
+		r = Rotation(1/int(frames),u)
+		axis, angle = r.to_axis_angle()
+		t = helical * axis
+		bpy.context.scene.frame_set(self.frame)
+		obj.keyframe_insert(data_path="rotation_quaternion",index=-1)
+		obj.keyframe_insert(data_path="location",index=-1)
+		fn = self.frame + 1
+		for i in range(int(frames) * int(rounds) * 360):
+			bpy.context.scene.frame_set(fn)
+			if line is None:
+				obj.rotation_quaternion.rotate(r.quaternion)
+			else:
+				obj.rotation_quaternion.rotate(lr.quaternion)
+			obj.keyframe_insert(data_path="rotation_quaternion",index=-1)
+			w = obj.location - origin
+			w.rotate(r.quaternion)
+			obj.location = origin + w + t
+			if line is not None:
+				line.location = origin + w + t
+				line.keyframe_insert(data_path="location",index=-1)
+			obj.keyframe_insert(data_path="location",index=-1)
+			fn += 1
 		self.frame = fn - frames
 		bpy.context.scene.frame_end = self.frame
 		bpy.context.scene.frame_set(0)
@@ -4938,6 +5018,27 @@ class LinearAlgebra():
 			origin = Vector(origin)
 		self.set_origin(origin)
 		self.draw_base_axis(axis=length,positive=False,scale=scale,zaxis=zaxis,name=name)
+	#
+	#
+	def base_canonica_white(self,origin=Vector([0,0,0]),length=20,scale=0.04,zaxis=True,name="Base canònica"):
+		"""
+		Draws the canonical base in white
+		Parameters:
+		   origin: point where to represent the base
+
+		   length: length of the axis
+
+		   scale: scale of the cylinder
+
+		   zaxis: if False the z axis is not drawn
+
+		   name: name of the object
+		"""
+		if not isinstance(origin,Vector):
+			origin = Vector(origin)
+		self.colors = Colors.colors(["White","White","White"])
+		self.draw_base_axis(axis=length,positive=False,scale=scale,zaxis=zaxis,name=name)
+		self.colors = Colors.colors(["Red","Green","Blue"])
 	#
 	# Vector i base canònica
 	#
@@ -5706,7 +5807,7 @@ class LinearAlgebra():
 
 			xmax, ymax: maximun values of the x and y coordinates
 		"""
-		self.hyperbolic_paraboloid(a2=a**2,b2=b**2,xmax=xmax,ymax=ymax,canonica=True,principal=False)
+		return self.hyperbolic_paraboloid(a2=a**2,b2=b**2,xmax=xmax,ymax=ymax,canonica=True,principal=False)
 	#
 	# Paraboloide elliptic
 	#
@@ -5727,8 +5828,9 @@ class LinearAlgebra():
 		else:
 			u1 = Vector([1,0,0])
 			u2 = Vector([0,1,0])
-		self.elliptic_paraboloid(a2=a**2,b2=b**2,u1=u1,u2=u2,xmax=xmax,cmax=xmax,canonica=True,principal=False)
+		el = self.elliptic_paraboloid(a2=a**2,b2=b**2,u1=u1,u2=u2,xmax=xmax,cmax=xmax,canonica=True,principal=False)
 		self.reset()
+		return el
 	#
 	# Cilindre el·líptic
 	#
@@ -5751,9 +5853,10 @@ class LinearAlgebra():
 		else:
 			u1 = Vector([1,0,0])
 			u2 = Vector([0,1,0])
-		self.elliptic_cylinder(a2=a**2,b2=b**2,u1=u1,u2=u2,zmax=pmax,canonica=True,principal=False)
-		self.draw_ellipse(a=a,b=b,u1=u1,u2=u2,thickness=0.02,steps=128,axis=False)
+		cy = self.elliptic_cylinder(a2=a**2,b2=b**2,u1=u1,u2=u2,zmax=pmax,canonica=True,principal=False)
+		el = self.draw_ellipse(a=a,b=b,u1=u1,u2=u2,thickness=0.02,steps=128,axis=False)
 		self.reset()
+		return list(cy) + [el]
 	#
 	# Cilindre hiperbòlic
 	#
@@ -5778,13 +5881,14 @@ class LinearAlgebra():
 		else:
 			u1 = Vector([1,0,0])
 			u2 = Vector([0,1,0])
-		self.hyperbolic_cylinder(a2=a**2,b2=b**2,u1=u1,u2=u2,xmax=pmax,zmax=hmax,canonica=True,principal=False)
-		self.draw_hyperbole(a=a,b=b,u1=u1,u2=u2,thickness=0.02,ymax=b*math.sqrt(-1+(pmax/a)**2),steps=128,axis=False)
+		cy = self.hyperbolic_cylinder(a2=a**2,b2=b**2,u1=u1,u2=u2,xmax=pmax,zmax=hmax,canonica=True,principal=False)
+		hy = self.draw_hyperbole(a=a,b=b,u1=u1,u2=u2,thickness=0.02,ymax=b*math.sqrt(-1+(pmax/a)**2),steps=128,axis=False)
 		self.reset()
+		return list(cy) + [hy]
 	#
 	# Cilindre parabòlic
 	#
-	def cilindre_parabolic_simple(self,a=3,direccio='Z',pmax=10,hmax=26):
+	def cilindre_parabolic_simple(self,a=3,direccio='Z',pmax=10,hmax=40):
 		"""
 		Draws a parabolic cylinder with direction X, Y or Z
 		Parameters:
@@ -5816,9 +5920,10 @@ class LinearAlgebra():
 		s = 1
 		if a < 0:
 			s = -1
-		self.parabolic_cylinder(a=a,u1=u1,u2=u2,xmax=pmax,canonica=True,principal=False)
-		self.draw_parabola(a=s/a**2,u1=v1,u2=v2,thickness=0.02,xmax=pmax,steps=128,axis=False)
+		cy = self.parabolic_cylinder(p=a**2/2,u1=u1,u2=u2,xmax=pmax,ymax=hmax,canonica=True,principal=False)
+		pa = self.draw_parabola(a=s/a**2,u1=v1,u2=v2,thickness=0.02,xmax=pmax,steps=128,axis=False)
 		self.reset()
+		return list(cy) + [pa]
 	#
 	# Con
 	#
@@ -5849,8 +5954,9 @@ class LinearAlgebra():
 			u2 = Vector([0,1,0])
 			v1 = Vector([1,0,0])
 			v2 = Vector([0,0,1])
-		self.cone(a2=a**2,b2=b**2,c2=c**2,u1=u1,u2=u2,xmax=pmax,canonica=True,principal=False)
+		co = self.cone(a2=a**2,b2=b**2,c2=c**2,u1=u1,u2=u2,xmax=pmax,canonica=True,principal=False)
 		self.reset()
+		return co
 
 	#
 	# Esfera
@@ -5865,7 +5971,7 @@ class LinearAlgebra():
 
 			cmax: maximum values of the x, y and z coordinates
 		"""
-		self.sphere(o=centre,r2=radi**2,canonica=True,principal=False,cmax=cmax)
+		return self.sphere(o=centre,r2=radi**2,canonica=True,principal=False,cmax=cmax)
 	#
 	# Tor
 	#
@@ -6028,7 +6134,7 @@ class LinearAlgebra():
 			psi, theta, phi = R.to_euler_angles(axis=euler)
 			self.rotate_euler(ortoedre2,psi=psi,theta=theta,phi=phi,axis=euler,canonica=False,reverse=reverse)
 	#
-	# Rotació afí i moviment helicoidal
+	# Rotation or helical motion
 	#
 	def moviment_helicoidal_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([3,4,2]),opacity=1,origen=Vector([4,3,0]),eix='Z',rounds=1,translacio=0.0):
 		"""
@@ -6055,7 +6161,7 @@ class LinearAlgebra():
 		if not isinstance(origen,Vector):
 			origen = Vector(origen)
 		ortoedre = self.draw_cube(origin=centre,scale=costats,color="AzureBlueDark",opacity=opacity,thickness=0.015,scalelines=0.025,linecolor="Orange",name="Ortoedre")
-		self.rotate_object(ortoedre,axis=eix,origin=origen,helicoidal=translacio,rounds=rounds)
+		self.rotate_object(ortoedre,axis=eix,origin=origen,helical=translacio,rounds=rounds)
 	#
 	# Gir en el pla d'un poligon
 	#
