@@ -3412,7 +3412,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def hyperbolic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color="AzureBlueDark",name="Hyperbolic Cylinder",xmax=None,zmax=20,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+	def hyperbolic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color="AzureBlueDark",name="Hyperbolic Cylinder",xmax=None,zmax=15,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws an hyperbolic cylinder
 		Parameters:
@@ -3444,6 +3444,8 @@ class LinearAlgebra():
 
 		   preserve: Keep self.origin and self.base as the principal reference
 		"""
+		if cmax < zmax + 2:
+			cmax = zmax + 2
 		axis1 = None
 		axis2 = None
 		q = self.vectors_to_quaternion(u1,u2)
@@ -3468,7 +3470,7 @@ class LinearAlgebra():
 		if xmax is None:
 			xmax = 5.0/a + 2
 		xmax /= a
-		hy = self.draw_hyperbolic_cylinder(a=1.0,b=1.0,xmin=1.0,xmax=xmax,length=zmax,steps=128,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
+		hy = self.draw_hyperbolic_cylinder(a=1.0,b=1.0,xmin=1.0,xmax=xmax,length=2*zmax,steps=128,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
 		if not preserve:
 			self.set_origin()
 			self.set_base()
@@ -3508,8 +3510,8 @@ class LinearAlgebra():
 		"""
 		axis1 = None
 		axis2 = None
-		if cmax < zmax + 3:
-			cmax = zmax + 3
+		if cmax < zmax + 2:
+			cmax = zmax + 2
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
 		orig = [0,0,0]
@@ -5862,7 +5864,7 @@ class LinearAlgebra():
 	#
 	# Cilindre hiperbòlic
 	#
-	def cilindre_hiperbolic_simple(self,a=4,b=3,direccio='Z',pmax=12,hmax=26):
+	def cilindre_hiperbolic_simple(self,a=4,b=3,direccio='Z',pmax=15,hmax=20):
 		"""
 		Draws an hyperbolic cylinder with direction X, Y or Z
 		Parameters:
@@ -5890,7 +5892,7 @@ class LinearAlgebra():
 	#
 	# Cilindre parabòlic
 	#
-	def cilindre_parabolic_simple(self,a=3,direccio='Z',pmax=10,hmax=40):
+	def cilindre_parabolic_simple(self,a=3,direccio='Z',pmax=15,hmax=20):
 		"""
 		Draws a parabolic cylinder with direction X, Y or Z
 		Parameters:
