@@ -3476,7 +3476,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def elliptic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color="AzureBlueDark",name="EllipticCylinder",zmax=20,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+	def elliptic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color="AzureBlueDark",name="EllipticCylinder",zmax=20,cmax=20,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws an elliptic cylinder
 		Parameters:
@@ -3508,6 +3508,8 @@ class LinearAlgebra():
 		"""
 		axis1 = None
 		axis2 = None
+		if cmax < zmax + 3:
+			cmax = zmax + 3
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
 		orig = [0,0,0]
@@ -3527,7 +3529,7 @@ class LinearAlgebra():
 			axis2 = self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
 		a = math.sqrt(a2)
 		b = math.sqrt(b2)
-		el = self.draw_elliptic_cylinder(a=1.0,b=1.0,length=zmax,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
+		el = self.draw_elliptic_cylinder(a=1.0,b=1.0,length=2*zmax,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
 		if not preserve:
 			self.set_origin()
 			self.set_base()
@@ -5834,7 +5836,7 @@ class LinearAlgebra():
 	#
 	# Cilindre el·líptic
 	#
-	def cilindre_elliptic_simple(self,a=10,b=6,direccio='Z',pmax=26):
+	def cilindre_elliptic_simple(self,a=10,b=6,direccio='Z',pmax=20):
 		"""
 		Draws an elliptic cylinder with direction X, Y or Z
 		Parameters:
