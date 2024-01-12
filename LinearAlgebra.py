@@ -3185,6 +3185,7 @@ class LinearAlgebra():
 		if not preserve:
 			self.set_origin()
 			self.set_base()
+			self.set_rotation()
 		return axis1, axis2, el
 	#
 	#
@@ -3280,6 +3281,7 @@ class LinearAlgebra():
 		if not preserve:
 			self.set_origin()
 			self.set_base()
+			self.set_rotation()
 		return axis1, axis2, hy
 	#
 	#
@@ -3343,6 +3345,7 @@ class LinearAlgebra():
 		if not preserve:
 			self.set_origin()
 			self.set_base()
+			self.set_rotation()
 		return axis1, axis2, hy
 	#
 	#
@@ -3408,6 +3411,7 @@ class LinearAlgebra():
 		if not preserve:
 			self.set_origin()
 			self.set_base()
+			self.set_rotation()
 		return axis1, axis2, co
 	#
 	#
@@ -3474,6 +3478,7 @@ class LinearAlgebra():
 		if not preserve:
 			self.set_origin()
 			self.set_base()
+			self.set_rotation()
 		return axis1, axis2, hy
 	#
 	#
@@ -3535,6 +3540,7 @@ class LinearAlgebra():
 		if not preserve:
 			self.set_origin()
 			self.set_base()
+			self.set_rotation()
 		return axis1, axis2, el
 	#
 	#
@@ -3597,6 +3603,7 @@ class LinearAlgebra():
 		if not preserve:
 			self.set_origin()
 			self.set_base()
+			self.set_rotation()
 		return axis1, axis2, el
 	#
 	#
@@ -3670,6 +3677,7 @@ class LinearAlgebra():
 		if not preserve:
 			self.set_origin()
 			self.set_base()
+			self.set_rotation()
 		return axis1, axis2, hy
 	#
 	#
@@ -3733,6 +3741,7 @@ class LinearAlgebra():
 		if not preserve:
 			self.set_origin()
 			self.set_base()
+			self.set_rotation()
 		return axis1, axis2, pa
 	#
 	#
@@ -5641,6 +5650,7 @@ class LinearAlgebra():
 		self.draw_line(start=-5*u2,end=5*u2,color="Blue",scale=0.03,name="Asímptota 2")
 		self.set_origin()
 		self.set_base()
+		self.set_rotation()
 	#
 	# Paràbola
 	#
@@ -5679,6 +5689,7 @@ class LinearAlgebra():
 		self.draw_line(start=[-xmax-3,-p/2,0],end=[xmax+3,-p/2,0],color="Blue",scale=0.04,name="Recta directriu")
 		self.set_origin()
 		self.set_base()
+		self.set_rotation()
 	#
 	# El·lipsoide de revolucio
 	#
