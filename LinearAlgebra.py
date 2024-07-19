@@ -1,10 +1,10 @@
 # Filename:   LinearAlgebra.py
 # Author:     Rafel Amer (rafel.amer AT upc.edu)
-# Copyright:  Rafel Amer 2020-2023
+# Copyright:  Rafel Amer 2020-2024
 #
 #             This file contains code from the file add_mesh_3d_function_surface.py
-#             distributed with Blender
-#
+#             and object_utils.py distributed with Blender as add_ons
+# 
 # Disclaimer: This code is presented "as is" and it has been written to learn
 #             to use the python scripting language and the Blender sofware
 #             use them in the studies of Linear Algebra and Geometry
@@ -36,11 +36,126 @@ except:
 	pass
 from mathutils import Vector, Matrix, Euler, Quaternion
 
+
+def add_object_align_init(context, operator):
+    properties = operator.properties if operator is not None else None
+
+    space_data = context.space_data
+    if space_data and space_data.type != 'VIEW_3D':
+        space_data = None
+
+    # location
+    if operator and properties.is_property_set("location"):
+        location = Matrix.Translation(Vector(properties.location))
+    else:
+        location = Matrix.Translation(context.scene.cursor.location)
+
+        if operator:
+            properties.location = location.to_translation()
+
+    # rotation
+    add_align_preference = context.preferences.edit.object_align
+    if operator:
+        if not properties.is_property_set("rotation"):
+            # So one of "align" and "rotation" will be set
+            properties.align = add_align_preference
+
+        if properties.align == 'WORLD':
+            rotation = properties.rotation.to_matrix().to_4x4()
+        elif properties.align == 'VIEW':
+            rotation = space_data.region_3d.view_matrix.to_3x3().inverted()
+            rotation.resize_4x4()
+            properties.rotation = rotation.to_euler()
+        elif properties.align == 'CURSOR':
+            rotation = context.scene.cursor.matrix
+            rotation.col[3][0:3] = 0.0, 0.0, 0.0
+            properties.rotation = rotation.to_euler()
+        else:
+            rotation = properties.rotation.to_matrix().to_4x4()
+    else:
+        if (add_align_preference == 'VIEW') and space_data:
+            rotation = space_data.region_3d.view_matrix.to_3x3().inverted()
+            rotation.resize_4x4()
+        elif add_align_preference == 'CURSOR':
+            rotation = context.scene.cursor.rotation_euler.to_matrix().to_4x4()
+        else:
+            rotation = Matrix()
+
+    return location @ rotation
+
+#
+#
+#
+def object_data_add(context, obdata, operator=None, name=None):
+    layer = context.view_layer
+    layer_collection = context.layer_collection or layer.active_layer_collection
+    scene_collection = layer_collection.collection
+	
+    for ob in layer.objects:
+        if ob is not None:
+            ob.select_set(False)
+
+    if name is None:
+        name = "Object" if obdata is None else obdata.name
+
+    obj_act = layer.objects.active
+    obj_new = bpy.data.objects.new(name, obdata)
+    scene_collection.objects.link(obj_new)
+    obj_new.select_set(True)
+    obj_new.matrix_world = add_object_align_init(context, operator)
+
+    space_data = context.space_data
+    if space_data and space_data.type != 'VIEW_3D':
+        space_data = None
+
+    if space_data:
+        if space_data.local_view:
+            obj_new.local_view_set(space_data, True)
+
+    if obj_act and obj_act.mode == 'EDIT' and obj_act.type == obj_new.type:
+        bpy.ops.mesh.select_all(action='DESELECT')
+        obj_act.select_set(True)
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        obj_act.select_set(True)
+        layer.update()  # apply location
+        # layer.objects.active = obj_new
+
+        # Match up UV layers, this is needed so adding an object with UVs
+        # doesn't create new layers when there happens to be a naming mismatch.
+        uv_new = obdata.uv_layers.active
+        if uv_new is not None:
+            uv_act = obj_act.data.uv_layers.active
+            if uv_act is not None:
+                uv_new.name = uv_act.name
+
+        bpy.ops.object.join()  # join into the active.
+        if obdata:
+            bpy.data.meshes.remove(obdata)
+
+        bpy.ops.object.mode_set(mode='EDIT')
+    else:
+        layer.objects.active = obj_new
+        if context.preferences.edit.use_enter_edit_mode:
+            if obdata and obdata.library is None:
+                obtype = obj_new.type
+                mode = None
+                if obtype in {'ARMATURE', 'CURVE', 'CURVES', 'FONT', 'LATTICE', 'MESH', 'META', 'SURFACE'}:
+                    mode = 'EDIT'
+                elif obtype == 'GPENCIL':
+                    mode = 'EDIT_GPENCIL'
+
+                if mode is not None:
+                    bpy.ops.object.mode_set(mode=mode)
+    return obj_new
+#
+#
+#
 def create_mesh_object(context,verts,edges,faces,name):
 	mesh = bpy.data.meshes.new(name)
 	mesh.from_pydata(verts, edges, faces)
 	mesh.update()
-	return object_utils.object_data_add(context, mesh, operator=None)
+	return object_data_add(context, mesh, operator=None)
 #
 #
 #
@@ -1678,7 +1793,7 @@ class LinearAlgebra():
 	#
 	#
 	def draw_one_sheet_hyperboloid(self,a=2.0,b=2.0,xmin=math.sqrt(2),xmax=5.0,steps=256,scale=[1,1,1],color="AzureBlueDark",name="HyperboloidOneSheet",opacity=1.0,thickness=0.05):
-		"""
+		r"""
 		Draws a one sheet hyperboloid from the hyperbole z = \pm a*sqrt(x^2-b) in the XZ plane
 		Parameters:
 		   a, b: coefficients of the hyperbole
@@ -1760,7 +1875,7 @@ class LinearAlgebra():
 	#
 	#
 	def draw_two_sheets_hyperboloid(self,a=2.0,b=1.0,xmin=0.0,xmax=5.0,steps=50,scale=[1,1,1],color="AzureBlueDark",name="HyperboloidTwoSheets",opacity=1.0,thickness=0.05):
-		"""
+		r"""
 		Draws a two sheet hyperboloid from the hyperbole z = \pm a * math.sqrt(x**2+b) in the XZ plane
 		Parameters:
 		   a, b: coefficients of the hyperbole
@@ -5904,7 +6019,7 @@ class LinearAlgebra():
 	# Cilindre parabòlic
 	#
 	def cilindre_parabolic_simple(self,a=3,direccio='Z',pmax=15,hmax=20):
-		"""
+		r"""
 		Draws a parabolic cylinder with direction X, Y or Z
 		Parameters:
 			a: the initial parabola has equation of type z=\pm x^2/a^2
