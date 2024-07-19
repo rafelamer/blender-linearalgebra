@@ -28,7 +28,7 @@ import math
 import bpy
 import bmesh
 import random
-from bpy_extras import object_utils
+
 try:
 	from sympy import *
 except:
