@@ -791,7 +791,7 @@ class LinearAlgebra():
 		self.meshes = bpy.data.meshes
 		self.collection = bpy.context.collection
 		self.ops = bpy.ops
-		self.colors= Colors.colors(["Red","Green","Blue"])
+		self.colors= Colors.colors(["Red","GreenDarkHard","Blue"])
 		self.rotation = None
 		self.origin = [0,0,0]
 		self.base = [[1,0,0],[0,1,0],[0,0,1]]
@@ -862,7 +862,7 @@ class LinearAlgebra():
 		"""
 		Set self.colors to default colors
 		"""
-		self.colors= Colors.colors(["Red","Green","Blue"])
+		self.colors= Colors.colors(["Red","GreenDarkHard","Blue"])
 	#
 	#
 	#
@@ -1018,17 +1018,18 @@ class LinearAlgebra():
 		if principled_bsdf is not None:
 			#for i, o in enumerate(principled_bsdf.inputs):
 			#	print(i, o.name)
-			principled_bsdf.inputs['Base Color'].default_value = (r, g, b, 0.5)
+			principled_bsdf.inputs['Base Color'].default_value = (r, g, b, opacity)
 			principled_bsdf.inputs['IOR'].default_value = 0.0
 			principled_bsdf.inputs['Metallic'].default_value = 1.0
+			principled_bsdf.inputs['Roughness'].default_value = 1.0
 			if bpy.app.version[0] < 4:
 				principled_bsdf.inputs['Specular'].default_value = 1.0
 			else:
 				principled_bsdf.inputs['Specular IOR Level'].default_value = 1.0
 			if bpy.app.version[0] < 4:
-				principled_bsdf.inputs['Emission'].default_value = (r, g, b, 0.5)
+				principled_bsdf.inputs['Emission'].default_value = (r, g, b, opacity)
 			else:
-				principled_bsdf.inputs['Emission Color'].default_value = (r, g, b, 0.5)
+				principled_bsdf.inputs['Emission Color'].default_value = (r, g, b, opacity)
 			principled_bsdf.inputs['Emission Strength'].default_value = 0.0
 			if opacity < 1.0:
 				material.blend_method = 'BLEND'
@@ -1211,6 +1212,7 @@ class LinearAlgebra():
 		base = self.base
 		if not zaxis:
 			base = self.base[0:2]
+		
 		for vec in base:
 			#
 			# Draw the stem
@@ -1309,7 +1311,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def draw_vector(self,vector=None,canonica=False,color="Black",scale=0.05,arrow=True,head_height=0.15,axis=0,name="Vector",positive=True):
+	def draw_vector(self,vector=None,canonica=False,color="Black",scale=0.05,arrow=True,head_height=None,axis=0,name="Vector",positive=True):
 		"""
 		Draw the vector with components 'vector'
 		Parameters:
@@ -1353,6 +1355,11 @@ class LinearAlgebra():
 			mat.transpose()
 			v = mat @ vec
 
+		if head_height is None:
+			head_height = 0.15*(v - o).length
+		if head_height > 0.15:
+			head_height = 0.15
+
 		if arrow:
 			t = bpy.data.objects.get("Arrow_stem")
 			obj = t.copy()
@@ -1374,7 +1381,7 @@ class LinearAlgebra():
 			obj2.data = obj2.data.copy()
 			obj2.name = "Arrow"
 			obj2.location =  v - 2 * head_height * v / v.length
-			obj2.scale = (1.05*scale,1.05*scale + 0.05,head_height)
+			obj2.scale = (2*scale,2*scale,head_height)
 			obj2.rotation_mode = 'QUATERNION'
 			obj2.rotation_quaternion = (v - o).to_track_quat('Z','Y')
 			if color is not None:
@@ -2374,7 +2381,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def draw_plane_surface(self,origin=None,normal=None,base=None,sizex=10,sizey=10,vectors=False,scalelines=0.05,scalevector=0.01,
+	def draw_plane_surface(self,origin=None,normal=None,base=None,sizex=10,sizey=10,vectors=False,scalelines=0.05,scalevector=0.03,
 						color="AzureBlueDark",linecolor="BlueDarkDull",vectorcolor="Black",name="Plane",opacity=1.0,thickness=0.0):
 		"""
 		Draws a plane with normal vector or base vectors. It passes through the point origin.
@@ -2512,7 +2519,7 @@ class LinearAlgebra():
 			obj = self.join([obj,lines])
 
 		if vectors:
-			vecs = self.draw_vectors(nodes,True,color=vectorcolor,scale=scalevector,head_height=0.2,name="Vectors",axis=0)
+			vecs = self.draw_vectors(nodes,True,color=vectorcolor,scale=scalevector,head_height=0.1,name="Vectors",axis=0)
 
 		if vecs is not None:
 			obj = self.join([obj,vecs])
@@ -2650,6 +2657,13 @@ class LinearAlgebra():
 		if vecs is not None:
 			obj = self.join([obj,vecs])
 		return obj
+	#
+	#
+	#
+	def ortoedre(self,centre=Vector([0,0,0]),costats=[6,10,8],scalelines=0.05,vectors=False,color="Blue",linecolor="Red",vectorcolor="Black",name='Ortoedre',opacity=1.0,thickness=0.0):
+		if not isinstance(centre,Vector):
+			centre = Vector(centre)
+		self.draw_cube(origin=centre,scale=costats,scalelines=scalelines,vectors=vectors,color=color,linecolor=linecolor,vectorcolor=vectorcolor,name=name,opacity=opacity,thickness=thickness)
 	#
 	#
 	#
@@ -4624,7 +4638,7 @@ class LinearAlgebra():
 	#
 	# Rotation of a vector
 	#
-	def rotate_vector(self,vector=None,axis='Z'):
+	def rotate_vector(self,vector=None,axis='Z',length=25):
 		"""
 		Rotates a vector around the axis
 		Parameters:
@@ -4655,7 +4669,7 @@ class LinearAlgebra():
 		a = vec1.length
 		b = (vector-vec1).length
 		p2 = b**2/a**2
-		self.rotate_object(obj,u)
+		self.rotate_object(obj,u,length=length)
 		self.cone(u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color="GrayLight",opacity=0.2)
 	#
 	#
@@ -4854,7 +4868,7 @@ class LinearAlgebra():
 	#
 	# Rotate objects or helical motion
 	#
-	def rotate_object(self,obj=None,axis='Z',frames=1,origin=Vector([0,0,0]),localaxis=None,localangle=None,helical=0.0,rounds=1,draw=True):
+	def rotate_object(self,obj=None,axis='Z',frames=1,origin=Vector([0,0,0]),localaxis=None,localangle=None,helical=0.0,rounds=1,length=25,draw=True):
 		"""
 		Rotates an object around the axis
 		Parameters:
@@ -4894,7 +4908,7 @@ class LinearAlgebra():
 			lr = Rotation(localangle,localaxis)
 		if draw:
 			self.set_origin(origin)
-			self.draw_vector(u,axis=15/u.length,positive=False,color="White")
+			self.draw_vector(u,axis=length/u.length,positive=False,color="White")
 			self.set_origin()
 		r = Rotation(1/int(frames),u)
 		axis, angle = r.to_axis_angle()
@@ -6199,8 +6213,10 @@ class LinearAlgebra():
 
 			eix: axis of rotation, given by a vector or by X, Y or Z
 		"""
+		if not isinstance(vector,Vector):
+			vector = Vector(vector)
 		self.base_canonica(length=vector.length + 2)
-		self.rotate_vector(vector,eix)
+		self.rotate_vector(vector,eix,length=vector.length + 2)
 	#
 	# Rotació d'un ortoedre a partir dels angles d'Euler
 	#
