@@ -1,3 +1,4 @@
+#########################################################################################
 # Filename:   LinearAlgebra.py
 # Author:     Rafel Amer (rafel.amer AT upc.edu)
 # Copyright:  Rafel Amer 2020-2024
@@ -2556,7 +2557,7 @@ class LinearAlgebra():
 
 		   opacity: opacity of the point
 		"""
-		bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=16, radius=radius, enter_editmode=False, location=location)
+		bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=8, radius=radius, enter_editmode=False, location=location)
 		bpy.context.object.name = name
 		obj = bpy.data.objects.get(name)
 
@@ -4585,7 +4586,7 @@ class LinearAlgebra():
 	#
 	# Helical motion or rotation of objects
 	#
-	def rotate_objects(self,objs=[],axis='Z',angle=90,frames=1,origin=Vector([0,0,0]),translation=[0.0,0.0,0.0]):
+	def rotate_objects(self,objs=[],axis='Z',angle=90,frames=1,origin=Vector([0,0,0]),translation=[0.0,0.0,0.0],length=25,draw=False):
 		"""
 		Rotates an object around the axis
 		Parameters:
@@ -4613,6 +4614,11 @@ class LinearAlgebra():
 			u = axis
 		else:
 			u = Vector(axis)
+
+		if draw:
+			self.set_origin(origin)
+			self.draw_vector(u,axis=length,positive=False,color="White")
+			self.set_origin()
 
 		r = Rotation(1/int(frames),u)
 		t = translation / (int(frames) * angle)
@@ -4670,7 +4676,58 @@ class LinearAlgebra():
 		b = (vector-vec1).length
 		p2 = b**2/a**2
 		self.rotate_object(obj,u,length=length)
-		self.cone(u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color="GrayLight",opacity=0.2)
+		self.cone(u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color="GrayLight",opacity=0.1,thickness=0.01)
+	#
+	# Rotation of a point
+	#
+	def rotate_point(self,punt=None,origen=Vector([0,0,0]),axis='Z',length=25,vectors=True):
+		"""
+		Rotates a point around an affine line
+		Parameters:
+		   point: the point
+
+		   origen: a point of the affine line
+
+		   axis: it must be 'X', 'Y', 'Z' or a vector
+
+		   length: length of the
+		"""
+		draw = False
+		if punt is None:
+			return None
+		if axis == 'X':
+			u = Vector([1,0,0])
+		elif axis == 'Y':
+			u = Vector([0,1,0])
+		elif axis == 'Z':
+			u = Vector([0,0,1])
+		elif isinstance(axis,Vector):
+			u = axis
+		else:
+			u = Vector(axis)
+
+		if not isinstance(origen,Vector):
+			origen = Vector(origen)
+
+		self.draw_point(radius=0.2,location=punt,name="Blue",color="Blue")
+		obj = self.draw_point(radius=0.2,location=punt,name="Red",color="Red")
+		if vectors:
+			self.set_origin(origen)
+			self.draw_vector(punt-origen,name="VBlack",color="Black")
+			obj2 = self.draw_vector(punt-origen,name="VRed",color="Red")
+		w1 = u.orthogonal().normalized()
+		vec1 = (punt-origen).project(u)
+		w3 = vec1.normalized()
+		w2 = w3.cross(w1)
+		a = vec1.length
+		b = (punt-origen-vec1).length
+		p2 = b**2/a**2
+		if vectors:
+			self.rotate_objects([obj,obj2],u,angle=360,origin=origen,length=length,draw=True)
+		else:
+			self.rotate_object(obj,u,origin=origen,length=length)
+		self.cone(o=origen,u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color="GrayLight",opacity=0.1,thickness=0.01)
+		self.reset()
 	#
 	#
 	#
@@ -4908,7 +4965,7 @@ class LinearAlgebra():
 			lr = Rotation(localangle,localaxis)
 		if draw:
 			self.set_origin(origin)
-			self.draw_vector(u,axis=length/u.length,positive=False,color="White")
+			self.draw_vector(u,axis=length,positive=False,color="White")
 			self.set_origin()
 		r = Rotation(1/int(frames),u)
 		axis, angle = r.to_axis_angle()
@@ -5231,6 +5288,35 @@ class LinearAlgebra():
 		self.set_origin(origin)
 		self.set_base([u1,u2,u3])
 		self.draw_base_axis(axis=length,positive=False,scale=scale,name=name)
+	#
+	# Base a partir d'un eix
+	#
+	def base_adaptada(self,origin=Vector([0,0,0]),axis=Vector([1,1,1]),length=15,scale=0.04,name="Base adaptada"):
+		"""
+		Draws an ortonormal base from vector axis with origin in the point origin and sets the default
+		origin and default base to them
+		Parameters:
+			origin: origin of the vector and the base
+
+			axis: first vector of the base
+
+			length: length of the axis
+
+			scale: scale of the base
+
+			name: name of the base
+		"""
+		if not isinstance(origin,Vector):
+			origin = Vector(origin)
+		if not isinstance(axis,Vector):
+			axis = Vector(axis)
+		self.set_origin(origin)
+		u1 = axis.normalized()
+		u2 = u1.orthogonal().normalized()
+		u3 = u1.cross(u2)
+		self.set_base([u1,u2,u3])
+		self.draw_base_axis(axis=length,positive=False,scale=scale,name=name)
+		self.reset()
 	#
 	# Vector en base no canònica
 	#
@@ -6205,18 +6291,70 @@ class LinearAlgebra():
 	#
 	# Rotació d'un vector
 	#
-	def rotacio_vector(self,vector=Vector([6,8,5]),eix=Vector([1,1,1])):
+	def rotacio_vector(self,vector=Vector([6,8,5]),eix=Vector([1,1,1]),adaptada=False):
 		"""
 		Draws an animation of a vector rotating around a vectorial line
 		Parameters:
 			vector: vector to rotate
 
 			eix: axis of rotation, given by a vector or by X, Y or Z
+
+			adaptada: if True, draws a base adapted to the rotation
 		"""
 		if not isinstance(vector,Vector):
 			vector = Vector(vector)
-		self.base_canonica(length=vector.length + 2)
-		self.rotate_vector(vector,eix,length=vector.length + 2)
+		if eix == 'X':
+			u = Vector([1,0,0])
+		elif eix == 'Y':
+			u = Vector([0,1,0])
+		elif eix == 'Z':
+			u = Vector([0,0,1])
+		elif isinstance(axis,Vector):
+			u = axis
+		else:
+			u = Vector(axis)
+		e = vector.project(eix)
+		l = e.length
+		if l < 18:
+			l = 18
+		if adaptada:
+			self.base_adaptada(axis=eix,length=l)
+		self.base_canonica(length=l)
+		self.rotate_vector(vector,eix,length=l)
+    # 
+	# Rotació d'un punt al voltant d'un eix
+	#
+	def rotacio_punt(self,punt=Vector([6,8,5]),origen=Vector([4,3,0]),eix=Vector([1,1,1]),vectors=True):
+		"""
+		Draws an animation of a point rotating around an afine line
+		Parameters:
+			punt: point to rotate
+
+			origen: point of the affine line
+
+			eix: axis of rotation, given by a vector or by X, Y or Z 
+		"""
+		if not isinstance(punt,Vector):
+			punt = Vector(punt)
+		if eix == 'X':
+			u = Vector([1,0,0])
+		elif eix == 'Y':
+			u = Vector([0,1,0])
+		elif eix == 'Z':
+			u = Vector([0,0,1])
+		elif isinstance(eix,Vector):
+			u = eix
+		else:
+			u = Vector(eix)
+
+		if not isinstance(origen,Vector):
+			origen = Vector(origen)
+		e = (punt-origen).project(u)
+		l = e.length
+		if l < 18:
+			l = 18
+		self.base_canonica(length=l)
+		self.rotate_point(punt,origen,u,length=l,vectors=vectors)
 	#
 	# Rotació d'un ortoedre a partir dels angles d'Euler
 	#
