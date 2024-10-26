@@ -3,7 +3,7 @@
 # Author:     Rafel Amer (rafel.amer AT upc.edu)
 # Copyright:  Rafel Amer 2020-2024
 #
-#             This file contains code from the file add_mesh_3d_function_surface.py
+#             This file contains code from the files add_mesh_3d_function_surface.py
 #             and object_utils.py distributed with Blender as add_ons
 # 
 # Disclaimer: This code is presented "as is" and it has been written to learn
@@ -24,6 +24,7 @@
 #               any later version.
 #
 #	          See https://www.gnu.org/licenses/
+#
 #########################################################################################
 import math
 import bpy
@@ -4936,6 +4937,10 @@ class LinearAlgebra():
 
 		   axis: it must be 'X', 'Y', 'Z' or a Vector
 
+		   frames: increment of the frame set
+
+		   helical: tranlation by round
+
 		   local: if True the center of rotation is the location of the object
 		"""
 		if obj is None:
@@ -4972,7 +4977,8 @@ class LinearAlgebra():
 			self.set_origin()
 		r = Rotation(1/int(frames),u)
 		axis, angle = r.to_axis_angle()
-		t = helical * axis
+		axis.normalize()
+		t =  helical / (angle * int(frames) * 360) * axis
 		bpy.context.scene.frame_set(self.frame)
 		obj.keyframe_insert(data_path="rotation_quaternion",index=-1)
 		obj.keyframe_insert(data_path="location",index=-1)
@@ -6437,7 +6443,7 @@ class LinearAlgebra():
 
 			opacity: opacity of the orthohedron
 
-			translation: translation of the helical motion (distance by frame)
+			translation: translation of the helical motion (distance by round)
 			             if translation = 0.0, it's a rotation motion
 		"""
 		self.base_canonica()
@@ -6449,6 +6455,54 @@ class LinearAlgebra():
 			origen = Vector(origen)
 		ortoedre = self.draw_cube(origin=centre,scale=costats,color="AzureBlueDark",opacity=opacity,thickness=0.015,scalelines=0.025,linecolor="Orange",name="Ortoedre")
 		self.rotate_object(ortoedre,axis=eix,origin=origen,helical=translacio,rounds=rounds)
+	#
+	# Rotation or helical motion of a point
+	#
+	def moviment_helicoidal_punt(self,punt=Vector([0,0,0]),origen=Vector([-3,-3,-4]),eix='Z',rounds=5,translacio=2,reverse=False):
+		"""
+		Draws an animation of the helical motion of an orthohedron around an affine line
+		Parameters:
+			punt: posició inicial del punt
+
+			origen: point of the affine line
+
+			eix: axis of rotation
+
+			rounds: rounds of the point aroud the axis
+
+			translation: translation of the helical motion (distance by frame)
+			             if translation = 0.0, it's a rotation motion
+		"""
+		if isinstance(eix,str):
+			eix = eix.strip().upper()
+		if eix == 'X':
+			u = Vector([1,0,0])
+		elif eix == 'Y':
+			u = Vector([0,1,0])
+		elif eix == 'Z':
+			u = Vector([0,0,1])
+		elif isinstance(eix,Vector):
+			u = eix
+		else:
+			u = Vector(eix)
+		self.base_canonica()
+		if not isinstance(punt,Vector):
+			punt = Vector(punt)
+		if not isinstance(origen,Vector):
+			origen = Vector(origen)
+		self.draw_point(radius=0.3,location=punt,name="Blue",color="Blue")
+		obj = self.draw_point(radius=0.3,location=punt,name="Red",color="Red")
+		if reverse:
+			self.rotate_object(obj,axis=-u,origin=origen,helical=translacio,rounds=rounds)
+		else:
+			self.rotate_object(obj,axis=u,origin=origen,helical=translacio,rounds=rounds)
+		vec1 = (punt-origen).project(u)
+		center = origen + vec1
+		w1 = (punt-center).normalized()
+		w3 = u.normalized()
+		w2 = w3.cross(w1)
+		radius = (center-punt).length
+		self.curve(lambda t: (radius*cos(t),radius*sin(t),translacio*t/(2*pi)),tmin=-2*rounds*pi,tmax=2*rounds*pi,steps=128*rounds,thickness=0.005,name="Hèlix",color="Yellow",o=center,u1=w1,u2=w2)
 	#
 	# Gir en el pla d'un poligon
 	#
