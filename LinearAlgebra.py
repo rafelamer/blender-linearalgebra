@@ -4709,14 +4709,16 @@ class LinearAlgebra():
 		if not isinstance(origen,Vector):
 			origen = Vector(origen)
 
-		self.draw_point(radius=0.2,location=punt,name="Blue",color="Blue")
-		obj = self.draw_point(radius=0.2,location=punt,name="Red",color="Red")
+		self.draw_point(radius=0.3,location=punt,name="Blue",color="Blue")
+		obj = self.draw_point(radius=0.3,location=punt,name="Red",color="Red")
 		if vectors:
 			self.set_origin(origen)
 			self.draw_vector(punt-origen,name="VBlack",color="Black")
 			obj2 = self.draw_vector(punt-origen,name="VRed",color="Red")
 		w1 = u.orthogonal().normalized()
 		vec1 = (punt-origen).project(u)
+		center = origen + vec1
+		radius = (center-punt).length
 		w3 = vec1.normalized()
 		w2 = w3.cross(w1)
 		a = vec1.length
@@ -4726,7 +4728,8 @@ class LinearAlgebra():
 			self.rotate_objects([obj,obj2],u,angle=360,origin=origen,length=length,draw=True)
 		else:
 			self.rotate_object(obj,u,origin=origen,length=length)
-		self.cone(o=origen,u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color="GrayLight",opacity=0.1,thickness=0.01)
+		self.draw_circle(center=center,u1=w1,u2=w2,radius=radius,name="Circumferència",steps=128,color="Yellow")
+		self.cone(o=origen,u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color="GrayLight",opacity=0.25,thickness=0.01)
 		self.reset()
 	#
 	#
