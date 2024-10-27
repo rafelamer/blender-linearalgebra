@@ -6429,7 +6429,7 @@ class LinearAlgebra():
 	#
 	# Rotation or helical motion
 	#
-	def moviment_helicoidal_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([3,4,2]),opacity=1,origen=Vector([4,3,0]),eix='Z',rounds=1,translacio=0.0):
+	def moviment_helicoidal_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([3,5,2]),opacity=1,origen=Vector([4,3,0]),eix='Z',rounds=1,translacio=0.0,aligned=False):
 		"""
 		Draws an animation of the helical motion of an orthohedron around an affine line
 		Parameters:
@@ -6445,7 +6445,24 @@ class LinearAlgebra():
 
 			translation: translation of the helical motion (distance by round)
 			             if translation = 0.0, it's a rotation motion
+
+			aligned: if True, aligns the orthohedron with the axis of rotation
 		"""
+		if isinstance(eix,str):
+			eix = eix.strip().upper()
+		if eix == 'X':
+			u = Vector([1,0,0])
+		elif eix == 'Y':
+			u = Vector([0,1,0])
+		elif eix == 'Z':
+			u = Vector([0,0,1])
+		elif isinstance(eix,Vector):
+			u = eix
+		else:
+			u = Vector(eix)
+		w1 = u.normalized()
+		w2 = u.orthogonal().normalized()
+		w3 = w1.cross(w2)
 		self.base_canonica()
 		if not isinstance(centre,Vector):
 			centre = Vector(centre)
@@ -6454,6 +6471,11 @@ class LinearAlgebra():
 		if not isinstance(origen,Vector):
 			origen = Vector(origen)
 		ortoedre = self.draw_cube(origin=centre,scale=costats,color="AzureBlueDark",opacity=opacity,thickness=0.015,scalelines=0.025,linecolor="Orange",name="Ortoedre")
+		if aligned:
+			ortoedre.rotation_mode = 'QUATERNION'
+			x = Vector([1,0,0])
+			quaternion = x.rotation_difference(w1)
+			ortoedre.rotation_quaternion.rotate(quaternion)
 		self.rotate_object(ortoedre,axis=eix,origin=origen,helical=translacio,rounds=rounds)
 	#
 	# Rotation or helical motion of a point
