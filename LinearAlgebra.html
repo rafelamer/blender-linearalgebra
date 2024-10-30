@@ -26,13 +26,14 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python"># Filename:   LinearAlgebra.py
+<pre><code class="python">#########################################################################################
+# Filename:   LinearAlgebra.py
 # Author:     Rafel Amer (rafel.amer AT upc.edu)
-# Copyright:  Rafel Amer 2020-2023
+# Copyright:  Rafel Amer 2020-2024
 #
-#             This file contains code from the file add_mesh_3d_function_surface.py
-#             distributed with Blender
-#
+#             This file contains code from the files add_mesh_3d_function_surface.
+#             and object_utils.py distributed with Blender as add_ons
+# 
 # Disclaimer: This code is presented &#34;as is&#34; and it has been written to learn
 #             to use the python scripting language and the Blender sofware
 #             use them in the studies of Linear Algebra and Geometry
@@ -51,12 +52,13 @@
 #               any later version.
 #
 #                 See https://www.gnu.org/licenses/
+#
 #########################################################################################
 import math
 import bpy
 import bmesh
 import random
-from bpy_extras import object_utils
+
 try:
         from sympy import *
 except:
@@ -64,11 +66,126 @@ except:
         pass
 from mathutils import Vector, Matrix, Euler, Quaternion
 
+
+def add_object_align_init(context, operator):
+    properties = operator.properties if operator is not None else None
+
+    space_data = context.space_data
+    if space_data and space_data.type != &#39;VIEW_3D&#39;:
+        space_data = None
+
+    # location
+    if operator and properties.is_property_set(&#34;location&#34;):
+        location = Matrix.Translation(Vector(properties.location))
+    else:
+        location = Matrix.Translation(context.scene.cursor.location)
+
+        if operator:
+            properties.location = location.to_translation()
+
+    # rotation
+    add_align_preference = context.preferences.edit.object_align
+    if operator:
+        if not properties.is_property_set(&#34;rotation&#34;):
+            # So one of &#34;align&#34; and &#34;rotation&#34; will be set
+            properties.align = add_align_preference
+
+        if properties.align == &#39;WORLD&#39;:
+            rotation = properties.rotation.to_matrix().to_4x4()
+        elif properties.align == &#39;VIEW&#39;:
+            rotation = space_data.region_3d.view_matrix.to_3x3().inverted()
+            rotation.resize_4x4()
+            properties.rotation = rotation.to_euler()
+        elif properties.align == &#39;CURSOR&#39;:
+            rotation = context.scene.cursor.matrix
+            rotation.col[3][0:3] = 0.0, 0.0, 0.0
+            properties.rotation = rotation.to_euler()
+        else:
+            rotation = properties.rotation.to_matrix().to_4x4()
+    else:
+        if (add_align_preference == &#39;VIEW&#39;) and space_data:
+            rotation = space_data.region_3d.view_matrix.to_3x3().inverted()
+            rotation.resize_4x4()
+        elif add_align_preference == &#39;CURSOR&#39;:
+            rotation = context.scene.cursor.rotation_euler.to_matrix().to_4x4()
+        else:
+            rotation = Matrix()
+
+    return location @ rotation
+
+#
+#
+#
+def object_data_add(context, obdata, operator=None, name=None):
+    layer = context.view_layer
+    layer_collection = context.layer_collection or layer.active_layer_collection
+    scene_collection = layer_collection.collection
+        
+    for ob in layer.objects:
+        if ob is not None:
+            ob.select_set(False)
+
+    if name is None:
+        name = &#34;Object&#34; if obdata is None else obdata.name
+
+    obj_act = layer.objects.active
+    obj_new = bpy.data.objects.new(name, obdata)
+    scene_collection.objects.link(obj_new)
+    obj_new.select_set(True)
+    obj_new.matrix_world = add_object_align_init(context, operator)
+
+    space_data = context.space_data
+    if space_data and space_data.type != &#39;VIEW_3D&#39;:
+        space_data = None
+
+    if space_data:
+        if space_data.local_view:
+            obj_new.local_view_set(space_data, True)
+
+    if obj_act and obj_act.mode == &#39;EDIT&#39; and obj_act.type == obj_new.type:
+        bpy.ops.mesh.select_all(action=&#39;DESELECT&#39;)
+        obj_act.select_set(True)
+        bpy.ops.object.mode_set(mode=&#39;OBJECT&#39;)
+
+        obj_act.select_set(True)
+        layer.update()  # apply location
+        # layer.objects.active = obj_new
+
+        # Match up UV layers, this is needed so adding an object with UVs
+        # doesn&#39;t create new layers when there happens to be a naming mismatch.
+        uv_new = obdata.uv_layers.active
+        if uv_new is not None:
+            uv_act = obj_act.data.uv_layers.active
+            if uv_act is not None:
+                uv_new.name = uv_act.name
+
+        bpy.ops.object.join()  # join into the active.
+        if obdata:
+            bpy.data.meshes.remove(obdata)
+
+        bpy.ops.object.mode_set(mode=&#39;EDIT&#39;)
+    else:
+        layer.objects.active = obj_new
+        if context.preferences.edit.use_enter_edit_mode:
+            if obdata and obdata.library is None:
+                obtype = obj_new.type
+                mode = None
+                if obtype in {&#39;ARMATURE&#39;, &#39;CURVE&#39;, &#39;CURVES&#39;, &#39;FONT&#39;, &#39;LATTICE&#39;, &#39;MESH&#39;, &#39;META&#39;, &#39;SURFACE&#39;}:
+                    mode = &#39;EDIT&#39;
+                elif obtype == &#39;GPENCIL&#39;:
+                    mode = &#39;EDIT_GPENCIL&#39;
+
+                if mode is not None:
+                    bpy.ops.object.mode_set(mode=mode)
+    return obj_new
+#
+#
+#
 def create_mesh_object(context,verts,edges,faces,name):
         mesh = bpy.data.meshes.new(name)
         mesh.from_pydata(verts, edges, faces)
         mesh.update()
-        return object_utils.object_data_add(context, mesh, operator=None)
+        return object_data_add(context, mesh, operator=None)
 #
 #
 #
@@ -704,7 +821,7 @@ class LinearAlgebra():
                 self.meshes = bpy.data.meshes
                 self.collection = bpy.context.collection
                 self.ops = bpy.ops
-                self.colors= Colors.colors([&#34;Red&#34;,&#34;Green&#34;,&#34;Blue&#34;])
+                self.colors= Colors.colors([&#34;Red&#34;,&#34;GreenDarkHard&#34;,&#34;Blue&#34;])
                 self.rotation = None
                 self.origin = [0,0,0]
                 self.base = [[1,0,0],[0,1,0],[0,0,1]]
@@ -741,6 +858,17 @@ class LinearAlgebra():
         #
         #
         #
+        def base_disk(self):
+                &#34;&#34;&#34;
+                Draws a base cone with radius1=1.5, radius2=0, depth=2
+                &#34;&#34;&#34;
+                bpy.ops.mesh.primitive_circle_add(vertices=32,fill_type=&#39;NGON&#39;,enter_editmode=False,align=&#39;WORLD&#39;,location=(0.0, 0.0, 0.0))
+                bpy.ops.object.origin_set(type=&#39;ORIGIN_CURSOR&#39;, center=&#39;MEDIAN&#39;)
+                bpy.ops.object.shade_smooth()
+                bpy.context.object.name = &#39;Base_disk&#39;
+        #
+        #
+        #
         def delete_base_cilinder(self):
                 &#34;&#34;&#34;
                 Removes the base cilinder
@@ -761,6 +889,16 @@ class LinearAlgebra():
         #
         #
         #
+        def delete_base_disk(self):
+                &#34;&#34;&#34;
+                Removes the base disk
+                &#34;&#34;&#34;
+                bpy.ops.object.select_all(action=&#39;DESELECT&#39;)
+                bpy.data.objects[&#39;Base_disk&#39;].select_set(True)
+                bpy.ops.object.delete()
+        #
+        #
+        #
         def set_colors(self,names):
                 &#34;&#34;&#34;
                 Set self.colors to the list of colors with names &#39;names&#39;
@@ -775,7 +913,7 @@ class LinearAlgebra():
                 &#34;&#34;&#34;
                 Set self.colors to default colors
                 &#34;&#34;&#34;
-                self.colors= Colors.colors([&#34;Red&#34;,&#34;Green&#34;,&#34;Blue&#34;])
+                self.colors= Colors.colors([&#34;Red&#34;,&#34;GreenDarkHard&#34;,&#34;Blue&#34;])
         #
         #
         #
@@ -931,17 +1069,18 @@ class LinearAlgebra():
                 if principled_bsdf is not None:
                         #for i, o in enumerate(principled_bsdf.inputs):
                         #       print(i, o.name)
-                        principled_bsdf.inputs[&#39;Base Color&#39;].default_value = (r, g, b, 0.5)
+                        principled_bsdf.inputs[&#39;Base Color&#39;].default_value = (r, g, b, opacity)
                         principled_bsdf.inputs[&#39;IOR&#39;].default_value = 0.0
                         principled_bsdf.inputs[&#39;Metallic&#39;].default_value = 1.0
+                        principled_bsdf.inputs[&#39;Roughness&#39;].default_value = 1.0
                         if bpy.app.version[0] &lt; 4:
                                 principled_bsdf.inputs[&#39;Specular&#39;].default_value = 1.0
                         else:
                                 principled_bsdf.inputs[&#39;Specular IOR Level&#39;].default_value = 1.0
                         if bpy.app.version[0] &lt; 4:
-                                principled_bsdf.inputs[&#39;Emission&#39;].default_value = (r, g, b, 0.5)
+                                principled_bsdf.inputs[&#39;Emission&#39;].default_value = (r, g, b, opacity)
                         else:
-                                principled_bsdf.inputs[&#39;Emission Color&#39;].default_value = (r, g, b, 0.5)
+                                principled_bsdf.inputs[&#39;Emission Color&#39;].default_value = (r, g, b, opacity)
                         principled_bsdf.inputs[&#39;Emission Strength&#39;].default_value = 0.0
                         if opacity &lt; 1.0:
                                 material.blend_method = &#39;BLEND&#39;
@@ -1124,6 +1263,7 @@ class LinearAlgebra():
                 base = self.base
                 if not zaxis:
                         base = self.base[0:2]
+                
                 for vec in base:
                         #
                         # Draw the stem
@@ -1222,7 +1362,7 @@ class LinearAlgebra():
         #
         #
         #
-        def draw_vector(self,vector=None,canonica=False,color=&#34;Black&#34;,scale=0.05,arrow=True,head_height=0.15,axis=0,name=&#34;Vector&#34;,positive=True):
+        def draw_vector(self,vector=None,canonica=False,color=&#34;Black&#34;,scale=0.05,arrow=True,head_height=None,axis=0,name=&#34;Vector&#34;,positive=True):
                 &#34;&#34;&#34;
                 Draw the vector with components &#39;vector&#39;
                 Parameters:
@@ -1266,6 +1406,11 @@ class LinearAlgebra():
                         mat.transpose()
                         v = mat @ vec
 
+                if head_height is None:
+                        head_height = 0.15*(v - o).length
+                if head_height &gt; 0.15:
+                        head_height = 0.15
+
                 if arrow:
                         t = bpy.data.objects.get(&#34;Arrow_stem&#34;)
                         obj = t.copy()
@@ -1287,7 +1432,7 @@ class LinearAlgebra():
                         obj2.data = obj2.data.copy()
                         obj2.name = &#34;Arrow&#34;
                         obj2.location =  v - 2 * head_height * v / v.length
-                        obj2.scale = (1.05*scale,1.05*scale + 0.05,head_height)
+                        obj2.scale = (2*scale,2*scale,head_height)
                         obj2.rotation_mode = &#39;QUATERNION&#39;
                         obj2.rotation_quaternion = (v - o).to_track_quat(&#39;Z&#39;,&#39;Y&#39;)
                         if color is not None:
@@ -1706,7 +1851,7 @@ class LinearAlgebra():
         #
         #
         def draw_one_sheet_hyperboloid(self,a=2.0,b=2.0,xmin=math.sqrt(2),xmax=5.0,steps=256,scale=[1,1,1],color=&#34;AzureBlueDark&#34;,name=&#34;HyperboloidOneSheet&#34;,opacity=1.0,thickness=0.05):
-                &#34;&#34;&#34;
+                r&#34;&#34;&#34;
                 Draws a one sheet hyperboloid from the hyperbole z = \pm a*sqrt(x^2-b) in the XZ plane
                 Parameters:
                    a, b: coefficients of the hyperbole
@@ -1788,7 +1933,7 @@ class LinearAlgebra():
         #
         #
         def draw_two_sheets_hyperboloid(self,a=2.0,b=1.0,xmin=0.0,xmax=5.0,steps=50,scale=[1,1,1],color=&#34;AzureBlueDark&#34;,name=&#34;HyperboloidTwoSheets&#34;,opacity=1.0,thickness=0.05):
-                &#34;&#34;&#34;
+                r&#34;&#34;&#34;
                 Draws a two sheet hyperboloid from the hyperbole z = \pm a * math.sqrt(x**2+b) in the XZ plane
                 Parameters:
                    a, b: coefficients of the hyperbole
@@ -2287,7 +2432,7 @@ class LinearAlgebra():
         #
         #
         #
-        def draw_plane_surface(self,origin=None,normal=None,base=None,sizex=10,sizey=10,vectors=False,scalelines=0.05,scalevector=0.01,
+        def draw_plane_surface(self,origin=None,normal=None,base=None,sizex=10,sizey=10,vectors=False,scalelines=0.05,scalevector=0.03,
                                                 color=&#34;AzureBlueDark&#34;,linecolor=&#34;BlueDarkDull&#34;,vectorcolor=&#34;Black&#34;,name=&#34;Plane&#34;,opacity=1.0,thickness=0.0):
                 &#34;&#34;&#34;
                 Draws a plane with normal vector or base vectors. It passes through the point origin.
@@ -2425,7 +2570,7 @@ class LinearAlgebra():
                         obj = self.join([obj,lines])
 
                 if vectors:
-                        vecs = self.draw_vectors(nodes,True,color=vectorcolor,scale=scalevector,head_height=0.2,name=&#34;Vectors&#34;,axis=0)
+                        vecs = self.draw_vectors(nodes,True,color=vectorcolor,scale=scalevector,head_height=0.1,name=&#34;Vectors&#34;,axis=0)
 
                 if vecs is not None:
                         obj = self.join([obj,vecs])
@@ -2462,7 +2607,7 @@ class LinearAlgebra():
 
                    opacity: opacity of the point
                 &#34;&#34;&#34;
-                bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=16, radius=radius, enter_editmode=False, location=location)
+                bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=8, radius=radius, enter_editmode=False, location=location)
                 bpy.context.object.name = name
                 obj = bpy.data.objects.get(name)
 
@@ -2563,6 +2708,13 @@ class LinearAlgebra():
                 if vecs is not None:
                         obj = self.join([obj,vecs])
                 return obj
+        #
+        #
+        #
+        def ortoedre(self,centre=Vector([0,0,0]),costats=[6,10,8],scalelines=0.05,vectors=False,color=&#34;Blue&#34;,linecolor=&#34;Red&#34;,vectorcolor=&#34;Black&#34;,name=&#39;Ortoedre&#39;,opacity=1.0,thickness=0.0):
+                if not isinstance(centre,Vector):
+                        centre = Vector(centre)
+                self.draw_cube(origin=centre,scale=costats,scalelines=scalelines,vectors=vectors,color=color,linecolor=linecolor,vectorcolor=vectorcolor,name=name,opacity=opacity,thickness=thickness)
         #
         #
         #
@@ -3108,21 +3260,23 @@ class LinearAlgebra():
         #
         # Join a list a objects
         #
-        def join(self,list):
+        def join(self,llista):
                 &#34;&#34;&#34;
                 Joins a list of objects
                 Parameters:
-                   list: list of objects
+                   llista: list of objects
                 &#34;&#34;&#34;
-                if len(list) &lt;= 1:
+                if len(llista) == 0:
                         return
+                if len(llista) == 1:
+                        return llista[0]
                 bpy.ops.object.select_all(action=&#39;DESELECT&#39;)
-                bpy.context.view_layer.objects.active = list[0]
-                for obj in list:
+                bpy.context.view_layer.objects.active = llista[0]
+                for obj in llista:
                         obj.select_set(True)
                 bpy.ops.object.join()
                 bpy.ops.object.select_all(action=&#39;DESELECT&#39;)
-                return list[0]
+                return llista[0]
         #
         # Vectors to quaternion
         #
@@ -3213,6 +3367,7 @@ class LinearAlgebra():
                 if not preserve:
                         self.set_origin()
                         self.set_base()
+                        self.set_rotation()
                 return axis1, axis2, el
         #
         #
@@ -3308,6 +3463,7 @@ class LinearAlgebra():
                 if not preserve:
                         self.set_origin()
                         self.set_base()
+                        self.set_rotation()
                 return axis1, axis2, hy
         #
         #
@@ -3371,6 +3527,7 @@ class LinearAlgebra():
                 if not preserve:
                         self.set_origin()
                         self.set_base()
+                        self.set_rotation()
                 return axis1, axis2, hy
         #
         #
@@ -3436,11 +3593,12 @@ class LinearAlgebra():
                 if not preserve:
                         self.set_origin()
                         self.set_base()
+                        self.set_rotation()
                 return axis1, axis2, co
         #
         #
         #
-        def hyperbolic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color=&#34;AzureBlueDark&#34;,name=&#34;Hyperbolic Cylinder&#34;,xmax=None,zmax=20,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+        def hyperbolic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color=&#34;AzureBlueDark&#34;,name=&#34;Hyperbolic Cylinder&#34;,xmax=None,zmax=15,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
                 &#34;&#34;&#34;
                 Draws an hyperbolic cylinder
                 Parameters:
@@ -3472,6 +3630,8 @@ class LinearAlgebra():
 
                    preserve: Keep self.origin and self.base as the principal reference
                 &#34;&#34;&#34;
+                if cmax &lt; zmax + 2:
+                        cmax = zmax + 2
                 axis1 = None
                 axis2 = None
                 q = self.vectors_to_quaternion(u1,u2)
@@ -3496,15 +3656,16 @@ class LinearAlgebra():
                 if xmax is None:
                         xmax = 5.0/a + 2
                 xmax /= a
-                hy = self.draw_hyperbolic_cylinder(a=1.0,b=1.0,xmin=1.0,xmax=xmax,length=zmax,steps=128,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
+                hy = self.draw_hyperbolic_cylinder(a=1.0,b=1.0,xmin=1.0,xmax=xmax,length=2*zmax,steps=128,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
                 if not preserve:
                         self.set_origin()
                         self.set_base()
+                        self.set_rotation()
                 return axis1, axis2, hy
         #
         #
         #
-        def elliptic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color=&#34;AzureBlueDark&#34;,name=&#34;EllipticCylinder&#34;,zmax=20,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+        def elliptic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color=&#34;AzureBlueDark&#34;,name=&#34;EllipticCylinder&#34;,zmax=20,cmax=20,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
                 &#34;&#34;&#34;
                 Draws an elliptic cylinder
                 Parameters:
@@ -3536,6 +3697,8 @@ class LinearAlgebra():
                 &#34;&#34;&#34;
                 axis1 = None
                 axis2 = None
+                if cmax &lt; zmax + 2:
+                        cmax = zmax + 2
                 q = self.vectors_to_quaternion(u1,u2)
                 u = Quaternion([1,0,0,0])
                 orig = [0,0,0]
@@ -3555,10 +3718,11 @@ class LinearAlgebra():
                         axis2 = self.draw_base_axis(axis = pmax,positive=False,name=&#34;Referència principal&#34;)
                 a = math.sqrt(a2)
                 b = math.sqrt(b2)
-                el = self.draw_elliptic_cylinder(a=1.0,b=1.0,length=zmax,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
+                el = self.draw_elliptic_cylinder(a=1.0,b=1.0,length=2*zmax,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
                 if not preserve:
                         self.set_origin()
                         self.set_base()
+                        self.set_rotation()
                 return axis1, axis2, el
         #
         #
@@ -3621,6 +3785,7 @@ class LinearAlgebra():
                 if not preserve:
                         self.set_origin()
                         self.set_base()
+                        self.set_rotation()
                 return axis1, axis2, el
         #
         #
@@ -3694,6 +3859,7 @@ class LinearAlgebra():
                 if not preserve:
                         self.set_origin()
                         self.set_base()
+                        self.set_rotation()
                 return axis1, axis2, hy
         #
         #
@@ -3757,6 +3923,7 @@ class LinearAlgebra():
                 if not preserve:
                         self.set_origin()
                         self.set_base()
+                        self.set_rotation()
                 return axis1, axis2, pa
         #
         #
@@ -3892,6 +4059,49 @@ class LinearAlgebra():
         #
         #
         #
+        def draw_disk(self,center=Vector([0,0,0]),radius=5,u1=Vector([1,0,0]),u2=Vector([0,1,0]),thickness=0.01,name=&#34;Disc&#34;,color=&#34;AzureBlueDark&#34;):
+                &#34;&#34;&#34;
+                Draws a disc in a reference R&#39; determined by self.origin and self.base
+                Parameters:
+                   radius: radius of the disc
+
+                   thickness: thickness of the surface
+
+                   name: name of the curve
+
+                   color: color of the curve
+                &#34;&#34;&#34;
+                self.base_disk()
+                t = bpy.data.objects.get(&#34;Base_disk&#34;)
+                obj = t.copy()
+                obj.name = name
+                self.delete_base_disk()
+                if radius != 1.0:
+                        obj.scale = (radius,radius,1)
+                modifier = obj.modifiers.new(name=&#34;SubSurf&#34;, type=&#39;SUBSURF&#39;)
+                modifier.levels = 4
+                modifier.subdivision_type = &#39;SIMPLE&#39;
+                if thickness &gt; 0.0:
+                        modifier = obj.modifiers.new(name=&#34;Solidify&#34;, type=&#39;SOLIDIFY&#39;)
+                        modifier.thickness = thickness
+                        modifier.offset = 1.0
+                c = Colors.color(color)
+                self.add_material(obj,c.name,c.r,c.g,c.b,1.0)
+                qt = self.vectors_to_quaternion(u1,u2)
+                self.set_rotation(quaternion=qt)
+                if self.rotation is not None:
+                        obj.rotation_mode = &#39;QUATERNION&#39;
+                        obj.rotation_quaternion.rotate(self.rotation.quaternion)
+                        ### obj.location.rotate(self.rotation.quaternion)
+                obj.location = center
+                self.scene.collection.objects.link(obj)
+                bpy.ops.object.shade_smooth()
+                bpy.context.view_layer.objects.active = None
+                obj.select_set(False)
+                return obj
+        #
+        #
+        #
         def curve(self,fun=None,tmin=0.0,tmax=1.0,steps=25,thickness=0.01,name=&#34;Curve&#34;,color=&#34;White&#34;,axis=False,zaxis=True,o=Vector([0,0,0]),u1=Vector([1,0,0]),u2=Vector([0,1,0]),symmetry=None,change=False):
                 &#34;&#34;&#34;
                 Draws a curve in a reference R&#39; determined by the origin o and basis {v1, v2, v3} constructed from u1 and u2 and
@@ -3991,7 +4201,7 @@ class LinearAlgebra():
         #
         #
         #
-        def draw_circle(self,center=[0,0,0],u1=Vector([1,0,0]),u2=Vector([0,1,0]),axis=False,zaxis=False,radius=1,steps=25,thickness=0.01,name=&#34;Circle&#34;,color=&#34;White&#34;,change=False):
+        def draw_circle(self,center=[0,0,0],u1=Vector([1,0,0]),u2=Vector([0,1,0]),axis=False,zaxis=False,radius=1,steps=128,thickness=0.01,name=&#34;Circle&#34;,color=&#34;White&#34;,fillcolor=None,change=False):
                 &#34;&#34;&#34;
                 Draws a circle of center &#39;center&#39; and radius &#39;radius&#39; in the plane determined by vectors u1 and u2
                 Parameters:
@@ -4015,10 +4225,14 @@ class LinearAlgebra():
 
                    change: if True, set the reference self.orifin, self.base to {o; v1, v2, v3}
                 &#34;&#34;&#34;
+                d = None
+                if fillcolor is not None:
+                        d = self.draw_disk(center=center,radius=radius,u1=u1,u2=u2,thickness=0.5*thickness,name=&#34;Disc&#34;,color=fillcolor)
+                c = self.draw_curve(lambda t: (radius*math.cos(t),radius*math.sin(t),0),tmin=0.0,tmax=2*math.pi,axis=axis,zaxis=zaxis,steps=steps,thickness=thickness,name=name,color=color,o=center,u1=u1,u2=u2)
                 if change:
                         self.set_origin(center)
                         self.set_base([u1,u2],orthonormal=True)
-                return self.draw_curve(lambda t: (radius*math.cos(t),radius*math.sin(t),0),tmin=0.0,tmax=2*math.pi,axis=axis,zaxis=zaxis,steps=steps,thickness=thickness,name=name,color=color,o=center,u1=u1,u2=u2)
+                return c, d
         #
         #
         #
@@ -4471,7 +4685,7 @@ class LinearAlgebra():
         #
         # Helical motion or rotation of objects
         #
-        def rotate_objects(self,objs=[],axis=&#39;Z&#39;,angle=90,frames=1,origin=Vector([0,0,0]),translation=[0.0,0.0,0.0]):
+        def rotate_objects(self,objs=[],axis=&#39;Z&#39;,angle=None,frames=1,origin=Vector([0,0,0]),translation=3,rounds=1,length=25,draw=False):
                 &#34;&#34;&#34;
                 Rotates an object around the axis
                 Parameters:
@@ -4479,14 +4693,11 @@ class LinearAlgebra():
 
                    axis: it must be &#39;X&#39;, &#39;Y&#39;, &#39;Z&#39; or a Vector
 
-                   local: if True the center of rotation is the location of the object
                 &#34;&#34;&#34;
                 if objs is None or (not isinstance(objs,list) and not isinstance(objs,tuple)):
                         return None
                 if not isinstance(origin,Vector):
                         origin = Vector(origin)
-                if not isinstance(translation,Vector):
-                        translation = Vector(translation)
                 if isinstance(axis,str):
                         axis = axis.strip().upper()
                 if axis == &#39;X&#39;:
@@ -4500,14 +4711,27 @@ class LinearAlgebra():
                 else:
                         u = Vector(axis)
 
+                if angle is None:
+                        angle = 360
+                else:
+                        rounds = 1
+
+                if draw:
+                        self.set_origin(origin)
+                        self.draw_vector(u,axis=length,positive=False,color=&#34;White&#34;)
+                        self.set_origin()
+
                 r = Rotation(1/int(frames),u)
-                t = translation / (int(frames) * angle)
+                axis, alfa = r.to_axis_angle()
+                axis.normalize()
+                r = Rotation(1/int(frames),u)
+                t =  translation / (alfa * int(frames) * 360) * axis
                 bpy.context.scene.frame_set(self.frame)
                 for obj in objs:
                         obj.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
                         obj.keyframe_insert(data_path=&#34;location&#34;,index=-1)
                 fn = self.frame + 1
-                for i in range(int(frames) * angle):
+                for i in range(int(frames) * int(rounds) * angle):
                         for obj in objs:
                                 bpy.context.scene.frame_set(fn)
                                 obj.rotation_quaternion.rotate(r.quaternion)
@@ -4524,7 +4748,7 @@ class LinearAlgebra():
         #
         # Rotation of a vector
         #
-        def rotate_vector(self,vector=None,axis=&#39;Z&#39;):
+        def rotate_vector(self,vector=None,axis=&#39;Z&#39;,length=25):
                 &#34;&#34;&#34;
                 Rotates a vector around the axis
                 Parameters:
@@ -4555,8 +4779,62 @@ class LinearAlgebra():
                 a = vec1.length
                 b = (vector-vec1).length
                 p2 = b**2/a**2
-                self.rotate_object(obj,u)
-                self.cone(u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color=&#34;GrayLight&#34;,opacity=0.2)
+                self.rotate_object(obj,u,length=length)
+                self.cone(u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color=&#34;GrayLight&#34;,opacity=0.1,thickness=0.01)
+        #
+        # Rotation of a point
+        #
+        def rotate_point(self,punt=None,origen=Vector([0,0,0]),axis=&#39;Z&#39;,length=25,vectors=True):
+                &#34;&#34;&#34;
+                Rotates a point around an affine line
+                Parameters:
+                   point: the point
+
+                   origen: a point of the affine line
+
+                   axis: it must be &#39;X&#39;, &#39;Y&#39;, &#39;Z&#39; or a vector
+
+                   length: length of the
+                &#34;&#34;&#34;
+                draw = False
+                if punt is None:
+                        return None
+                if axis == &#39;X&#39;:
+                        u = Vector([1,0,0])
+                elif axis == &#39;Y&#39;:
+                        u = Vector([0,1,0])
+                elif axis == &#39;Z&#39;:
+                        u = Vector([0,0,1])
+                elif isinstance(axis,Vector):
+                        u = axis
+                else:
+                        u = Vector(axis)
+
+                if not isinstance(origen,Vector):
+                        origen = Vector(origen)
+
+                self.draw_point(radius=0.3,location=punt,name=&#34;Blue&#34;,color=&#34;Blue&#34;)
+                obj = self.draw_point(radius=0.3,location=punt,name=&#34;Red&#34;,color=&#34;Red&#34;)
+                if vectors:
+                        self.set_origin(origen)
+                        self.draw_vector(punt-origen,name=&#34;VBlack&#34;,color=&#34;Black&#34;)
+                        obj2 = self.draw_vector(punt-origen,name=&#34;VRed&#34;,color=&#34;Red&#34;)
+                w1 = u.orthogonal().normalized()
+                vec1 = (punt-origen).project(u)
+                center = origen + vec1
+                radius = (center-punt).length
+                w3 = vec1.normalized()
+                w2 = w3.cross(w1)
+                a = vec1.length
+                b = (punt-origen-vec1).length
+                p2 = b**2/a**2
+                if vectors:
+                        self.rotate_objects([obj,obj2],u,angle=360,origin=origen,length=length,draw=True)
+                else:
+                        self.rotate_object(obj,u,origin=origen,length=length)
+                self.draw_circle(center=center,u1=w1,u2=w2,radius=radius,name=&#34;Circumferència&#34;,steps=128,color=&#34;Yellow&#34;)
+                self.cone(o=origen,u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color=&#34;GrayLight&#34;,opacity=0.25,thickness=0.01)
+                self.reset()
         #
         #
         #
@@ -4754,13 +5032,17 @@ class LinearAlgebra():
         #
         # Rotate objects or helical motion
         #
-        def rotate_object(self,obj=None,axis=&#39;Z&#39;,frames=1,origin=Vector([0,0,0]),localaxis=None,localangle=None,helical=0.0,rounds=1,draw=True):
+        def rotate_object(self,obj=None,axis=&#39;Z&#39;,frames=1,origin=Vector([0,0,0]),localaxis=None,localangle=None,helical=0.0,rounds=1,length=25,draw=True):
                 &#34;&#34;&#34;
                 Rotates an object around the axis
                 Parameters:
                    obj: the object
 
                    axis: it must be &#39;X&#39;, &#39;Y&#39;, &#39;Z&#39; or a Vector
+
+                   frames: increment of the frame set
+
+                   helical: tranlation by round
 
                    local: if True the center of rotation is the location of the object
                 &#34;&#34;&#34;
@@ -4794,11 +5076,13 @@ class LinearAlgebra():
                         lr = Rotation(localangle,localaxis)
                 if draw:
                         self.set_origin(origin)
-                        self.draw_vector(u,axis=15/u.length,positive=False,color=&#34;White&#34;)
+                        self.draw_vector(u,axis=length,positive=False,color=&#34;White&#34;)
                         self.set_origin()
+                return
                 r = Rotation(1/int(frames),u)
                 axis, angle = r.to_axis_angle()
-                t = helical * axis
+                axis.normalize()
+                t =  helical / (angle * int(frames) * 360) * axis
                 bpy.context.scene.frame_set(self.frame)
                 obj.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
                 obj.keyframe_insert(data_path=&#34;location&#34;,index=-1)
@@ -5117,6 +5401,35 @@ class LinearAlgebra():
                 self.set_origin(origin)
                 self.set_base([u1,u2,u3])
                 self.draw_base_axis(axis=length,positive=False,scale=scale,name=name)
+        #
+        # Base a partir d&#39;un eix
+        #
+        def base_adaptada(self,origin=Vector([0,0,0]),axis=Vector([1,1,1]),length=15,scale=0.04,name=&#34;Base adaptada&#34;):
+                &#34;&#34;&#34;
+                Draws an ortonormal base from vector axis with origin in the point origin and sets the default
+                origin and default base to them
+                Parameters:
+                        origin: origin of the vector and the base
+
+                        axis: first vector of the base
+
+                        length: length of the axis
+
+                        scale: scale of the base
+
+                        name: name of the base
+                &#34;&#34;&#34;
+                if not isinstance(origin,Vector):
+                        origin = Vector(origin)
+                if not isinstance(axis,Vector):
+                        axis = Vector(axis)
+                self.set_origin(origin)
+                u1 = axis.normalized()
+                u2 = u1.orthogonal().normalized()
+                u3 = u1.cross(u2)
+                self.set_base([u1,u2,u3])
+                self.draw_base_axis(axis=length,positive=False,scale=scale,name=name)
+                self.reset()
         #
         # Vector en base no canònica
         #
@@ -5665,6 +5978,7 @@ class LinearAlgebra():
                 self.draw_line(start=-5*u2,end=5*u2,color=&#34;Blue&#34;,scale=0.03,name=&#34;Asímptota 2&#34;)
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         #
         # Paràbola
         #
@@ -5703,6 +6017,7 @@ class LinearAlgebra():
                 self.draw_line(start=[-xmax-3,-p/2,0],end=[xmax+3,-p/2,0],color=&#34;Blue&#34;,scale=0.04,name=&#34;Recta directriu&#34;)
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         #
         # El·lipsoide de revolucio
         #
@@ -5862,7 +6177,7 @@ class LinearAlgebra():
         #
         # Cilindre el·líptic
         #
-        def cilindre_elliptic_simple(self,a=10,b=6,direccio=&#39;Z&#39;,pmax=26):
+        def cilindre_elliptic_simple(self,a=10,b=6,direccio=&#39;Z&#39;,pmax=20):
                 &#34;&#34;&#34;
                 Draws an elliptic cylinder with direction X, Y or Z
                 Parameters:
@@ -5888,7 +6203,7 @@ class LinearAlgebra():
         #
         # Cilindre hiperbòlic
         #
-        def cilindre_hiperbolic_simple(self,a=4,b=3,direccio=&#39;Z&#39;,pmax=12,hmax=26):
+        def cilindre_hiperbolic_simple(self,a=4,b=3,direccio=&#39;Z&#39;,pmax=15,hmax=20):
                 &#34;&#34;&#34;
                 Draws an hyperbolic cylinder with direction X, Y or Z
                 Parameters:
@@ -5916,8 +6231,8 @@ class LinearAlgebra():
         #
         # Cilindre parabòlic
         #
-        def cilindre_parabolic_simple(self,a=3,direccio=&#39;Z&#39;,pmax=10,hmax=40):
-                &#34;&#34;&#34;
+        def cilindre_parabolic_simple(self,a=3,direccio=&#39;Z&#39;,pmax=15,hmax=20):
+                r&#34;&#34;&#34;
                 Draws a parabolic cylinder with direction X, Y or Z
                 Parameters:
                         a: the initial parabola has equation of type z=\pm x^2/a^2
@@ -5985,7 +6300,53 @@ class LinearAlgebra():
                 co = self.cone(a2=a**2,b2=b**2,c2=c**2,u1=u1,u2=u2,xmax=pmax,canonica=True,principal=False)
                 self.reset()
                 return co
+        #
+        # Cilindre fitat
+        #
+        def cilindre(self,centre=Vector([0,0,0]),radi=1,height=5,eix=&#39;Z&#39;,color=&#34;AzureBlueDark&#34;,circlecolor=&#34;Blue&#34;):
+                &#34;&#34;&#34;
+                Draws a bounded cylinder with direction eix
+                Parameters:
 
+                centre: center of the cylinder
+
+                radi: radius
+
+                height: height
+
+                eix: X, Y, Z or a vector
+
+                color: color of the cylinder
+
+                circlecolor: color of the two circles of a bounded cylinder 
+                &#34;&#34;&#34;
+                if not isinstance(centre,Vector):
+                        centre = Vector(centre)
+                if isinstance(eix,str):
+                        eix = eix.strip().upper()
+                if eix == &#39;X&#39;:
+                        u = Vector([1,0,0])
+                elif eix == &#39;Y&#39;:
+                        u = Vector([0,1,0])
+                elif eix == &#39;Z&#39;:
+                        u = Vector([0,0,1])
+                elif isinstance(eix,Vector):
+                        u = eix
+                else:
+                        u = Vector(eix)
+                
+                u1 = u.orthogonal().normalized()
+                u2 = u.normalized().cross(u1)
+                center1 = centre + height/2 * u.normalized()
+                center2 = centre - height/2 * u.normalized()
+                
+                c1, d1 = self.draw_circle(center=center1,radius=radi,u1=u1,u2=u2,axis=False,zaxis=False,steps=128,thickness=0.02,name=&#34;Circumferències&#34;,fillcolor=color,color=circlecolor)
+                c2, d2 = self.draw_circle(center=center2,radius=radi,u1=u1,u2=u2,axis=False,zaxis=False,steps=128,thickness=0.02,name=&#34;Circumferència 2&#34;,fillcolor=color,color=circlecolor)
+                _, _, cil = self.elliptic_cylinder(o=centre,a2=radi**2,b2=radi**2,u1=u1,u2=u2,principal=False,canonica=False,zmax=height/2,color=color,thickness=0.01,name=&#34;Cilindre&#34;)
+                self.join([cil,d1,d2])
+                self.join([c1,c2])
+                self.reset()
+                return cil, c1
         #
         # Esfera
         #
@@ -6089,16 +6450,70 @@ class LinearAlgebra():
         #
         # Rotació d&#39;un vector
         #
-        def rotacio_vector(self,vector=Vector([6,8,5]),eix=Vector([1,1,1])):
+        def rotacio_vector(self,vector=Vector([6,8,5]),eix=Vector([1,1,1]),adaptada=False):
                 &#34;&#34;&#34;
                 Draws an animation of a vector rotating around a vectorial line
                 Parameters:
                         vector: vector to rotate
 
                         eix: axis of rotation, given by a vector or by X, Y or Z
+
+                        adaptada: if True, draws a base adapted to the rotation
                 &#34;&#34;&#34;
-                self.base_canonica(length=vector.length + 2)
-                self.rotate_vector(vector,eix)
+                if not isinstance(vector,Vector):
+                        vector = Vector(vector)
+                if eix == &#39;X&#39;:
+                        u = Vector([1,0,0])
+                elif eix == &#39;Y&#39;:
+                        u = Vector([0,1,0])
+                elif eix == &#39;Z&#39;:
+                        u = Vector([0,0,1])
+                elif isinstance(axis,Vector):
+                        u = eix
+                else:
+                        u = Vector(eix)
+                e = vector.project(eix)
+                l = e.length
+                if l &lt; 18:
+                        l = 18
+                if adaptada:
+                        self.base_adaptada(axis=eix,length=l)
+                self.base_canonica(length=l)
+                self.rotate_vector(vector,eix,length=l)
+    # 
+        # Rotació d&#39;un punt al voltant d&#39;un eix
+        #
+        def rotacio_punt(self,punt=Vector([6,8,5]),origen=Vector([4,3,0]),eix=Vector([1,1,1]),vectors=True):
+                &#34;&#34;&#34;
+                Draws an animation of a point rotating around an afine line
+                Parameters:
+                        punt: point to rotate
+
+                        origen: point of the affine line
+
+                        eix: axis of rotation, given by a vector or by X, Y or Z 
+                &#34;&#34;&#34;
+                if not isinstance(punt,Vector):
+                        punt = Vector(punt)
+                if eix == &#39;X&#39;:
+                        u = Vector([1,0,0])
+                elif eix == &#39;Y&#39;:
+                        u = Vector([0,1,0])
+                elif eix == &#39;Z&#39;:
+                        u = Vector([0,0,1])
+                elif isinstance(eix,Vector):
+                        u = eix
+                else:
+                        u = Vector(eix)
+
+                if not isinstance(origen,Vector):
+                        origen = Vector(origen)
+                e = (punt-origen).project(u)
+                l = e.length
+                if l &lt; 18:
+                        l = 18
+                self.base_canonica(length=l)
+                self.rotate_point(punt,origen,u,length=l,vectors=vectors)
         #
         # Rotació d&#39;un ortoedre a partir dels angles d&#39;Euler
         #
@@ -6164,7 +6579,7 @@ class LinearAlgebra():
         #
         # Rotation or helical motion
         #
-        def moviment_helicoidal_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([3,4,2]),opacity=1,origen=Vector([4,3,0]),eix=&#39;Z&#39;,rounds=1,translacio=0.0):
+        def moviment_helicoidal_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([3,5,2]),opacity=1,origen=Vector([4,3,0]),eix=&#39;Z&#39;,rounds=1,translacio=0.0,aligned=False):
                 &#34;&#34;&#34;
                 Draws an animation of the helical motion of an orthohedron around an affine line
                 Parameters:
@@ -6178,9 +6593,26 @@ class LinearAlgebra():
 
                         opacity: opacity of the orthohedron
 
-                        translation: translation of the helical motion (distance by frame)
+                        translation: translation of the helical motion (distance by round)
                                      if translation = 0.0, it&#39;s a rotation motion
+
+                        aligned: if True, aligns the orthohedron with the axis of rotation
                 &#34;&#34;&#34;
+                if isinstance(eix,str):
+                        eix = eix.strip().upper()
+                if eix == &#39;X&#39;:
+                        u = Vector([1,0,0])
+                elif eix == &#39;Y&#39;:
+                        u = Vector([0,1,0])
+                elif eix == &#39;Z&#39;:
+                        u = Vector([0,0,1])
+                elif isinstance(eix,Vector):
+                        u = eix
+                else:
+                        u = Vector(eix)
+                w1 = u.normalized()
+                w2 = u.orthogonal().normalized()
+                w3 = w1.cross(w2)
                 self.base_canonica()
                 if not isinstance(centre,Vector):
                         centre = Vector(centre)
@@ -6189,7 +6621,117 @@ class LinearAlgebra():
                 if not isinstance(origen,Vector):
                         origen = Vector(origen)
                 ortoedre = self.draw_cube(origin=centre,scale=costats,color=&#34;AzureBlueDark&#34;,opacity=opacity,thickness=0.015,scalelines=0.025,linecolor=&#34;Orange&#34;,name=&#34;Ortoedre&#34;)
+                if aligned:
+                        ortoedre.rotation_mode = &#39;QUATERNION&#39;
+                        x = Vector([1,0,0])
+                        quaternion = x.rotation_difference(w1)
+                        ortoedre.rotation_quaternion.rotate(quaternion)
                 self.rotate_object(ortoedre,axis=eix,origin=origen,helical=translacio,rounds=rounds)
+        #
+        # Rotation or helical motion of a cylinder
+        #
+        def moviment_helicoidal_cilindre(self,centre=Vector([0,0,0]),radi=3,altura=12,opacity=1,origen=Vector([4,3,0]),eix=&#39;Z&#39;,rounds=1,translacio=0.0,aligned=False,reverse=False):
+                &#34;&#34;&#34;
+                Draws an animation of the helical motion of an orthohedron around an affine line
+                Parameters:
+                        centre: center of the cylinder
+
+                        radi: radius of the cylinder
+
+                        altura: height of the cylinder
+
+                        origen: point of the affine line
+
+                        eix: axis of rotation
+
+                        opacity: opacity of the orthohedron
+
+                        translation: translation of the helical motion (distance by round)
+                                     if translation = 0.0, it&#39;s a rotation motion
+
+                        aligned: if True, aligns the orthohedron with the axis of rotation
+                &#34;&#34;&#34;
+                if isinstance(eix,str):
+                        eix = eix.strip().upper()
+                if eix == &#39;X&#39;:
+                        u = Vector([1,0,0])
+                elif eix == &#39;Y&#39;:
+                        u = Vector([0,1,0])
+                elif eix == &#39;Z&#39;:
+                        u = Vector([0,0,1])
+                elif isinstance(eix,Vector):
+                        u = eix
+                else:
+                        u = Vector(eix)
+                
+                w1 = u.normalized()
+                w2 = u.orthogonal().normalized()
+                w3 = w1.cross(w2)
+                self.base_canonica()
+                if not isinstance(centre,Vector):
+                        centre = Vector(centre)
+                if not isinstance(origen,Vector):
+                        origen = Vector(origen)
+                cil, cir = self.cilindre(centre=centre,radi=radi,height=altura,eix=&#39;Z&#39;,color=&#34;AzureBlueDark&#34;,circlecolor=&#34;Blue&#34;)
+                if aligned:
+                        cil.rotation_mode = &#39;QUATERNION&#39;
+                        cir.rotation_mode = &#39;QUATERNION&#39;
+                        x = Vector([0,0,1])
+                        quaternion = x.rotation_difference(w1)
+                        cil.rotation_quaternion.rotate(quaternion)
+                        cir.rotation_quaternion.rotate(quaternion)
+                        cir.location = cil.location + altura/2 * w1
+                if reverse:
+                        u *= -1
+                self.rotate_objects([cil,cir],axis=u,origin=origen,translation=translacio,rounds=rounds,draw=True)
+        #
+        # Rotation or helical motion of a point
+        #
+        def moviment_helicoidal_punt(self,punt=Vector([0,0,0]),origen=Vector([-3,-3,-4]),eix=&#39;Z&#39;,rounds=5,translacio=2,reverse=False):
+                &#34;&#34;&#34;
+                Draws an animation of the helical motion of an orthohedron around an affine line
+                Parameters:
+                        punt: posició inicial del punt
+
+                        origen: point of the affine line
+
+                        eix: axis of rotation
+
+                        rounds: rounds of the point aroud the axis
+
+                        translation: translation of the helical motion (distance by frame)
+                                     if translation = 0.0, it&#39;s a rotation motion
+                &#34;&#34;&#34;
+                if isinstance(eix,str):
+                        eix = eix.strip().upper()
+                if eix == &#39;X&#39;:
+                        u = Vector([1,0,0])
+                elif eix == &#39;Y&#39;:
+                        u = Vector([0,1,0])
+                elif eix == &#39;Z&#39;:
+                        u = Vector([0,0,1])
+                elif isinstance(eix,Vector):
+                        u = eix
+                else:
+                        u = Vector(eix)
+                self.base_canonica()
+                if not isinstance(punt,Vector):
+                        punt = Vector(punt)
+                if not isinstance(origen,Vector):
+                        origen = Vector(origen)
+                self.draw_point(radius=0.3,location=punt,name=&#34;Blue&#34;,color=&#34;Blue&#34;)
+                obj = self.draw_point(radius=0.3,location=punt,name=&#34;Red&#34;,color=&#34;Red&#34;)
+                if reverse:
+                        self.rotate_object(obj,axis=-u,origin=origen,helical=translacio,rounds=rounds)
+                else:
+                        self.rotate_object(obj,axis=u,origin=origen,helical=translacio,rounds=rounds)
+                vec1 = (punt-origen).project(u)
+                center = origen + vec1
+                w1 = (punt-center).normalized()
+                w3 = u.normalized()
+                w2 = w3.cross(w1)
+                radius = (center-punt).length
+                self.curve(lambda t: (radius*cos(t),radius*sin(t),translacio*t/(2*pi)),tmin=-2*rounds*pi,tmax=2*rounds*pi,steps=128*rounds,thickness=0.005,name=&#34;Hèlix&#34;,color=&#34;Yellow&#34;,o=center,u1=w1,u2=w2)
         #
         # Gir en el pla d&#39;un poligon
         #
@@ -6353,6 +6895,62 @@ class LinearAlgebra():
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
+<dt id="LinearAlgebra.add_object_align_init"><code class="name flex">
+<span>def <span class="ident">add_object_align_init</span></span>(<span>context, operator)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_object_align_init(context, operator):
+    properties = operator.properties if operator is not None else None
+
+    space_data = context.space_data
+    if space_data and space_data.type != &#39;VIEW_3D&#39;:
+        space_data = None
+
+    # location
+    if operator and properties.is_property_set(&#34;location&#34;):
+        location = Matrix.Translation(Vector(properties.location))
+    else:
+        location = Matrix.Translation(context.scene.cursor.location)
+
+        if operator:
+            properties.location = location.to_translation()
+
+    # rotation
+    add_align_preference = context.preferences.edit.object_align
+    if operator:
+        if not properties.is_property_set(&#34;rotation&#34;):
+            # So one of &#34;align&#34; and &#34;rotation&#34; will be set
+            properties.align = add_align_preference
+
+        if properties.align == &#39;WORLD&#39;:
+            rotation = properties.rotation.to_matrix().to_4x4()
+        elif properties.align == &#39;VIEW&#39;:
+            rotation = space_data.region_3d.view_matrix.to_3x3().inverted()
+            rotation.resize_4x4()
+            properties.rotation = rotation.to_euler()
+        elif properties.align == &#39;CURSOR&#39;:
+            rotation = context.scene.cursor.matrix
+            rotation.col[3][0:3] = 0.0, 0.0, 0.0
+            properties.rotation = rotation.to_euler()
+        else:
+            rotation = properties.rotation.to_matrix().to_4x4()
+    else:
+        if (add_align_preference == &#39;VIEW&#39;) and space_data:
+            rotation = space_data.region_3d.view_matrix.to_3x3().inverted()
+            rotation.resize_4x4()
+        elif add_align_preference == &#39;CURSOR&#39;:
+            rotation = context.scene.cursor.rotation_euler.to_matrix().to_4x4()
+        else:
+            rotation = Matrix()
+
+    return location @ rotation</code></pre>
+</details>
+</dd>
 <dt id="LinearAlgebra.createFaces"><code class="name flex">
 <span>def <span class="ident">createFaces</span></span>(<span>vertIdx1, vertIdx2, closed=False, flipped=False)</span>
 </code></dt>
@@ -6418,7 +7016,7 @@ class LinearAlgebra():
         mesh = bpy.data.meshes.new(name)
         mesh.from_pydata(verts, edges, faces)
         mesh.update()
-        return object_utils.object_data_add(context, mesh, operator=None)</code></pre>
+        return object_data_add(context, mesh, operator=None)</code></pre>
 </details>
 </dd>
 <dt id="LinearAlgebra.draw_parametric_surface"><code class="name flex">
@@ -6474,6 +7072,79 @@ class LinearAlgebra():
                         faces.append([range_u_step - 1,range_u_step - 1 - uN,range_u_step - 2 - uN])
                         faces.append([range_v_step * uRange,range_v_step * uRange + uN,range_v_step * uRange + uN + 1])
         create_mesh_object(bpy.context,verts, [], faces, name)</code></pre>
+</details>
+</dd>
+<dt id="LinearAlgebra.object_data_add"><code class="name flex">
+<span>def <span class="ident">object_data_add</span></span>(<span>context, obdata, operator=None, name=None)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def object_data_add(context, obdata, operator=None, name=None):
+    layer = context.view_layer
+    layer_collection = context.layer_collection or layer.active_layer_collection
+    scene_collection = layer_collection.collection
+        
+    for ob in layer.objects:
+        if ob is not None:
+            ob.select_set(False)
+
+    if name is None:
+        name = &#34;Object&#34; if obdata is None else obdata.name
+
+    obj_act = layer.objects.active
+    obj_new = bpy.data.objects.new(name, obdata)
+    scene_collection.objects.link(obj_new)
+    obj_new.select_set(True)
+    obj_new.matrix_world = add_object_align_init(context, operator)
+
+    space_data = context.space_data
+    if space_data and space_data.type != &#39;VIEW_3D&#39;:
+        space_data = None
+
+    if space_data:
+        if space_data.local_view:
+            obj_new.local_view_set(space_data, True)
+
+    if obj_act and obj_act.mode == &#39;EDIT&#39; and obj_act.type == obj_new.type:
+        bpy.ops.mesh.select_all(action=&#39;DESELECT&#39;)
+        obj_act.select_set(True)
+        bpy.ops.object.mode_set(mode=&#39;OBJECT&#39;)
+
+        obj_act.select_set(True)
+        layer.update()  # apply location
+        # layer.objects.active = obj_new
+
+        # Match up UV layers, this is needed so adding an object with UVs
+        # doesn&#39;t create new layers when there happens to be a naming mismatch.
+        uv_new = obdata.uv_layers.active
+        if uv_new is not None:
+            uv_act = obj_act.data.uv_layers.active
+            if uv_act is not None:
+                uv_new.name = uv_act.name
+
+        bpy.ops.object.join()  # join into the active.
+        if obdata:
+            bpy.data.meshes.remove(obdata)
+
+        bpy.ops.object.mode_set(mode=&#39;EDIT&#39;)
+    else:
+        layer.objects.active = obj_new
+        if context.preferences.edit.use_enter_edit_mode:
+            if obdata and obdata.library is None:
+                obtype = obj_new.type
+                mode = None
+                if obtype in {&#39;ARMATURE&#39;, &#39;CURVE&#39;, &#39;CURVES&#39;, &#39;FONT&#39;, &#39;LATTICE&#39;, &#39;MESH&#39;, &#39;META&#39;, &#39;SURFACE&#39;}:
+                    mode = &#39;EDIT&#39;
+                elif obtype == &#39;GPENCIL&#39;:
+                    mode = &#39;EDIT_GPENCIL&#39;
+
+                if mode is not None:
+                    bpy.ops.object.mode_set(mode=mode)
+    return obj_new</code></pre>
 </details>
 </dd>
 </dl>
@@ -6841,7 +7512,7 @@ def colors(self,names):
                 self.meshes = bpy.data.meshes
                 self.collection = bpy.context.collection
                 self.ops = bpy.ops
-                self.colors= Colors.colors([&#34;Red&#34;,&#34;Green&#34;,&#34;Blue&#34;])
+                self.colors= Colors.colors([&#34;Red&#34;,&#34;GreenDarkHard&#34;,&#34;Blue&#34;])
                 self.rotation = None
                 self.origin = [0,0,0]
                 self.base = [[1,0,0],[0,1,0],[0,0,1]]
@@ -6878,6 +7549,17 @@ def colors(self,names):
         #
         #
         #
+        def base_disk(self):
+                &#34;&#34;&#34;
+                Draws a base cone with radius1=1.5, radius2=0, depth=2
+                &#34;&#34;&#34;
+                bpy.ops.mesh.primitive_circle_add(vertices=32,fill_type=&#39;NGON&#39;,enter_editmode=False,align=&#39;WORLD&#39;,location=(0.0, 0.0, 0.0))
+                bpy.ops.object.origin_set(type=&#39;ORIGIN_CURSOR&#39;, center=&#39;MEDIAN&#39;)
+                bpy.ops.object.shade_smooth()
+                bpy.context.object.name = &#39;Base_disk&#39;
+        #
+        #
+        #
         def delete_base_cilinder(self):
                 &#34;&#34;&#34;
                 Removes the base cilinder
@@ -6898,6 +7580,16 @@ def colors(self,names):
         #
         #
         #
+        def delete_base_disk(self):
+                &#34;&#34;&#34;
+                Removes the base disk
+                &#34;&#34;&#34;
+                bpy.ops.object.select_all(action=&#39;DESELECT&#39;)
+                bpy.data.objects[&#39;Base_disk&#39;].select_set(True)
+                bpy.ops.object.delete()
+        #
+        #
+        #
         def set_colors(self,names):
                 &#34;&#34;&#34;
                 Set self.colors to the list of colors with names &#39;names&#39;
@@ -6912,7 +7604,7 @@ def colors(self,names):
                 &#34;&#34;&#34;
                 Set self.colors to default colors
                 &#34;&#34;&#34;
-                self.colors= Colors.colors([&#34;Red&#34;,&#34;Green&#34;,&#34;Blue&#34;])
+                self.colors= Colors.colors([&#34;Red&#34;,&#34;GreenDarkHard&#34;,&#34;Blue&#34;])
         #
         #
         #
@@ -7068,17 +7760,18 @@ def colors(self,names):
                 if principled_bsdf is not None:
                         #for i, o in enumerate(principled_bsdf.inputs):
                         #       print(i, o.name)
-                        principled_bsdf.inputs[&#39;Base Color&#39;].default_value = (r, g, b, 0.5)
+                        principled_bsdf.inputs[&#39;Base Color&#39;].default_value = (r, g, b, opacity)
                         principled_bsdf.inputs[&#39;IOR&#39;].default_value = 0.0
                         principled_bsdf.inputs[&#39;Metallic&#39;].default_value = 1.0
+                        principled_bsdf.inputs[&#39;Roughness&#39;].default_value = 1.0
                         if bpy.app.version[0] &lt; 4:
                                 principled_bsdf.inputs[&#39;Specular&#39;].default_value = 1.0
                         else:
                                 principled_bsdf.inputs[&#39;Specular IOR Level&#39;].default_value = 1.0
                         if bpy.app.version[0] &lt; 4:
-                                principled_bsdf.inputs[&#39;Emission&#39;].default_value = (r, g, b, 0.5)
+                                principled_bsdf.inputs[&#39;Emission&#39;].default_value = (r, g, b, opacity)
                         else:
-                                principled_bsdf.inputs[&#39;Emission Color&#39;].default_value = (r, g, b, 0.5)
+                                principled_bsdf.inputs[&#39;Emission Color&#39;].default_value = (r, g, b, opacity)
                         principled_bsdf.inputs[&#39;Emission Strength&#39;].default_value = 0.0
                         if opacity &lt; 1.0:
                                 material.blend_method = &#39;BLEND&#39;
@@ -7261,6 +7954,7 @@ def colors(self,names):
                 base = self.base
                 if not zaxis:
                         base = self.base[0:2]
+                
                 for vec in base:
                         #
                         # Draw the stem
@@ -7359,7 +8053,7 @@ def colors(self,names):
         #
         #
         #
-        def draw_vector(self,vector=None,canonica=False,color=&#34;Black&#34;,scale=0.05,arrow=True,head_height=0.15,axis=0,name=&#34;Vector&#34;,positive=True):
+        def draw_vector(self,vector=None,canonica=False,color=&#34;Black&#34;,scale=0.05,arrow=True,head_height=None,axis=0,name=&#34;Vector&#34;,positive=True):
                 &#34;&#34;&#34;
                 Draw the vector with components &#39;vector&#39;
                 Parameters:
@@ -7403,6 +8097,11 @@ def colors(self,names):
                         mat.transpose()
                         v = mat @ vec
 
+                if head_height is None:
+                        head_height = 0.15*(v - o).length
+                if head_height &gt; 0.15:
+                        head_height = 0.15
+
                 if arrow:
                         t = bpy.data.objects.get(&#34;Arrow_stem&#34;)
                         obj = t.copy()
@@ -7424,7 +8123,7 @@ def colors(self,names):
                         obj2.data = obj2.data.copy()
                         obj2.name = &#34;Arrow&#34;
                         obj2.location =  v - 2 * head_height * v / v.length
-                        obj2.scale = (1.05*scale,1.05*scale + 0.05,head_height)
+                        obj2.scale = (2*scale,2*scale,head_height)
                         obj2.rotation_mode = &#39;QUATERNION&#39;
                         obj2.rotation_quaternion = (v - o).to_track_quat(&#39;Z&#39;,&#39;Y&#39;)
                         if color is not None:
@@ -7843,7 +8542,7 @@ def colors(self,names):
         #
         #
         def draw_one_sheet_hyperboloid(self,a=2.0,b=2.0,xmin=math.sqrt(2),xmax=5.0,steps=256,scale=[1,1,1],color=&#34;AzureBlueDark&#34;,name=&#34;HyperboloidOneSheet&#34;,opacity=1.0,thickness=0.05):
-                &#34;&#34;&#34;
+                r&#34;&#34;&#34;
                 Draws a one sheet hyperboloid from the hyperbole z = \pm a*sqrt(x^2-b) in the XZ plane
                 Parameters:
                    a, b: coefficients of the hyperbole
@@ -7925,7 +8624,7 @@ def colors(self,names):
         #
         #
         def draw_two_sheets_hyperboloid(self,a=2.0,b=1.0,xmin=0.0,xmax=5.0,steps=50,scale=[1,1,1],color=&#34;AzureBlueDark&#34;,name=&#34;HyperboloidTwoSheets&#34;,opacity=1.0,thickness=0.05):
-                &#34;&#34;&#34;
+                r&#34;&#34;&#34;
                 Draws a two sheet hyperboloid from the hyperbole z = \pm a * math.sqrt(x**2+b) in the XZ plane
                 Parameters:
                    a, b: coefficients of the hyperbole
@@ -8424,7 +9123,7 @@ def colors(self,names):
         #
         #
         #
-        def draw_plane_surface(self,origin=None,normal=None,base=None,sizex=10,sizey=10,vectors=False,scalelines=0.05,scalevector=0.01,
+        def draw_plane_surface(self,origin=None,normal=None,base=None,sizex=10,sizey=10,vectors=False,scalelines=0.05,scalevector=0.03,
                                                 color=&#34;AzureBlueDark&#34;,linecolor=&#34;BlueDarkDull&#34;,vectorcolor=&#34;Black&#34;,name=&#34;Plane&#34;,opacity=1.0,thickness=0.0):
                 &#34;&#34;&#34;
                 Draws a plane with normal vector or base vectors. It passes through the point origin.
@@ -8562,7 +9261,7 @@ def colors(self,names):
                         obj = self.join([obj,lines])
 
                 if vectors:
-                        vecs = self.draw_vectors(nodes,True,color=vectorcolor,scale=scalevector,head_height=0.2,name=&#34;Vectors&#34;,axis=0)
+                        vecs = self.draw_vectors(nodes,True,color=vectorcolor,scale=scalevector,head_height=0.1,name=&#34;Vectors&#34;,axis=0)
 
                 if vecs is not None:
                         obj = self.join([obj,vecs])
@@ -8599,7 +9298,7 @@ def colors(self,names):
 
                    opacity: opacity of the point
                 &#34;&#34;&#34;
-                bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=16, radius=radius, enter_editmode=False, location=location)
+                bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=8, radius=radius, enter_editmode=False, location=location)
                 bpy.context.object.name = name
                 obj = bpy.data.objects.get(name)
 
@@ -8700,6 +9399,13 @@ def colors(self,names):
                 if vecs is not None:
                         obj = self.join([obj,vecs])
                 return obj
+        #
+        #
+        #
+        def ortoedre(self,centre=Vector([0,0,0]),costats=[6,10,8],scalelines=0.05,vectors=False,color=&#34;Blue&#34;,linecolor=&#34;Red&#34;,vectorcolor=&#34;Black&#34;,name=&#39;Ortoedre&#39;,opacity=1.0,thickness=0.0):
+                if not isinstance(centre,Vector):
+                        centre = Vector(centre)
+                self.draw_cube(origin=centre,scale=costats,scalelines=scalelines,vectors=vectors,color=color,linecolor=linecolor,vectorcolor=vectorcolor,name=name,opacity=opacity,thickness=thickness)
         #
         #
         #
@@ -9245,21 +9951,23 @@ def colors(self,names):
         #
         # Join a list a objects
         #
-        def join(self,list):
+        def join(self,llista):
                 &#34;&#34;&#34;
                 Joins a list of objects
                 Parameters:
-                   list: list of objects
+                   llista: list of objects
                 &#34;&#34;&#34;
-                if len(list) &lt;= 1:
+                if len(llista) == 0:
                         return
+                if len(llista) == 1:
+                        return llista[0]
                 bpy.ops.object.select_all(action=&#39;DESELECT&#39;)
-                bpy.context.view_layer.objects.active = list[0]
-                for obj in list:
+                bpy.context.view_layer.objects.active = llista[0]
+                for obj in llista:
                         obj.select_set(True)
                 bpy.ops.object.join()
                 bpy.ops.object.select_all(action=&#39;DESELECT&#39;)
-                return list[0]
+                return llista[0]
         #
         # Vectors to quaternion
         #
@@ -9350,6 +10058,7 @@ def colors(self,names):
                 if not preserve:
                         self.set_origin()
                         self.set_base()
+                        self.set_rotation()
                 return axis1, axis2, el
         #
         #
@@ -9445,6 +10154,7 @@ def colors(self,names):
                 if not preserve:
                         self.set_origin()
                         self.set_base()
+                        self.set_rotation()
                 return axis1, axis2, hy
         #
         #
@@ -9508,6 +10218,7 @@ def colors(self,names):
                 if not preserve:
                         self.set_origin()
                         self.set_base()
+                        self.set_rotation()
                 return axis1, axis2, hy
         #
         #
@@ -9573,11 +10284,12 @@ def colors(self,names):
                 if not preserve:
                         self.set_origin()
                         self.set_base()
+                        self.set_rotation()
                 return axis1, axis2, co
         #
         #
         #
-        def hyperbolic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color=&#34;AzureBlueDark&#34;,name=&#34;Hyperbolic Cylinder&#34;,xmax=None,zmax=20,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+        def hyperbolic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color=&#34;AzureBlueDark&#34;,name=&#34;Hyperbolic Cylinder&#34;,xmax=None,zmax=15,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
                 &#34;&#34;&#34;
                 Draws an hyperbolic cylinder
                 Parameters:
@@ -9609,6 +10321,8 @@ def colors(self,names):
 
                    preserve: Keep self.origin and self.base as the principal reference
                 &#34;&#34;&#34;
+                if cmax &lt; zmax + 2:
+                        cmax = zmax + 2
                 axis1 = None
                 axis2 = None
                 q = self.vectors_to_quaternion(u1,u2)
@@ -9633,15 +10347,16 @@ def colors(self,names):
                 if xmax is None:
                         xmax = 5.0/a + 2
                 xmax /= a
-                hy = self.draw_hyperbolic_cylinder(a=1.0,b=1.0,xmin=1.0,xmax=xmax,length=zmax,steps=128,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
+                hy = self.draw_hyperbolic_cylinder(a=1.0,b=1.0,xmin=1.0,xmax=xmax,length=2*zmax,steps=128,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
                 if not preserve:
                         self.set_origin()
                         self.set_base()
+                        self.set_rotation()
                 return axis1, axis2, hy
         #
         #
         #
-        def elliptic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color=&#34;AzureBlueDark&#34;,name=&#34;EllipticCylinder&#34;,zmax=20,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+        def elliptic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color=&#34;AzureBlueDark&#34;,name=&#34;EllipticCylinder&#34;,zmax=20,cmax=20,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
                 &#34;&#34;&#34;
                 Draws an elliptic cylinder
                 Parameters:
@@ -9673,6 +10388,8 @@ def colors(self,names):
                 &#34;&#34;&#34;
                 axis1 = None
                 axis2 = None
+                if cmax &lt; zmax + 2:
+                        cmax = zmax + 2
                 q = self.vectors_to_quaternion(u1,u2)
                 u = Quaternion([1,0,0,0])
                 orig = [0,0,0]
@@ -9692,10 +10409,11 @@ def colors(self,names):
                         axis2 = self.draw_base_axis(axis = pmax,positive=False,name=&#34;Referència principal&#34;)
                 a = math.sqrt(a2)
                 b = math.sqrt(b2)
-                el = self.draw_elliptic_cylinder(a=1.0,b=1.0,length=zmax,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
+                el = self.draw_elliptic_cylinder(a=1.0,b=1.0,length=2*zmax,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
                 if not preserve:
                         self.set_origin()
                         self.set_base()
+                        self.set_rotation()
                 return axis1, axis2, el
         #
         #
@@ -9758,6 +10476,7 @@ def colors(self,names):
                 if not preserve:
                         self.set_origin()
                         self.set_base()
+                        self.set_rotation()
                 return axis1, axis2, el
         #
         #
@@ -9831,6 +10550,7 @@ def colors(self,names):
                 if not preserve:
                         self.set_origin()
                         self.set_base()
+                        self.set_rotation()
                 return axis1, axis2, hy
         #
         #
@@ -9894,6 +10614,7 @@ def colors(self,names):
                 if not preserve:
                         self.set_origin()
                         self.set_base()
+                        self.set_rotation()
                 return axis1, axis2, pa
         #
         #
@@ -10029,6 +10750,49 @@ def colors(self,names):
         #
         #
         #
+        def draw_disk(self,center=Vector([0,0,0]),radius=5,u1=Vector([1,0,0]),u2=Vector([0,1,0]),thickness=0.01,name=&#34;Disc&#34;,color=&#34;AzureBlueDark&#34;):
+                &#34;&#34;&#34;
+                Draws a disc in a reference R&#39; determined by self.origin and self.base
+                Parameters:
+                   radius: radius of the disc
+
+                   thickness: thickness of the surface
+
+                   name: name of the curve
+
+                   color: color of the curve
+                &#34;&#34;&#34;
+                self.base_disk()
+                t = bpy.data.objects.get(&#34;Base_disk&#34;)
+                obj = t.copy()
+                obj.name = name
+                self.delete_base_disk()
+                if radius != 1.0:
+                        obj.scale = (radius,radius,1)
+                modifier = obj.modifiers.new(name=&#34;SubSurf&#34;, type=&#39;SUBSURF&#39;)
+                modifier.levels = 4
+                modifier.subdivision_type = &#39;SIMPLE&#39;
+                if thickness &gt; 0.0:
+                        modifier = obj.modifiers.new(name=&#34;Solidify&#34;, type=&#39;SOLIDIFY&#39;)
+                        modifier.thickness = thickness
+                        modifier.offset = 1.0
+                c = Colors.color(color)
+                self.add_material(obj,c.name,c.r,c.g,c.b,1.0)
+                qt = self.vectors_to_quaternion(u1,u2)
+                self.set_rotation(quaternion=qt)
+                if self.rotation is not None:
+                        obj.rotation_mode = &#39;QUATERNION&#39;
+                        obj.rotation_quaternion.rotate(self.rotation.quaternion)
+                        ### obj.location.rotate(self.rotation.quaternion)
+                obj.location = center
+                self.scene.collection.objects.link(obj)
+                bpy.ops.object.shade_smooth()
+                bpy.context.view_layer.objects.active = None
+                obj.select_set(False)
+                return obj
+        #
+        #
+        #
         def curve(self,fun=None,tmin=0.0,tmax=1.0,steps=25,thickness=0.01,name=&#34;Curve&#34;,color=&#34;White&#34;,axis=False,zaxis=True,o=Vector([0,0,0]),u1=Vector([1,0,0]),u2=Vector([0,1,0]),symmetry=None,change=False):
                 &#34;&#34;&#34;
                 Draws a curve in a reference R&#39; determined by the origin o and basis {v1, v2, v3} constructed from u1 and u2 and
@@ -10128,7 +10892,7 @@ def colors(self,names):
         #
         #
         #
-        def draw_circle(self,center=[0,0,0],u1=Vector([1,0,0]),u2=Vector([0,1,0]),axis=False,zaxis=False,radius=1,steps=25,thickness=0.01,name=&#34;Circle&#34;,color=&#34;White&#34;,change=False):
+        def draw_circle(self,center=[0,0,0],u1=Vector([1,0,0]),u2=Vector([0,1,0]),axis=False,zaxis=False,radius=1,steps=128,thickness=0.01,name=&#34;Circle&#34;,color=&#34;White&#34;,fillcolor=None,change=False):
                 &#34;&#34;&#34;
                 Draws a circle of center &#39;center&#39; and radius &#39;radius&#39; in the plane determined by vectors u1 and u2
                 Parameters:
@@ -10152,10 +10916,14 @@ def colors(self,names):
 
                    change: if True, set the reference self.orifin, self.base to {o; v1, v2, v3}
                 &#34;&#34;&#34;
+                d = None
+                if fillcolor is not None:
+                        d = self.draw_disk(center=center,radius=radius,u1=u1,u2=u2,thickness=0.5*thickness,name=&#34;Disc&#34;,color=fillcolor)
+                c = self.draw_curve(lambda t: (radius*math.cos(t),radius*math.sin(t),0),tmin=0.0,tmax=2*math.pi,axis=axis,zaxis=zaxis,steps=steps,thickness=thickness,name=name,color=color,o=center,u1=u1,u2=u2)
                 if change:
                         self.set_origin(center)
                         self.set_base([u1,u2],orthonormal=True)
-                return self.draw_curve(lambda t: (radius*math.cos(t),radius*math.sin(t),0),tmin=0.0,tmax=2*math.pi,axis=axis,zaxis=zaxis,steps=steps,thickness=thickness,name=name,color=color,o=center,u1=u1,u2=u2)
+                return c, d
         #
         #
         #
@@ -10608,7 +11376,7 @@ def colors(self,names):
         #
         # Helical motion or rotation of objects
         #
-        def rotate_objects(self,objs=[],axis=&#39;Z&#39;,angle=90,frames=1,origin=Vector([0,0,0]),translation=[0.0,0.0,0.0]):
+        def rotate_objects(self,objs=[],axis=&#39;Z&#39;,angle=None,frames=1,origin=Vector([0,0,0]),translation=3,rounds=1,length=25,draw=False):
                 &#34;&#34;&#34;
                 Rotates an object around the axis
                 Parameters:
@@ -10616,14 +11384,11 @@ def colors(self,names):
 
                    axis: it must be &#39;X&#39;, &#39;Y&#39;, &#39;Z&#39; or a Vector
 
-                   local: if True the center of rotation is the location of the object
                 &#34;&#34;&#34;
                 if objs is None or (not isinstance(objs,list) and not isinstance(objs,tuple)):
                         return None
                 if not isinstance(origin,Vector):
                         origin = Vector(origin)
-                if not isinstance(translation,Vector):
-                        translation = Vector(translation)
                 if isinstance(axis,str):
                         axis = axis.strip().upper()
                 if axis == &#39;X&#39;:
@@ -10637,14 +11402,27 @@ def colors(self,names):
                 else:
                         u = Vector(axis)
 
+                if angle is None:
+                        angle = 360
+                else:
+                        rounds = 1
+
+                if draw:
+                        self.set_origin(origin)
+                        self.draw_vector(u,axis=length,positive=False,color=&#34;White&#34;)
+                        self.set_origin()
+
                 r = Rotation(1/int(frames),u)
-                t = translation / (int(frames) * angle)
+                axis, alfa = r.to_axis_angle()
+                axis.normalize()
+                r = Rotation(1/int(frames),u)
+                t =  translation / (alfa * int(frames) * 360) * axis
                 bpy.context.scene.frame_set(self.frame)
                 for obj in objs:
                         obj.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
                         obj.keyframe_insert(data_path=&#34;location&#34;,index=-1)
                 fn = self.frame + 1
-                for i in range(int(frames) * angle):
+                for i in range(int(frames) * int(rounds) * angle):
                         for obj in objs:
                                 bpy.context.scene.frame_set(fn)
                                 obj.rotation_quaternion.rotate(r.quaternion)
@@ -10661,7 +11439,7 @@ def colors(self,names):
         #
         # Rotation of a vector
         #
-        def rotate_vector(self,vector=None,axis=&#39;Z&#39;):
+        def rotate_vector(self,vector=None,axis=&#39;Z&#39;,length=25):
                 &#34;&#34;&#34;
                 Rotates a vector around the axis
                 Parameters:
@@ -10692,8 +11470,62 @@ def colors(self,names):
                 a = vec1.length
                 b = (vector-vec1).length
                 p2 = b**2/a**2
-                self.rotate_object(obj,u)
-                self.cone(u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color=&#34;GrayLight&#34;,opacity=0.2)
+                self.rotate_object(obj,u,length=length)
+                self.cone(u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color=&#34;GrayLight&#34;,opacity=0.1,thickness=0.01)
+        #
+        # Rotation of a point
+        #
+        def rotate_point(self,punt=None,origen=Vector([0,0,0]),axis=&#39;Z&#39;,length=25,vectors=True):
+                &#34;&#34;&#34;
+                Rotates a point around an affine line
+                Parameters:
+                   point: the point
+
+                   origen: a point of the affine line
+
+                   axis: it must be &#39;X&#39;, &#39;Y&#39;, &#39;Z&#39; or a vector
+
+                   length: length of the
+                &#34;&#34;&#34;
+                draw = False
+                if punt is None:
+                        return None
+                if axis == &#39;X&#39;:
+                        u = Vector([1,0,0])
+                elif axis == &#39;Y&#39;:
+                        u = Vector([0,1,0])
+                elif axis == &#39;Z&#39;:
+                        u = Vector([0,0,1])
+                elif isinstance(axis,Vector):
+                        u = axis
+                else:
+                        u = Vector(axis)
+
+                if not isinstance(origen,Vector):
+                        origen = Vector(origen)
+
+                self.draw_point(radius=0.3,location=punt,name=&#34;Blue&#34;,color=&#34;Blue&#34;)
+                obj = self.draw_point(radius=0.3,location=punt,name=&#34;Red&#34;,color=&#34;Red&#34;)
+                if vectors:
+                        self.set_origin(origen)
+                        self.draw_vector(punt-origen,name=&#34;VBlack&#34;,color=&#34;Black&#34;)
+                        obj2 = self.draw_vector(punt-origen,name=&#34;VRed&#34;,color=&#34;Red&#34;)
+                w1 = u.orthogonal().normalized()
+                vec1 = (punt-origen).project(u)
+                center = origen + vec1
+                radius = (center-punt).length
+                w3 = vec1.normalized()
+                w2 = w3.cross(w1)
+                a = vec1.length
+                b = (punt-origen-vec1).length
+                p2 = b**2/a**2
+                if vectors:
+                        self.rotate_objects([obj,obj2],u,angle=360,origin=origen,length=length,draw=True)
+                else:
+                        self.rotate_object(obj,u,origin=origen,length=length)
+                self.draw_circle(center=center,u1=w1,u2=w2,radius=radius,name=&#34;Circumferència&#34;,steps=128,color=&#34;Yellow&#34;)
+                self.cone(o=origen,u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color=&#34;GrayLight&#34;,opacity=0.25,thickness=0.01)
+                self.reset()
         #
         #
         #
@@ -10891,13 +11723,17 @@ def colors(self,names):
         #
         # Rotate objects or helical motion
         #
-        def rotate_object(self,obj=None,axis=&#39;Z&#39;,frames=1,origin=Vector([0,0,0]),localaxis=None,localangle=None,helical=0.0,rounds=1,draw=True):
+        def rotate_object(self,obj=None,axis=&#39;Z&#39;,frames=1,origin=Vector([0,0,0]),localaxis=None,localangle=None,helical=0.0,rounds=1,length=25,draw=True):
                 &#34;&#34;&#34;
                 Rotates an object around the axis
                 Parameters:
                    obj: the object
 
                    axis: it must be &#39;X&#39;, &#39;Y&#39;, &#39;Z&#39; or a Vector
+
+                   frames: increment of the frame set
+
+                   helical: tranlation by round
 
                    local: if True the center of rotation is the location of the object
                 &#34;&#34;&#34;
@@ -10931,11 +11767,13 @@ def colors(self,names):
                         lr = Rotation(localangle,localaxis)
                 if draw:
                         self.set_origin(origin)
-                        self.draw_vector(u,axis=15/u.length,positive=False,color=&#34;White&#34;)
+                        self.draw_vector(u,axis=length,positive=False,color=&#34;White&#34;)
                         self.set_origin()
+                return
                 r = Rotation(1/int(frames),u)
                 axis, angle = r.to_axis_angle()
-                t = helical * axis
+                axis.normalize()
+                t =  helical / (angle * int(frames) * 360) * axis
                 bpy.context.scene.frame_set(self.frame)
                 obj.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
                 obj.keyframe_insert(data_path=&#34;location&#34;,index=-1)
@@ -11254,6 +12092,35 @@ def colors(self,names):
                 self.set_origin(origin)
                 self.set_base([u1,u2,u3])
                 self.draw_base_axis(axis=length,positive=False,scale=scale,name=name)
+        #
+        # Base a partir d&#39;un eix
+        #
+        def base_adaptada(self,origin=Vector([0,0,0]),axis=Vector([1,1,1]),length=15,scale=0.04,name=&#34;Base adaptada&#34;):
+                &#34;&#34;&#34;
+                Draws an ortonormal base from vector axis with origin in the point origin and sets the default
+                origin and default base to them
+                Parameters:
+                        origin: origin of the vector and the base
+
+                        axis: first vector of the base
+
+                        length: length of the axis
+
+                        scale: scale of the base
+
+                        name: name of the base
+                &#34;&#34;&#34;
+                if not isinstance(origin,Vector):
+                        origin = Vector(origin)
+                if not isinstance(axis,Vector):
+                        axis = Vector(axis)
+                self.set_origin(origin)
+                u1 = axis.normalized()
+                u2 = u1.orthogonal().normalized()
+                u3 = u1.cross(u2)
+                self.set_base([u1,u2,u3])
+                self.draw_base_axis(axis=length,positive=False,scale=scale,name=name)
+                self.reset()
         #
         # Vector en base no canònica
         #
@@ -11802,6 +12669,7 @@ def colors(self,names):
                 self.draw_line(start=-5*u2,end=5*u2,color=&#34;Blue&#34;,scale=0.03,name=&#34;Asímptota 2&#34;)
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         #
         # Paràbola
         #
@@ -11840,6 +12708,7 @@ def colors(self,names):
                 self.draw_line(start=[-xmax-3,-p/2,0],end=[xmax+3,-p/2,0],color=&#34;Blue&#34;,scale=0.04,name=&#34;Recta directriu&#34;)
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         #
         # El·lipsoide de revolucio
         #
@@ -11999,7 +12868,7 @@ def colors(self,names):
         #
         # Cilindre el·líptic
         #
-        def cilindre_elliptic_simple(self,a=10,b=6,direccio=&#39;Z&#39;,pmax=26):
+        def cilindre_elliptic_simple(self,a=10,b=6,direccio=&#39;Z&#39;,pmax=20):
                 &#34;&#34;&#34;
                 Draws an elliptic cylinder with direction X, Y or Z
                 Parameters:
@@ -12025,7 +12894,7 @@ def colors(self,names):
         #
         # Cilindre hiperbòlic
         #
-        def cilindre_hiperbolic_simple(self,a=4,b=3,direccio=&#39;Z&#39;,pmax=12,hmax=26):
+        def cilindre_hiperbolic_simple(self,a=4,b=3,direccio=&#39;Z&#39;,pmax=15,hmax=20):
                 &#34;&#34;&#34;
                 Draws an hyperbolic cylinder with direction X, Y or Z
                 Parameters:
@@ -12053,8 +12922,8 @@ def colors(self,names):
         #
         # Cilindre parabòlic
         #
-        def cilindre_parabolic_simple(self,a=3,direccio=&#39;Z&#39;,pmax=10,hmax=40):
-                &#34;&#34;&#34;
+        def cilindre_parabolic_simple(self,a=3,direccio=&#39;Z&#39;,pmax=15,hmax=20):
+                r&#34;&#34;&#34;
                 Draws a parabolic cylinder with direction X, Y or Z
                 Parameters:
                         a: the initial parabola has equation of type z=\pm x^2/a^2
@@ -12122,7 +12991,53 @@ def colors(self,names):
                 co = self.cone(a2=a**2,b2=b**2,c2=c**2,u1=u1,u2=u2,xmax=pmax,canonica=True,principal=False)
                 self.reset()
                 return co
+        #
+        # Cilindre fitat
+        #
+        def cilindre(self,centre=Vector([0,0,0]),radi=1,height=5,eix=&#39;Z&#39;,color=&#34;AzureBlueDark&#34;,circlecolor=&#34;Blue&#34;):
+                &#34;&#34;&#34;
+                Draws a bounded cylinder with direction eix
+                Parameters:
 
+                centre: center of the cylinder
+
+                radi: radius
+
+                height: height
+
+                eix: X, Y, Z or a vector
+
+                color: color of the cylinder
+
+                circlecolor: color of the two circles of a bounded cylinder 
+                &#34;&#34;&#34;
+                if not isinstance(centre,Vector):
+                        centre = Vector(centre)
+                if isinstance(eix,str):
+                        eix = eix.strip().upper()
+                if eix == &#39;X&#39;:
+                        u = Vector([1,0,0])
+                elif eix == &#39;Y&#39;:
+                        u = Vector([0,1,0])
+                elif eix == &#39;Z&#39;:
+                        u = Vector([0,0,1])
+                elif isinstance(eix,Vector):
+                        u = eix
+                else:
+                        u = Vector(eix)
+                
+                u1 = u.orthogonal().normalized()
+                u2 = u.normalized().cross(u1)
+                center1 = centre + height/2 * u.normalized()
+                center2 = centre - height/2 * u.normalized()
+                
+                c1, d1 = self.draw_circle(center=center1,radius=radi,u1=u1,u2=u2,axis=False,zaxis=False,steps=128,thickness=0.02,name=&#34;Circumferències&#34;,fillcolor=color,color=circlecolor)
+                c2, d2 = self.draw_circle(center=center2,radius=radi,u1=u1,u2=u2,axis=False,zaxis=False,steps=128,thickness=0.02,name=&#34;Circumferència 2&#34;,fillcolor=color,color=circlecolor)
+                _, _, cil = self.elliptic_cylinder(o=centre,a2=radi**2,b2=radi**2,u1=u1,u2=u2,principal=False,canonica=False,zmax=height/2,color=color,thickness=0.01,name=&#34;Cilindre&#34;)
+                self.join([cil,d1,d2])
+                self.join([c1,c2])
+                self.reset()
+                return cil, c1
         #
         # Esfera
         #
@@ -12226,16 +13141,70 @@ def colors(self,names):
         #
         # Rotació d&#39;un vector
         #
-        def rotacio_vector(self,vector=Vector([6,8,5]),eix=Vector([1,1,1])):
+        def rotacio_vector(self,vector=Vector([6,8,5]),eix=Vector([1,1,1]),adaptada=False):
                 &#34;&#34;&#34;
                 Draws an animation of a vector rotating around a vectorial line
                 Parameters:
                         vector: vector to rotate
 
                         eix: axis of rotation, given by a vector or by X, Y or Z
+
+                        adaptada: if True, draws a base adapted to the rotation
                 &#34;&#34;&#34;
-                self.base_canonica(length=vector.length + 2)
-                self.rotate_vector(vector,eix)
+                if not isinstance(vector,Vector):
+                        vector = Vector(vector)
+                if eix == &#39;X&#39;:
+                        u = Vector([1,0,0])
+                elif eix == &#39;Y&#39;:
+                        u = Vector([0,1,0])
+                elif eix == &#39;Z&#39;:
+                        u = Vector([0,0,1])
+                elif isinstance(axis,Vector):
+                        u = eix
+                else:
+                        u = Vector(eix)
+                e = vector.project(eix)
+                l = e.length
+                if l &lt; 18:
+                        l = 18
+                if adaptada:
+                        self.base_adaptada(axis=eix,length=l)
+                self.base_canonica(length=l)
+                self.rotate_vector(vector,eix,length=l)
+    # 
+        # Rotació d&#39;un punt al voltant d&#39;un eix
+        #
+        def rotacio_punt(self,punt=Vector([6,8,5]),origen=Vector([4,3,0]),eix=Vector([1,1,1]),vectors=True):
+                &#34;&#34;&#34;
+                Draws an animation of a point rotating around an afine line
+                Parameters:
+                        punt: point to rotate
+
+                        origen: point of the affine line
+
+                        eix: axis of rotation, given by a vector or by X, Y or Z 
+                &#34;&#34;&#34;
+                if not isinstance(punt,Vector):
+                        punt = Vector(punt)
+                if eix == &#39;X&#39;:
+                        u = Vector([1,0,0])
+                elif eix == &#39;Y&#39;:
+                        u = Vector([0,1,0])
+                elif eix == &#39;Z&#39;:
+                        u = Vector([0,0,1])
+                elif isinstance(eix,Vector):
+                        u = eix
+                else:
+                        u = Vector(eix)
+
+                if not isinstance(origen,Vector):
+                        origen = Vector(origen)
+                e = (punt-origen).project(u)
+                l = e.length
+                if l &lt; 18:
+                        l = 18
+                self.base_canonica(length=l)
+                self.rotate_point(punt,origen,u,length=l,vectors=vectors)
         #
         # Rotació d&#39;un ortoedre a partir dels angles d&#39;Euler
         #
@@ -12301,7 +13270,7 @@ def colors(self,names):
         #
         # Rotation or helical motion
         #
-        def moviment_helicoidal_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([3,4,2]),opacity=1,origen=Vector([4,3,0]),eix=&#39;Z&#39;,rounds=1,translacio=0.0):
+        def moviment_helicoidal_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([3,5,2]),opacity=1,origen=Vector([4,3,0]),eix=&#39;Z&#39;,rounds=1,translacio=0.0,aligned=False):
                 &#34;&#34;&#34;
                 Draws an animation of the helical motion of an orthohedron around an affine line
                 Parameters:
@@ -12315,9 +13284,26 @@ def colors(self,names):
 
                         opacity: opacity of the orthohedron
 
-                        translation: translation of the helical motion (distance by frame)
+                        translation: translation of the helical motion (distance by round)
                                      if translation = 0.0, it&#39;s a rotation motion
+
+                        aligned: if True, aligns the orthohedron with the axis of rotation
                 &#34;&#34;&#34;
+                if isinstance(eix,str):
+                        eix = eix.strip().upper()
+                if eix == &#39;X&#39;:
+                        u = Vector([1,0,0])
+                elif eix == &#39;Y&#39;:
+                        u = Vector([0,1,0])
+                elif eix == &#39;Z&#39;:
+                        u = Vector([0,0,1])
+                elif isinstance(eix,Vector):
+                        u = eix
+                else:
+                        u = Vector(eix)
+                w1 = u.normalized()
+                w2 = u.orthogonal().normalized()
+                w3 = w1.cross(w2)
                 self.base_canonica()
                 if not isinstance(centre,Vector):
                         centre = Vector(centre)
@@ -12326,7 +13312,117 @@ def colors(self,names):
                 if not isinstance(origen,Vector):
                         origen = Vector(origen)
                 ortoedre = self.draw_cube(origin=centre,scale=costats,color=&#34;AzureBlueDark&#34;,opacity=opacity,thickness=0.015,scalelines=0.025,linecolor=&#34;Orange&#34;,name=&#34;Ortoedre&#34;)
+                if aligned:
+                        ortoedre.rotation_mode = &#39;QUATERNION&#39;
+                        x = Vector([1,0,0])
+                        quaternion = x.rotation_difference(w1)
+                        ortoedre.rotation_quaternion.rotate(quaternion)
                 self.rotate_object(ortoedre,axis=eix,origin=origen,helical=translacio,rounds=rounds)
+        #
+        # Rotation or helical motion of a cylinder
+        #
+        def moviment_helicoidal_cilindre(self,centre=Vector([0,0,0]),radi=3,altura=12,opacity=1,origen=Vector([4,3,0]),eix=&#39;Z&#39;,rounds=1,translacio=0.0,aligned=False,reverse=False):
+                &#34;&#34;&#34;
+                Draws an animation of the helical motion of an orthohedron around an affine line
+                Parameters:
+                        centre: center of the cylinder
+
+                        radi: radius of the cylinder
+
+                        altura: height of the cylinder
+
+                        origen: point of the affine line
+
+                        eix: axis of rotation
+
+                        opacity: opacity of the orthohedron
+
+                        translation: translation of the helical motion (distance by round)
+                                     if translation = 0.0, it&#39;s a rotation motion
+
+                        aligned: if True, aligns the orthohedron with the axis of rotation
+                &#34;&#34;&#34;
+                if isinstance(eix,str):
+                        eix = eix.strip().upper()
+                if eix == &#39;X&#39;:
+                        u = Vector([1,0,0])
+                elif eix == &#39;Y&#39;:
+                        u = Vector([0,1,0])
+                elif eix == &#39;Z&#39;:
+                        u = Vector([0,0,1])
+                elif isinstance(eix,Vector):
+                        u = eix
+                else:
+                        u = Vector(eix)
+                
+                w1 = u.normalized()
+                w2 = u.orthogonal().normalized()
+                w3 = w1.cross(w2)
+                self.base_canonica()
+                if not isinstance(centre,Vector):
+                        centre = Vector(centre)
+                if not isinstance(origen,Vector):
+                        origen = Vector(origen)
+                cil, cir = self.cilindre(centre=centre,radi=radi,height=altura,eix=&#39;Z&#39;,color=&#34;AzureBlueDark&#34;,circlecolor=&#34;Blue&#34;)
+                if aligned:
+                        cil.rotation_mode = &#39;QUATERNION&#39;
+                        cir.rotation_mode = &#39;QUATERNION&#39;
+                        x = Vector([0,0,1])
+                        quaternion = x.rotation_difference(w1)
+                        cil.rotation_quaternion.rotate(quaternion)
+                        cir.rotation_quaternion.rotate(quaternion)
+                        cir.location = cil.location + altura/2 * w1
+                if reverse:
+                        u *= -1
+                self.rotate_objects([cil,cir],axis=u,origin=origen,translation=translacio,rounds=rounds,draw=True)
+        #
+        # Rotation or helical motion of a point
+        #
+        def moviment_helicoidal_punt(self,punt=Vector([0,0,0]),origen=Vector([-3,-3,-4]),eix=&#39;Z&#39;,rounds=5,translacio=2,reverse=False):
+                &#34;&#34;&#34;
+                Draws an animation of the helical motion of an orthohedron around an affine line
+                Parameters:
+                        punt: posició inicial del punt
+
+                        origen: point of the affine line
+
+                        eix: axis of rotation
+
+                        rounds: rounds of the point aroud the axis
+
+                        translation: translation of the helical motion (distance by frame)
+                                     if translation = 0.0, it&#39;s a rotation motion
+                &#34;&#34;&#34;
+                if isinstance(eix,str):
+                        eix = eix.strip().upper()
+                if eix == &#39;X&#39;:
+                        u = Vector([1,0,0])
+                elif eix == &#39;Y&#39;:
+                        u = Vector([0,1,0])
+                elif eix == &#39;Z&#39;:
+                        u = Vector([0,0,1])
+                elif isinstance(eix,Vector):
+                        u = eix
+                else:
+                        u = Vector(eix)
+                self.base_canonica()
+                if not isinstance(punt,Vector):
+                        punt = Vector(punt)
+                if not isinstance(origen,Vector):
+                        origen = Vector(origen)
+                self.draw_point(radius=0.3,location=punt,name=&#34;Blue&#34;,color=&#34;Blue&#34;)
+                obj = self.draw_point(radius=0.3,location=punt,name=&#34;Red&#34;,color=&#34;Red&#34;)
+                if reverse:
+                        self.rotate_object(obj,axis=-u,origin=origen,helical=translacio,rounds=rounds)
+                else:
+                        self.rotate_object(obj,axis=u,origin=origen,helical=translacio,rounds=rounds)
+                vec1 = (punt-origen).project(u)
+                center = origen + vec1
+                w1 = (punt-center).normalized()
+                w3 = u.normalized()
+                w2 = w3.cross(w1)
+                radius = (center-punt).length
+                self.curve(lambda t: (radius*cos(t),radius*sin(t),translacio*t/(2*pi)),tmin=-2*rounds*pi,tmax=2*rounds*pi,steps=128*rounds,thickness=0.005,name=&#34;Hèlix&#34;,color=&#34;Yellow&#34;,o=center,u1=w1,u2=w2)
         #
         # Gir en el pla d&#39;un poligon
         #
@@ -12581,17 +13677,18 @@ def colors(self,names):
         if principled_bsdf is not None:
                 #for i, o in enumerate(principled_bsdf.inputs):
                 #       print(i, o.name)
-                principled_bsdf.inputs[&#39;Base Color&#39;].default_value = (r, g, b, 0.5)
+                principled_bsdf.inputs[&#39;Base Color&#39;].default_value = (r, g, b, opacity)
                 principled_bsdf.inputs[&#39;IOR&#39;].default_value = 0.0
                 principled_bsdf.inputs[&#39;Metallic&#39;].default_value = 1.0
+                principled_bsdf.inputs[&#39;Roughness&#39;].default_value = 1.0
                 if bpy.app.version[0] &lt; 4:
                         principled_bsdf.inputs[&#39;Specular&#39;].default_value = 1.0
                 else:
                         principled_bsdf.inputs[&#39;Specular IOR Level&#39;].default_value = 1.0
                 if bpy.app.version[0] &lt; 4:
-                        principled_bsdf.inputs[&#39;Emission&#39;].default_value = (r, g, b, 0.5)
+                        principled_bsdf.inputs[&#39;Emission&#39;].default_value = (r, g, b, opacity)
                 else:
-                        principled_bsdf.inputs[&#39;Emission Color&#39;].default_value = (r, g, b, 0.5)
+                        principled_bsdf.inputs[&#39;Emission Color&#39;].default_value = (r, g, b, opacity)
                 principled_bsdf.inputs[&#39;Emission Strength&#39;].default_value = 0.0
                 if opacity &lt; 1.0:
                         material.blend_method = &#39;BLEND&#39;
@@ -12736,6 +13833,50 @@ def colors(self,names):
         bpy.context.view_layer.update()</code></pre>
 </details>
 </dd>
+<dt id="LinearAlgebra.LinearAlgebra.base_adaptada"><code class="name flex">
+<span>def <span class="ident">base_adaptada</span></span>(<span>self, origin=Vector((0.0, 0.0, 0.0)), axis=Vector((1.0, 1.0, 1.0)), length=15, scale=0.04, name='Base adaptada')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Draws an ortonormal base from vector axis with origin in the point origin and sets the default
+origin and default base to them</p>
+<h2 id="parameters">Parameters</h2>
+<p>origin: origin of the vector and the base</p>
+<p>axis: first vector of the base</p>
+<p>length: length of the axis</p>
+<p>scale: scale of the base</p>
+<p>name: name of the base</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def base_adaptada(self,origin=Vector([0,0,0]),axis=Vector([1,1,1]),length=15,scale=0.04,name=&#34;Base adaptada&#34;):
+        &#34;&#34;&#34;
+        Draws an ortonormal base from vector axis with origin in the point origin and sets the default
+        origin and default base to them
+        Parameters:
+                origin: origin of the vector and the base
+
+                axis: first vector of the base
+
+                length: length of the axis
+
+                scale: scale of the base
+
+                name: name of the base
+        &#34;&#34;&#34;
+        if not isinstance(origin,Vector):
+                origin = Vector(origin)
+        if not isinstance(axis,Vector):
+                axis = Vector(axis)
+        self.set_origin(origin)
+        u1 = axis.normalized()
+        u2 = u1.orthogonal().normalized()
+        u3 = u1.cross(u2)
+        self.set_base([u1,u2,u3])
+        self.draw_base_axis(axis=length,positive=False,scale=scale,name=name)
+        self.reset()</code></pre>
+</details>
+</dd>
 <dt id="LinearAlgebra.LinearAlgebra.base_canonica"><code class="name flex">
 <span>def <span class="ident">base_canonica</span></span>(<span>self, origin=Vector((0.0, 0.0, 0.0)), length=15, scale=0.04, zaxis=True, name='Base canònica')</span>
 </code></dt>
@@ -12849,6 +13990,25 @@ def colors(self,names):
         bpy.ops.object.origin_set(type=&#39;ORIGIN_CURSOR&#39;, center=&#39;MEDIAN&#39;)
         bpy.ops.object.shade_smooth()
         bpy.context.object.name = &#39;Arrow_cone&#39;</code></pre>
+</details>
+</dd>
+<dt id="LinearAlgebra.LinearAlgebra.base_disk"><code class="name flex">
+<span>def <span class="ident">base_disk</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Draws a base cone with radius1=1.5, radius2=0, depth=2</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def base_disk(self):
+        &#34;&#34;&#34;
+        Draws a base cone with radius1=1.5, radius2=0, depth=2
+        &#34;&#34;&#34;
+        bpy.ops.mesh.primitive_circle_add(vertices=32,fill_type=&#39;NGON&#39;,enter_editmode=False,align=&#39;WORLD&#39;,location=(0.0, 0.0, 0.0))
+        bpy.ops.object.origin_set(type=&#39;ORIGIN_CURSOR&#39;, center=&#39;MEDIAN&#39;)
+        bpy.ops.object.shade_smooth()
+        bpy.context.object.name = &#39;Base_disk&#39;</code></pre>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.base_is_canonica"><code class="name flex">
@@ -12978,8 +14138,70 @@ origin and default base to them</p>
         self.draw_components(p,color=&#34;White&#34;,name=&#34;Coordenades en la referència R&#39;&#34;)</code></pre>
 </details>
 </dd>
+<dt id="LinearAlgebra.LinearAlgebra.cilindre"><code class="name flex">
+<span>def <span class="ident">cilindre</span></span>(<span>self, centre=Vector((0.0, 0.0, 0.0)), radi=1, height=5, eix='Z', color='AzureBlueDark', circlecolor='Blue')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Draws a bounded cylinder with direction eix
+Parameters:</p>
+<p>centre: center of the cylinder</p>
+<p>radi: radius</p>
+<p>height: height</p>
+<p>eix: X, Y, Z or a vector</p>
+<p>color: color of the cylinder</p>
+<p>circlecolor: color of the two circles of a bounded cylinder</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cilindre(self,centre=Vector([0,0,0]),radi=1,height=5,eix=&#39;Z&#39;,color=&#34;AzureBlueDark&#34;,circlecolor=&#34;Blue&#34;):
+        &#34;&#34;&#34;
+        Draws a bounded cylinder with direction eix
+        Parameters:
+
+        centre: center of the cylinder
+
+        radi: radius
+
+        height: height
+
+        eix: X, Y, Z or a vector
+
+        color: color of the cylinder
+
+        circlecolor: color of the two circles of a bounded cylinder 
+        &#34;&#34;&#34;
+        if not isinstance(centre,Vector):
+                centre = Vector(centre)
+        if isinstance(eix,str):
+                eix = eix.strip().upper()
+        if eix == &#39;X&#39;:
+                u = Vector([1,0,0])
+        elif eix == &#39;Y&#39;:
+                u = Vector([0,1,0])
+        elif eix == &#39;Z&#39;:
+                u = Vector([0,0,1])
+        elif isinstance(eix,Vector):
+                u = eix
+        else:
+                u = Vector(eix)
+        
+        u1 = u.orthogonal().normalized()
+        u2 = u.normalized().cross(u1)
+        center1 = centre + height/2 * u.normalized()
+        center2 = centre - height/2 * u.normalized()
+        
+        c1, d1 = self.draw_circle(center=center1,radius=radi,u1=u1,u2=u2,axis=False,zaxis=False,steps=128,thickness=0.02,name=&#34;Circumferències&#34;,fillcolor=color,color=circlecolor)
+        c2, d2 = self.draw_circle(center=center2,radius=radi,u1=u1,u2=u2,axis=False,zaxis=False,steps=128,thickness=0.02,name=&#34;Circumferència 2&#34;,fillcolor=color,color=circlecolor)
+        _, _, cil = self.elliptic_cylinder(o=centre,a2=radi**2,b2=radi**2,u1=u1,u2=u2,principal=False,canonica=False,zmax=height/2,color=color,thickness=0.01,name=&#34;Cilindre&#34;)
+        self.join([cil,d1,d2])
+        self.join([c1,c2])
+        self.reset()
+        return cil, c1</code></pre>
+</details>
+</dd>
 <dt id="LinearAlgebra.LinearAlgebra.cilindre_elliptic"><code class="name flex">
-<span>def <span class="ident">cilindre_elliptic</span></span>(<span>self, o=[0, 0, 0], u1=[1, 0, 0], u2=[0, 1, 0], a2=1, b2=1, principal=True, canonica=True, color='AzureBlueDark', name='EllipticCylinder', zmax=20, cmax=15, pmax=15, thickness=0.02, opacity=1.0, preserve=True)</span>
+<span>def <span class="ident">cilindre_elliptic</span></span>(<span>self, o=[0, 0, 0], u1=[1, 0, 0], u2=[0, 1, 0], a2=1, b2=1, principal=True, canonica=True, color='AzureBlueDark', name='EllipticCylinder', zmax=20, cmax=20, pmax=15, thickness=0.02, opacity=1.0, preserve=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Draws an elliptic cylinder</p>
@@ -13001,7 +14223,7 @@ origin and default base to them</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def elliptic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color=&#34;AzureBlueDark&#34;,name=&#34;EllipticCylinder&#34;,zmax=20,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+<pre><code class="python">def elliptic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color=&#34;AzureBlueDark&#34;,name=&#34;EllipticCylinder&#34;,zmax=20,cmax=20,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
         &#34;&#34;&#34;
         Draws an elliptic cylinder
         Parameters:
@@ -13033,6 +14255,8 @@ origin and default base to them</p>
         &#34;&#34;&#34;
         axis1 = None
         axis2 = None
+        if cmax &lt; zmax + 2:
+                cmax = zmax + 2
         q = self.vectors_to_quaternion(u1,u2)
         u = Quaternion([1,0,0,0])
         orig = [0,0,0]
@@ -13052,15 +14276,16 @@ origin and default base to them</p>
                 axis2 = self.draw_base_axis(axis = pmax,positive=False,name=&#34;Referència principal&#34;)
         a = math.sqrt(a2)
         b = math.sqrt(b2)
-        el = self.draw_elliptic_cylinder(a=1.0,b=1.0,length=zmax,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
+        el = self.draw_elliptic_cylinder(a=1.0,b=1.0,length=2*zmax,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
         if not preserve:
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         return axis1, axis2, el</code></pre>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.cilindre_elliptic_simple"><code class="name flex">
-<span>def <span class="ident">cilindre_elliptic_simple</span></span>(<span>self, a=10, b=6, direccio='Z', pmax=26)</span>
+<span>def <span class="ident">cilindre_elliptic_simple</span></span>(<span>self, a=10, b=6, direccio='Z', pmax=20)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Draws an elliptic cylinder with direction X, Y or Z</p>
@@ -13072,7 +14297,7 @@ origin and default base to them</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def cilindre_elliptic_simple(self,a=10,b=6,direccio=&#39;Z&#39;,pmax=26):
+<pre><code class="python">def cilindre_elliptic_simple(self,a=10,b=6,direccio=&#39;Z&#39;,pmax=20):
         &#34;&#34;&#34;
         Draws an elliptic cylinder with direction X, Y or Z
         Parameters:
@@ -13098,7 +14323,7 @@ origin and default base to them</p>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.cilindre_hiperbolic"><code class="name flex">
-<span>def <span class="ident">cilindre_hiperbolic</span></span>(<span>self, o=[0, 0, 0], u1=[1, 0, 0], u2=[0, 1, 0], a2=1, b2=1, principal=True, canonica=True, color='AzureBlueDark', name='Hyperbolic Cylinder', xmax=None, zmax=20, cmax=15, pmax=15, thickness=0.02, opacity=1.0, preserve=True)</span>
+<span>def <span class="ident">cilindre_hiperbolic</span></span>(<span>self, o=[0, 0, 0], u1=[1, 0, 0], u2=[0, 1, 0], a2=1, b2=1, principal=True, canonica=True, color='AzureBlueDark', name='Hyperbolic Cylinder', xmax=None, zmax=15, cmax=15, pmax=15, thickness=0.02, opacity=1.0, preserve=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Draws an hyperbolic cylinder</p>
@@ -13121,7 +14346,7 @@ origin and default base to them</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def hyperbolic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color=&#34;AzureBlueDark&#34;,name=&#34;Hyperbolic Cylinder&#34;,xmax=None,zmax=20,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+<pre><code class="python">def hyperbolic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color=&#34;AzureBlueDark&#34;,name=&#34;Hyperbolic Cylinder&#34;,xmax=None,zmax=15,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
         &#34;&#34;&#34;
         Draws an hyperbolic cylinder
         Parameters:
@@ -13153,6 +14378,8 @@ origin and default base to them</p>
 
            preserve: Keep self.origin and self.base as the principal reference
         &#34;&#34;&#34;
+        if cmax &lt; zmax + 2:
+                cmax = zmax + 2
         axis1 = None
         axis2 = None
         q = self.vectors_to_quaternion(u1,u2)
@@ -13177,15 +14404,16 @@ origin and default base to them</p>
         if xmax is None:
                 xmax = 5.0/a + 2
         xmax /= a
-        hy = self.draw_hyperbolic_cylinder(a=1.0,b=1.0,xmin=1.0,xmax=xmax,length=zmax,steps=128,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
+        hy = self.draw_hyperbolic_cylinder(a=1.0,b=1.0,xmin=1.0,xmax=xmax,length=2*zmax,steps=128,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
         if not preserve:
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         return axis1, axis2, hy</code></pre>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.cilindre_hiperbolic_simple"><code class="name flex">
-<span>def <span class="ident">cilindre_hiperbolic_simple</span></span>(<span>self, a=4, b=3, direccio='Z', pmax=12, hmax=26)</span>
+<span>def <span class="ident">cilindre_hiperbolic_simple</span></span>(<span>self, a=4, b=3, direccio='Z', pmax=15, hmax=20)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Draws an hyperbolic cylinder with direction X, Y or Z</p>
@@ -13198,7 +14426,7 @@ origin and default base to them</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def cilindre_hiperbolic_simple(self,a=4,b=3,direccio=&#39;Z&#39;,pmax=12,hmax=26):
+<pre><code class="python">def cilindre_hiperbolic_simple(self,a=4,b=3,direccio=&#39;Z&#39;,pmax=15,hmax=20):
         &#34;&#34;&#34;
         Draws an hyperbolic cylinder with direction X, Y or Z
         Parameters:
@@ -13308,11 +14536,12 @@ origin and default base to them</p>
         if not preserve:
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         return axis1, axis2, pa</code></pre>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.cilindre_parabolic_simple"><code class="name flex">
-<span>def <span class="ident">cilindre_parabolic_simple</span></span>(<span>self, a=3, direccio='Z', pmax=10, hmax=40)</span>
+<span>def <span class="ident">cilindre_parabolic_simple</span></span>(<span>self, a=3, direccio='Z', pmax=15, hmax=20)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Draws a parabolic cylinder with direction X, Y or Z</p>
@@ -13325,8 +14554,8 @@ origin and default base to them</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def cilindre_parabolic_simple(self,a=3,direccio=&#39;Z&#39;,pmax=10,hmax=40):
-        &#34;&#34;&#34;
+<pre><code class="python">def cilindre_parabolic_simple(self,a=3,direccio=&#39;Z&#39;,pmax=15,hmax=20):
+        r&#34;&#34;&#34;
         Draws a parabolic cylinder with direction X, Y or Z
         Parameters:
                 a: the initial parabola has equation of type z=\pm x^2/a^2
@@ -13507,6 +14736,7 @@ self.rotation and the basis self.base</p>
         if not preserve:
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         return axis1, axis2, co</code></pre>
 </details>
 </dd>
@@ -13724,6 +14954,7 @@ a: slope of the initial straight line</p>
         if not preserve:
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         return axis1, axis2, co</code></pre>
 </details>
 </dd>
@@ -13921,6 +15152,24 @@ the symmetric curve or curves from the parameter 'symmetry'</p>
         bpy.ops.object.delete()</code></pre>
 </details>
 </dd>
+<dt id="LinearAlgebra.LinearAlgebra.delete_base_disk"><code class="name flex">
+<span>def <span class="ident">delete_base_disk</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Removes the base disk</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def delete_base_disk(self):
+        &#34;&#34;&#34;
+        Removes the base disk
+        &#34;&#34;&#34;
+        bpy.ops.object.select_all(action=&#39;DESELECT&#39;)
+        bpy.data.objects[&#39;Base_disk&#39;].select_set(True)
+        bpy.ops.object.delete()</code></pre>
+</details>
+</dd>
 <dt id="LinearAlgebra.LinearAlgebra.distancia_rectes_encreuen"><code class="name flex">
 <span>def <span class="ident">distancia_rectes_encreuen</span></span>(<span>self, p0=Vector((3.0, 4.0, -2.0)), v0=Vector((1.0, 2.0, 3.0)), c0='Black', n0='Primera recta', p1=Vector((-3.0, 4.0, 1.0)), v1=Vector((1.0, -2.0, -1.0)), c1='Blue', n1='Segona recta', canonica=True, length=12, size=15, scale=0.03)</span>
 </code></dt>
@@ -14021,6 +15270,7 @@ the symmetric curve or curves from the parameter 'symmetry'</p>
         base = self.base
         if not zaxis:
                 base = self.base[0:2]
+        
         for vec in base:
                 #
                 # Draw the stem
@@ -14119,7 +15369,7 @@ the symmetric curve or curves from the parameter 'symmetry'</p>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.draw_circle"><code class="name flex">
-<span>def <span class="ident">draw_circle</span></span>(<span>self, center=[0, 0, 0], u1=Vector((1.0, 0.0, 0.0)), u2=Vector((0.0, 1.0, 0.0)), axis=False, zaxis=False, radius=1, steps=25, thickness=0.01, name='Circle', color='White', change=False)</span>
+<span>def <span class="ident">draw_circle</span></span>(<span>self, center=[0, 0, 0], u1=Vector((1.0, 0.0, 0.0)), u2=Vector((0.0, 1.0, 0.0)), axis=False, zaxis=False, radius=1, steps=128, thickness=0.01, name='Circle', color='White', fillcolor=None, change=False)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Draws a circle of center 'center' and radius 'radius' in the plane determined by vectors u1 and u2</p>
@@ -14138,7 +15388,7 @@ the symmetric curve or curves from the parameter 'symmetry'</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def draw_circle(self,center=[0,0,0],u1=Vector([1,0,0]),u2=Vector([0,1,0]),axis=False,zaxis=False,radius=1,steps=25,thickness=0.01,name=&#34;Circle&#34;,color=&#34;White&#34;,change=False):
+<pre><code class="python">def draw_circle(self,center=[0,0,0],u1=Vector([1,0,0]),u2=Vector([0,1,0]),axis=False,zaxis=False,radius=1,steps=128,thickness=0.01,name=&#34;Circle&#34;,color=&#34;White&#34;,fillcolor=None,change=False):
         &#34;&#34;&#34;
         Draws a circle of center &#39;center&#39; and radius &#39;radius&#39; in the plane determined by vectors u1 and u2
         Parameters:
@@ -14162,10 +15412,14 @@ the symmetric curve or curves from the parameter 'symmetry'</p>
 
            change: if True, set the reference self.orifin, self.base to {o; v1, v2, v3}
         &#34;&#34;&#34;
+        d = None
+        if fillcolor is not None:
+                d = self.draw_disk(center=center,radius=radius,u1=u1,u2=u2,thickness=0.5*thickness,name=&#34;Disc&#34;,color=fillcolor)
+        c = self.draw_curve(lambda t: (radius*math.cos(t),radius*math.sin(t),0),tmin=0.0,tmax=2*math.pi,axis=axis,zaxis=zaxis,steps=steps,thickness=thickness,name=name,color=color,o=center,u1=u1,u2=u2)
         if change:
                 self.set_origin(center)
                 self.set_base([u1,u2],orthonormal=True)
-        return self.draw_curve(lambda t: (radius*math.cos(t),radius*math.sin(t),0),tmin=0.0,tmax=2*math.pi,axis=axis,zaxis=zaxis,steps=steps,thickness=thickness,name=name,color=color,o=center,u1=u1,u2=u2)</code></pre>
+        return c, d</code></pre>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.draw_components"><code class="name flex">
@@ -14519,6 +15773,62 @@ self.rotation and the basis self.base</p>
         bpy.ops.object.shade_smooth()
         obj.location = o
         bpy.context.view_layer.objects.active = None
+        return obj</code></pre>
+</details>
+</dd>
+<dt id="LinearAlgebra.LinearAlgebra.draw_disk"><code class="name flex">
+<span>def <span class="ident">draw_disk</span></span>(<span>self, center=Vector((0.0, 0.0, 0.0)), radius=5, u1=Vector((1.0, 0.0, 0.0)), u2=Vector((0.0, 1.0, 0.0)), thickness=0.01, name='Disc', color='AzureBlueDark')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Draws a disc in a reference R' determined by self.origin and self.base</p>
+<h2 id="parameters">Parameters</h2>
+<p>radius: radius of the disc</p>
+<p>thickness: thickness of the surface</p>
+<p>name: name of the curve</p>
+<p>color: color of the curve</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def draw_disk(self,center=Vector([0,0,0]),radius=5,u1=Vector([1,0,0]),u2=Vector([0,1,0]),thickness=0.01,name=&#34;Disc&#34;,color=&#34;AzureBlueDark&#34;):
+        &#34;&#34;&#34;
+        Draws a disc in a reference R&#39; determined by self.origin and self.base
+        Parameters:
+           radius: radius of the disc
+
+           thickness: thickness of the surface
+
+           name: name of the curve
+
+           color: color of the curve
+        &#34;&#34;&#34;
+        self.base_disk()
+        t = bpy.data.objects.get(&#34;Base_disk&#34;)
+        obj = t.copy()
+        obj.name = name
+        self.delete_base_disk()
+        if radius != 1.0:
+                obj.scale = (radius,radius,1)
+        modifier = obj.modifiers.new(name=&#34;SubSurf&#34;, type=&#39;SUBSURF&#39;)
+        modifier.levels = 4
+        modifier.subdivision_type = &#39;SIMPLE&#39;
+        if thickness &gt; 0.0:
+                modifier = obj.modifiers.new(name=&#34;Solidify&#34;, type=&#39;SOLIDIFY&#39;)
+                modifier.thickness = thickness
+                modifier.offset = 1.0
+        c = Colors.color(color)
+        self.add_material(obj,c.name,c.r,c.g,c.b,1.0)
+        qt = self.vectors_to_quaternion(u1,u2)
+        self.set_rotation(quaternion=qt)
+        if self.rotation is not None:
+                obj.rotation_mode = &#39;QUATERNION&#39;
+                obj.rotation_quaternion.rotate(self.rotation.quaternion)
+                ### obj.location.rotate(self.rotation.quaternion)
+        obj.location = center
+        self.scene.collection.objects.link(obj)
+        bpy.ops.object.shade_smooth()
+        bpy.context.view_layer.objects.active = None
+        obj.select_set(False)
         return obj</code></pre>
 </details>
 </dd>
@@ -15464,7 +16774,7 @@ self.rotation and the basis self.base is used</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def draw_one_sheet_hyperboloid(self,a=2.0,b=2.0,xmin=math.sqrt(2),xmax=5.0,steps=256,scale=[1,1,1],color=&#34;AzureBlueDark&#34;,name=&#34;HyperboloidOneSheet&#34;,opacity=1.0,thickness=0.05):
-        &#34;&#34;&#34;
+        r&#34;&#34;&#34;
         Draws a one sheet hyperboloid from the hyperbole z = \pm a*sqrt(x^2-b) in the XZ plane
         Parameters:
            a, b: coefficients of the hyperbole
@@ -15995,7 +17305,7 @@ Only normal or base can be not None</p>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.draw_plane_surface"><code class="name flex">
-<span>def <span class="ident">draw_plane_surface</span></span>(<span>self, origin=None, normal=None, base=None, sizex=10, sizey=10, vectors=False, scalelines=0.05, scalevector=0.01, color='AzureBlueDark', linecolor='BlueDarkDull', vectorcolor='Black', name='Plane', opacity=1.0, thickness=0.0)</span>
+<span>def <span class="ident">draw_plane_surface</span></span>(<span>self, origin=None, normal=None, base=None, sizex=10, sizey=10, vectors=False, scalelines=0.05, scalevector=0.03, color='AzureBlueDark', linecolor='BlueDarkDull', vectorcolor='Black', name='Plane', opacity=1.0, thickness=0.0)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Draws a plane with normal vector or base vectors. It passes through the point origin.
@@ -16019,7 +17329,7 @@ Only normal or base can be not None</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def draw_plane_surface(self,origin=None,normal=None,base=None,sizex=10,sizey=10,vectors=False,scalelines=0.05,scalevector=0.01,
+<pre><code class="python">def draw_plane_surface(self,origin=None,normal=None,base=None,sizex=10,sizey=10,vectors=False,scalelines=0.05,scalevector=0.03,
                                         color=&#34;AzureBlueDark&#34;,linecolor=&#34;BlueDarkDull&#34;,vectorcolor=&#34;Black&#34;,name=&#34;Plane&#34;,opacity=1.0,thickness=0.0):
         &#34;&#34;&#34;
         Draws a plane with normal vector or base vectors. It passes through the point origin.
@@ -16157,7 +17467,7 @@ Only normal or base can be not None</p>
                 obj = self.join([obj,lines])
 
         if vectors:
-                vecs = self.draw_vectors(nodes,True,color=vectorcolor,scale=scalevector,head_height=0.2,name=&#34;Vectors&#34;,axis=0)
+                vecs = self.draw_vectors(nodes,True,color=vectorcolor,scale=scalevector,head_height=0.1,name=&#34;Vectors&#34;,axis=0)
 
         if vecs is not None:
                 obj = self.join([obj,vecs])
@@ -16208,7 +17518,7 @@ Only normal or base can be not None</p>
 
            opacity: opacity of the point
         &#34;&#34;&#34;
-        bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=16, radius=radius, enter_editmode=False, location=location)
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=8, radius=radius, enter_editmode=False, location=location)
         bpy.context.object.name = name
         obj = bpy.data.objects.get(name)
 
@@ -16876,7 +18186,7 @@ Only normal or base can be not None</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def draw_two_sheets_hyperboloid(self,a=2.0,b=1.0,xmin=0.0,xmax=5.0,steps=50,scale=[1,1,1],color=&#34;AzureBlueDark&#34;,name=&#34;HyperboloidTwoSheets&#34;,opacity=1.0,thickness=0.05):
-        &#34;&#34;&#34;
+        r&#34;&#34;&#34;
         Draws a two sheet hyperboloid from the hyperbole z = \pm a * math.sqrt(x**2+b) in the XZ plane
         Parameters:
            a, b: coefficients of the hyperbole
@@ -16951,7 +18261,7 @@ Only normal or base can be not None</p>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.draw_vector"><code class="name flex">
-<span>def <span class="ident">draw_vector</span></span>(<span>self, vector=None, canonica=False, color='Black', scale=0.05, arrow=True, head_height=0.15, axis=0, name='Vector', positive=True)</span>
+<span>def <span class="ident">draw_vector</span></span>(<span>self, vector=None, canonica=False, color='Black', scale=0.05, arrow=True, head_height=None, axis=0, name='Vector', positive=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Draw the vector with components 'vector'</p>
@@ -16971,7 +18281,7 @@ generated by the vector</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def draw_vector(self,vector=None,canonica=False,color=&#34;Black&#34;,scale=0.05,arrow=True,head_height=0.15,axis=0,name=&#34;Vector&#34;,positive=True):
+<pre><code class="python">def draw_vector(self,vector=None,canonica=False,color=&#34;Black&#34;,scale=0.05,arrow=True,head_height=None,axis=0,name=&#34;Vector&#34;,positive=True):
         &#34;&#34;&#34;
         Draw the vector with components &#39;vector&#39;
         Parameters:
@@ -17015,6 +18325,11 @@ generated by the vector</p></div>
                 mat.transpose()
                 v = mat @ vec
 
+        if head_height is None:
+                head_height = 0.15*(v - o).length
+        if head_height &gt; 0.15:
+                head_height = 0.15
+
         if arrow:
                 t = bpy.data.objects.get(&#34;Arrow_stem&#34;)
                 obj = t.copy()
@@ -17036,7 +18351,7 @@ generated by the vector</p></div>
                 obj2.data = obj2.data.copy()
                 obj2.name = &#34;Arrow&#34;
                 obj2.location =  v - 2 * head_height * v / v.length
-                obj2.scale = (1.05*scale,1.05*scale + 0.05,head_height)
+                obj2.scale = (2*scale,2*scale,head_height)
                 obj2.rotation_mode = &#39;QUATERNION&#39;
                 obj2.rotation_quaternion = (v - o).to_track_quat(&#39;Z&#39;,&#39;Y&#39;)
                 if color is not None:
@@ -17364,6 +18679,7 @@ v3 = v1.cross(v2)</p>
         if not preserve:
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         return axis1, axis2, el</code></pre>
 </details>
 </dd>
@@ -17453,6 +18769,7 @@ v3 = v1.cross(v2)</p>
         if not preserve:
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         return axis1, axis2, el</code></pre>
 </details>
 </dd>
@@ -17494,7 +18811,7 @@ a, b: semiaxis of the initial ellipse</p>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.elliptic_cylinder"><code class="name flex">
-<span>def <span class="ident">elliptic_cylinder</span></span>(<span>self, o=[0, 0, 0], u1=[1, 0, 0], u2=[0, 1, 0], a2=1, b2=1, principal=True, canonica=True, color='AzureBlueDark', name='EllipticCylinder', zmax=20, cmax=15, pmax=15, thickness=0.02, opacity=1.0, preserve=True)</span>
+<span>def <span class="ident">elliptic_cylinder</span></span>(<span>self, o=[0, 0, 0], u1=[1, 0, 0], u2=[0, 1, 0], a2=1, b2=1, principal=True, canonica=True, color='AzureBlueDark', name='EllipticCylinder', zmax=20, cmax=20, pmax=15, thickness=0.02, opacity=1.0, preserve=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Draws an elliptic cylinder</p>
@@ -17516,7 +18833,7 @@ a, b: semiaxis of the initial ellipse</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def elliptic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color=&#34;AzureBlueDark&#34;,name=&#34;EllipticCylinder&#34;,zmax=20,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+<pre><code class="python">def elliptic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color=&#34;AzureBlueDark&#34;,name=&#34;EllipticCylinder&#34;,zmax=20,cmax=20,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
         &#34;&#34;&#34;
         Draws an elliptic cylinder
         Parameters:
@@ -17548,6 +18865,8 @@ a, b: semiaxis of the initial ellipse</p>
         &#34;&#34;&#34;
         axis1 = None
         axis2 = None
+        if cmax &lt; zmax + 2:
+                cmax = zmax + 2
         q = self.vectors_to_quaternion(u1,u2)
         u = Quaternion([1,0,0,0])
         orig = [0,0,0]
@@ -17567,10 +18886,11 @@ a, b: semiaxis of the initial ellipse</p>
                 axis2 = self.draw_base_axis(axis = pmax,positive=False,name=&#34;Referència principal&#34;)
         a = math.sqrt(a2)
         b = math.sqrt(b2)
-        el = self.draw_elliptic_cylinder(a=1.0,b=1.0,length=zmax,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
+        el = self.draw_elliptic_cylinder(a=1.0,b=1.0,length=2*zmax,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
         if not preserve:
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         return axis1, axis2, el</code></pre>
 </details>
 </dd>
@@ -17655,6 +18975,7 @@ a, b: semiaxis of the initial ellipse</p>
         if not preserve:
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         return axis1, axis2, el</code></pre>
 </details>
 </dd>
@@ -17875,7 +19196,8 @@ a, b: semiaxis of the initial ellipse</p>
         self.draw_line(start=-5*u1,end=5*u1,color=&#34;Blue&#34;,scale=0.03,name=&#34;Asímptota 1&#34;)
         self.draw_line(start=-5*u2,end=5*u2,color=&#34;Blue&#34;,scale=0.03,name=&#34;Asímptota 2&#34;)
         self.set_origin()
-        self.set_base()</code></pre>
+        self.set_base()
+        self.set_rotation()</code></pre>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.hiperboloide_dues_fulles"><code class="name flex">
@@ -17960,6 +19282,7 @@ a, b: semiaxis of the initial ellipse</p>
         if not preserve:
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         return axis1, axis2, hy</code></pre>
 </details>
 </dd>
@@ -18089,6 +19412,7 @@ a, b: semiaxis of the initial hyperbole</p>
         if not preserve:
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         return axis1, axis2, hy</code></pre>
 </details>
 </dd>
@@ -18134,7 +19458,7 @@ a, b: semiaxis of the initial hyperbole</p>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.hyperbolic_cylinder"><code class="name flex">
-<span>def <span class="ident">hyperbolic_cylinder</span></span>(<span>self, o=[0, 0, 0], u1=[1, 0, 0], u2=[0, 1, 0], a2=1, b2=1, principal=True, canonica=True, color='AzureBlueDark', name='Hyperbolic Cylinder', xmax=None, zmax=20, cmax=15, pmax=15, thickness=0.02, opacity=1.0, preserve=True)</span>
+<span>def <span class="ident">hyperbolic_cylinder</span></span>(<span>self, o=[0, 0, 0], u1=[1, 0, 0], u2=[0, 1, 0], a2=1, b2=1, principal=True, canonica=True, color='AzureBlueDark', name='Hyperbolic Cylinder', xmax=None, zmax=15, cmax=15, pmax=15, thickness=0.02, opacity=1.0, preserve=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Draws an hyperbolic cylinder</p>
@@ -18157,7 +19481,7 @@ a, b: semiaxis of the initial hyperbole</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def hyperbolic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color=&#34;AzureBlueDark&#34;,name=&#34;Hyperbolic Cylinder&#34;,xmax=None,zmax=20,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+<pre><code class="python">def hyperbolic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color=&#34;AzureBlueDark&#34;,name=&#34;Hyperbolic Cylinder&#34;,xmax=None,zmax=15,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
         &#34;&#34;&#34;
         Draws an hyperbolic cylinder
         Parameters:
@@ -18189,6 +19513,8 @@ a, b: semiaxis of the initial hyperbole</p>
 
            preserve: Keep self.origin and self.base as the principal reference
         &#34;&#34;&#34;
+        if cmax &lt; zmax + 2:
+                cmax = zmax + 2
         axis1 = None
         axis2 = None
         q = self.vectors_to_quaternion(u1,u2)
@@ -18213,10 +19539,11 @@ a, b: semiaxis of the initial hyperbole</p>
         if xmax is None:
                 xmax = 5.0/a + 2
         xmax /= a
-        hy = self.draw_hyperbolic_cylinder(a=1.0,b=1.0,xmin=1.0,xmax=xmax,length=zmax,steps=128,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
+        hy = self.draw_hyperbolic_cylinder(a=1.0,b=1.0,xmin=1.0,xmax=xmax,length=2*zmax,steps=128,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
         if not preserve:
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         return axis1, axis2, hy</code></pre>
 </details>
 </dd>
@@ -18313,39 +19640,117 @@ a, b: semiaxis of the initial hyperbole</p>
         if not preserve:
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         return axis1, axis2, hy</code></pre>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.join"><code class="name flex">
-<span>def <span class="ident">join</span></span>(<span>self, list)</span>
+<span>def <span class="ident">join</span></span>(<span>self, llista)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Joins a list of objects</p>
 <h2 id="parameters">Parameters</h2>
-<p>list: list of objects</p></div>
+<p>llista: list of objects</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def join(self,list):
+<pre><code class="python">def join(self,llista):
         &#34;&#34;&#34;
         Joins a list of objects
         Parameters:
-           list: list of objects
+           llista: list of objects
         &#34;&#34;&#34;
-        if len(list) &lt;= 1:
+        if len(llista) == 0:
                 return
+        if len(llista) == 1:
+                return llista[0]
         bpy.ops.object.select_all(action=&#39;DESELECT&#39;)
-        bpy.context.view_layer.objects.active = list[0]
-        for obj in list:
+        bpy.context.view_layer.objects.active = llista[0]
+        for obj in llista:
                 obj.select_set(True)
         bpy.ops.object.join()
         bpy.ops.object.select_all(action=&#39;DESELECT&#39;)
-        return list[0]</code></pre>
+        return llista[0]</code></pre>
+</details>
+</dd>
+<dt id="LinearAlgebra.LinearAlgebra.moviment_helicoidal_cilindre"><code class="name flex">
+<span>def <span class="ident">moviment_helicoidal_cilindre</span></span>(<span>self, centre=Vector((0.0, 0.0, 0.0)), radi=3, altura=12, opacity=1, origen=Vector((4.0, 3.0, 0.0)), eix='Z', rounds=1, translacio=0.0, aligned=False, reverse=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Draws an animation of the helical motion of an orthohedron around an affine line</p>
+<h2 id="parameters">Parameters</h2>
+<p>centre: center of the cylinder</p>
+<p>radi: radius of the cylinder</p>
+<p>altura: height of the cylinder</p>
+<p>origen: point of the affine line</p>
+<p>eix: axis of rotation</p>
+<p>opacity: opacity of the orthohedron</p>
+<p>translation: translation of the helical motion (distance by round)
+if translation = 0.0, it's a rotation motion</p>
+<p>aligned: if True, aligns the orthohedron with the axis of rotation</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def moviment_helicoidal_cilindre(self,centre=Vector([0,0,0]),radi=3,altura=12,opacity=1,origen=Vector([4,3,0]),eix=&#39;Z&#39;,rounds=1,translacio=0.0,aligned=False,reverse=False):
+        &#34;&#34;&#34;
+        Draws an animation of the helical motion of an orthohedron around an affine line
+        Parameters:
+                centre: center of the cylinder
+
+                radi: radius of the cylinder
+
+                altura: height of the cylinder
+
+                origen: point of the affine line
+
+                eix: axis of rotation
+
+                opacity: opacity of the orthohedron
+
+                translation: translation of the helical motion (distance by round)
+                             if translation = 0.0, it&#39;s a rotation motion
+
+                aligned: if True, aligns the orthohedron with the axis of rotation
+        &#34;&#34;&#34;
+        if isinstance(eix,str):
+                eix = eix.strip().upper()
+        if eix == &#39;X&#39;:
+                u = Vector([1,0,0])
+        elif eix == &#39;Y&#39;:
+                u = Vector([0,1,0])
+        elif eix == &#39;Z&#39;:
+                u = Vector([0,0,1])
+        elif isinstance(eix,Vector):
+                u = eix
+        else:
+                u = Vector(eix)
+        
+        w1 = u.normalized()
+        w2 = u.orthogonal().normalized()
+        w3 = w1.cross(w2)
+        self.base_canonica()
+        if not isinstance(centre,Vector):
+                centre = Vector(centre)
+        if not isinstance(origen,Vector):
+                origen = Vector(origen)
+        cil, cir = self.cilindre(centre=centre,radi=radi,height=altura,eix=&#39;Z&#39;,color=&#34;AzureBlueDark&#34;,circlecolor=&#34;Blue&#34;)
+        if aligned:
+                cil.rotation_mode = &#39;QUATERNION&#39;
+                cir.rotation_mode = &#39;QUATERNION&#39;
+                x = Vector([0,0,1])
+                quaternion = x.rotation_difference(w1)
+                cil.rotation_quaternion.rotate(quaternion)
+                cir.rotation_quaternion.rotate(quaternion)
+                cir.location = cil.location + altura/2 * w1
+        if reverse:
+                u *= -1
+        self.rotate_objects([cil,cir],axis=u,origin=origen,translation=translacio,rounds=rounds,draw=True)</code></pre>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.moviment_helicoidal_ortoedre"><code class="name flex">
-<span>def <span class="ident">moviment_helicoidal_ortoedre</span></span>(<span>self, centre=Vector((0.0, 0.0, 0.0)), costats=Vector((3.0, 4.0, 2.0)), opacity=1, origen=Vector((4.0, 3.0, 0.0)), eix='Z', rounds=1, translacio=0.0)</span>
+<span>def <span class="ident">moviment_helicoidal_ortoedre</span></span>(<span>self, centre=Vector((0.0, 0.0, 0.0)), costats=Vector((3.0, 5.0, 2.0)), opacity=1, origen=Vector((4.0, 3.0, 0.0)), eix='Z', rounds=1, translacio=0.0, aligned=False)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Draws an animation of the helical motion of an orthohedron around an affine line</p>
@@ -18355,13 +19760,14 @@ a, b: semiaxis of the initial hyperbole</p>
 <p>origen: point of the affine line</p>
 <p>eix: axis of rotation</p>
 <p>opacity: opacity of the orthohedron</p>
-<p>translation: translation of the helical motion (distance by frame)
-if translation = 0.0, it's a rotation motion</p></div>
+<p>translation: translation of the helical motion (distance by round)
+if translation = 0.0, it's a rotation motion</p>
+<p>aligned: if True, aligns the orthohedron with the axis of rotation</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def moviment_helicoidal_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([3,4,2]),opacity=1,origen=Vector([4,3,0]),eix=&#39;Z&#39;,rounds=1,translacio=0.0):
+<pre><code class="python">def moviment_helicoidal_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([3,5,2]),opacity=1,origen=Vector([4,3,0]),eix=&#39;Z&#39;,rounds=1,translacio=0.0,aligned=False):
         &#34;&#34;&#34;
         Draws an animation of the helical motion of an orthohedron around an affine line
         Parameters:
@@ -18375,9 +19781,26 @@ if translation = 0.0, it's a rotation motion</p></div>
 
                 opacity: opacity of the orthohedron
 
-                translation: translation of the helical motion (distance by frame)
+                translation: translation of the helical motion (distance by round)
                              if translation = 0.0, it&#39;s a rotation motion
+
+                aligned: if True, aligns the orthohedron with the axis of rotation
         &#34;&#34;&#34;
+        if isinstance(eix,str):
+                eix = eix.strip().upper()
+        if eix == &#39;X&#39;:
+                u = Vector([1,0,0])
+        elif eix == &#39;Y&#39;:
+                u = Vector([0,1,0])
+        elif eix == &#39;Z&#39;:
+                u = Vector([0,0,1])
+        elif isinstance(eix,Vector):
+                u = eix
+        else:
+                u = Vector(eix)
+        w1 = u.normalized()
+        w2 = u.orthogonal().normalized()
+        w3 = w1.cross(w2)
         self.base_canonica()
         if not isinstance(centre,Vector):
                 centre = Vector(centre)
@@ -18386,7 +19809,75 @@ if translation = 0.0, it's a rotation motion</p></div>
         if not isinstance(origen,Vector):
                 origen = Vector(origen)
         ortoedre = self.draw_cube(origin=centre,scale=costats,color=&#34;AzureBlueDark&#34;,opacity=opacity,thickness=0.015,scalelines=0.025,linecolor=&#34;Orange&#34;,name=&#34;Ortoedre&#34;)
+        if aligned:
+                ortoedre.rotation_mode = &#39;QUATERNION&#39;
+                x = Vector([1,0,0])
+                quaternion = x.rotation_difference(w1)
+                ortoedre.rotation_quaternion.rotate(quaternion)
         self.rotate_object(ortoedre,axis=eix,origin=origen,helical=translacio,rounds=rounds)</code></pre>
+</details>
+</dd>
+<dt id="LinearAlgebra.LinearAlgebra.moviment_helicoidal_punt"><code class="name flex">
+<span>def <span class="ident">moviment_helicoidal_punt</span></span>(<span>self, punt=Vector((0.0, 0.0, 0.0)), origen=Vector((-3.0, -3.0, -4.0)), eix='Z', rounds=5, translacio=2, reverse=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Draws an animation of the helical motion of an orthohedron around an affine line</p>
+<h2 id="parameters">Parameters</h2>
+<p>punt: posició inicial del punt</p>
+<p>origen: point of the affine line</p>
+<p>eix: axis of rotation</p>
+<p>rounds: rounds of the point aroud the axis</p>
+<p>translation: translation of the helical motion (distance by frame)
+if translation = 0.0, it's a rotation motion</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def moviment_helicoidal_punt(self,punt=Vector([0,0,0]),origen=Vector([-3,-3,-4]),eix=&#39;Z&#39;,rounds=5,translacio=2,reverse=False):
+        &#34;&#34;&#34;
+        Draws an animation of the helical motion of an orthohedron around an affine line
+        Parameters:
+                punt: posició inicial del punt
+
+                origen: point of the affine line
+
+                eix: axis of rotation
+
+                rounds: rounds of the point aroud the axis
+
+                translation: translation of the helical motion (distance by frame)
+                             if translation = 0.0, it&#39;s a rotation motion
+        &#34;&#34;&#34;
+        if isinstance(eix,str):
+                eix = eix.strip().upper()
+        if eix == &#39;X&#39;:
+                u = Vector([1,0,0])
+        elif eix == &#39;Y&#39;:
+                u = Vector([0,1,0])
+        elif eix == &#39;Z&#39;:
+                u = Vector([0,0,1])
+        elif isinstance(eix,Vector):
+                u = eix
+        else:
+                u = Vector(eix)
+        self.base_canonica()
+        if not isinstance(punt,Vector):
+                punt = Vector(punt)
+        if not isinstance(origen,Vector):
+                origen = Vector(origen)
+        self.draw_point(radius=0.3,location=punt,name=&#34;Blue&#34;,color=&#34;Blue&#34;)
+        obj = self.draw_point(radius=0.3,location=punt,name=&#34;Red&#34;,color=&#34;Red&#34;)
+        if reverse:
+                self.rotate_object(obj,axis=-u,origin=origen,helical=translacio,rounds=rounds)
+        else:
+                self.rotate_object(obj,axis=u,origin=origen,helical=translacio,rounds=rounds)
+        vec1 = (punt-origen).project(u)
+        center = origen + vec1
+        w1 = (punt-center).normalized()
+        w3 = u.normalized()
+        w2 = w3.cross(w1)
+        radius = (center-punt).length
+        self.curve(lambda t: (radius*cos(t),radius*sin(t),translacio*t/(2*pi)),tmin=-2*rounds*pi,tmax=2*rounds*pi,steps=128*rounds,thickness=0.005,name=&#34;Hèlix&#34;,color=&#34;Yellow&#34;,o=center,u1=w1,u2=w2)</code></pre>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.one_sheet_hyperboloid"><code class="name flex">
@@ -18471,7 +19962,23 @@ if translation = 0.0, it's a rotation motion</p></div>
         if not preserve:
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         return axis1, axis2, hy</code></pre>
+</details>
+</dd>
+<dt id="LinearAlgebra.LinearAlgebra.ortoedre"><code class="name flex">
+<span>def <span class="ident">ortoedre</span></span>(<span>self, centre=Vector((0.0, 0.0, 0.0)), costats=[6, 10, 8], scalelines=0.05, vectors=False, color='Blue', linecolor='Red', vectorcolor='Black', name='Ortoedre', opacity=1.0, thickness=0.0)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def ortoedre(self,centre=Vector([0,0,0]),costats=[6,10,8],scalelines=0.05,vectors=False,color=&#34;Blue&#34;,linecolor=&#34;Red&#34;,vectorcolor=&#34;Black&#34;,name=&#39;Ortoedre&#39;,opacity=1.0,thickness=0.0):
+        if not isinstance(centre,Vector):
+                centre = Vector(centre)
+        self.draw_cube(origin=centre,scale=costats,scalelines=scalelines,vectors=vectors,color=color,linecolor=linecolor,vectorcolor=vectorcolor,name=name,opacity=opacity,thickness=thickness)</code></pre>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.parabola"><code class="name flex">
@@ -18524,7 +20031,8 @@ if translation = 0.0, it's a rotation motion</p></div>
         self.draw_point(radius=0.167,location=(0,0,0),name=&#34;Vèrtex&#34;,color=&#34;White&#34;)
         self.draw_line(start=[-xmax-3,-p/2,0],end=[xmax+3,-p/2,0],color=&#34;Blue&#34;,scale=0.04,name=&#34;Recta directriu&#34;)
         self.set_origin()
-        self.set_base()</code></pre>
+        self.set_base()
+        self.set_rotation()</code></pre>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.parabolic_cylinder"><code class="name flex">
@@ -18610,6 +20118,7 @@ if translation = 0.0, it's a rotation motion</p></div>
         if not preserve:
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         return axis1, axis2, pa</code></pre>
 </details>
 </dd>
@@ -18694,6 +20203,7 @@ if translation = 0.0, it's a rotation motion</p></div>
         if not preserve:
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         return axis1, axis2, el</code></pre>
 </details>
 </dd>
@@ -18865,6 +20375,7 @@ a: The constant of the initial parabola</p>
         if not preserve:
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         return axis1, axis2, hy</code></pre>
 </details>
 </dd>
@@ -19515,7 +21026,7 @@ origin and default base to them</p>
         &#34;&#34;&#34;
         Set self.colors to default colors
         &#34;&#34;&#34;
-        self.colors= Colors.colors([&#34;Red&#34;,&#34;Green&#34;,&#34;Blue&#34;])</code></pre>
+        self.colors= Colors.colors([&#34;Red&#34;,&#34;GreenDarkHard&#34;,&#34;Blue&#34;])</code></pre>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.reset_frames"><code class="name flex">
@@ -19767,28 +21278,96 @@ vector (1,0,0)</p></div>
                 self.rotate_euler(ortoedre2,psi=psi,theta=theta,phi=phi,axis=euler,canonica=False,reverse=reverse)</code></pre>
 </details>
 </dd>
-<dt id="LinearAlgebra.LinearAlgebra.rotacio_vector"><code class="name flex">
-<span>def <span class="ident">rotacio_vector</span></span>(<span>self, vector=Vector((6.0, 8.0, 5.0)), eix=Vector((1.0, 1.0, 1.0)))</span>
+<dt id="LinearAlgebra.LinearAlgebra.rotacio_punt"><code class="name flex">
+<span>def <span class="ident">rotacio_punt</span></span>(<span>self, punt=Vector((6.0, 8.0, 5.0)), origen=Vector((4.0, 3.0, 0.0)), eix=Vector((1.0, 1.0, 1.0)), vectors=True)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Draws an animation of a vector rotating around a vectorial line</p>
+<div class="desc"><p>Draws an animation of a point rotating around an afine line</p>
 <h2 id="parameters">Parameters</h2>
-<p>vector: vector to rotate</p>
+<p>punt: point to rotate</p>
+<p>origen: point of the affine line</p>
 <p>eix: axis of rotation, given by a vector or by X, Y or Z</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def rotacio_vector(self,vector=Vector([6,8,5]),eix=Vector([1,1,1])):
+<pre><code class="python">def rotacio_punt(self,punt=Vector([6,8,5]),origen=Vector([4,3,0]),eix=Vector([1,1,1]),vectors=True):
         &#34;&#34;&#34;
-        Draws an animation of a vector rotating around a vectorial line
+        Draws an animation of a point rotating around an afine line
         Parameters:
-                vector: vector to rotate
+                punt: point to rotate
 
-                eix: axis of rotation, given by a vector or by X, Y or Z
+                origen: point of the affine line
+
+                eix: axis of rotation, given by a vector or by X, Y or Z 
         &#34;&#34;&#34;
-        self.base_canonica(length=vector.length + 2)
-        self.rotate_vector(vector,eix)</code></pre>
+        if not isinstance(punt,Vector):
+                punt = Vector(punt)
+        if eix == &#39;X&#39;:
+                u = Vector([1,0,0])
+        elif eix == &#39;Y&#39;:
+                u = Vector([0,1,0])
+        elif eix == &#39;Z&#39;:
+                u = Vector([0,0,1])
+        elif isinstance(eix,Vector):
+                u = eix
+        else:
+                u = Vector(eix)
+
+        if not isinstance(origen,Vector):
+                origen = Vector(origen)
+        e = (punt-origen).project(u)
+        l = e.length
+        if l &lt; 18:
+                l = 18
+        self.base_canonica(length=l)
+        self.rotate_point(punt,origen,u,length=l,vectors=vectors)</code></pre>
+</details>
+</dd>
+<dt id="LinearAlgebra.LinearAlgebra.rotacio_vector"><code class="name flex">
+<span>def <span class="ident">rotacio_vector</span></span>(<span>self, vector=Vector((6.0, 8.0, 5.0)), eix=Vector((1.0, 1.0, 1.0)), adaptada=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Draws an animation of a vector rotating around a vectorial line</p>
+<h2 id="parameters">Parameters</h2>
+<p>vector: vector to rotate</p>
+<p>eix: axis of rotation, given by a vector or by X, Y or Z</p>
+<p>adaptada: if True, draws a base adapted to the rotation</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">    def rotacio_vector(self,vector=Vector([6,8,5]),eix=Vector([1,1,1]),adaptada=False):
+            &#34;&#34;&#34;
+            Draws an animation of a vector rotating around a vectorial line
+            Parameters:
+                    vector: vector to rotate
+
+                    eix: axis of rotation, given by a vector or by X, Y or Z
+
+                    adaptada: if True, draws a base adapted to the rotation
+            &#34;&#34;&#34;
+            if not isinstance(vector,Vector):
+                    vector = Vector(vector)
+            if eix == &#39;X&#39;:
+                    u = Vector([1,0,0])
+            elif eix == &#39;Y&#39;:
+                    u = Vector([0,1,0])
+            elif eix == &#39;Z&#39;:
+                    u = Vector([0,0,1])
+            elif isinstance(axis,Vector):
+                    u = eix
+            else:
+                    u = Vector(eix)
+            e = vector.project(eix)
+            l = e.length
+            if l &lt; 18:
+                    l = 18
+            if adaptada:
+                    self.base_adaptada(axis=eix,length=l)
+            self.base_canonica(length=l)
+            self.rotate_vector(vector,eix,length=l)
+# </code></pre>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.rotate_euler"><code class="name flex">
@@ -19950,25 +21529,31 @@ to negative angles</p></div>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.rotate_object"><code class="name flex">
-<span>def <span class="ident">rotate_object</span></span>(<span>self, obj=None, axis='Z', frames=1, origin=Vector((0.0, 0.0, 0.0)), localaxis=None, localangle=None, helical=0.0, rounds=1, draw=True)</span>
+<span>def <span class="ident">rotate_object</span></span>(<span>self, obj=None, axis='Z', frames=1, origin=Vector((0.0, 0.0, 0.0)), localaxis=None, localangle=None, helical=0.0, rounds=1, length=25, draw=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Rotates an object around the axis</p>
 <h2 id="parameters">Parameters</h2>
 <p>obj: the object</p>
 <p>axis: it must be 'X', 'Y', 'Z' or a Vector</p>
+<p>frames: increment of the frame set</p>
+<p>helical: tranlation by round</p>
 <p>local: if True the center of rotation is the location of the object</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def rotate_object(self,obj=None,axis=&#39;Z&#39;,frames=1,origin=Vector([0,0,0]),localaxis=None,localangle=None,helical=0.0,rounds=1,draw=True):
+<pre><code class="python">def rotate_object(self,obj=None,axis=&#39;Z&#39;,frames=1,origin=Vector([0,0,0]),localaxis=None,localangle=None,helical=0.0,rounds=1,length=25,draw=True):
         &#34;&#34;&#34;
         Rotates an object around the axis
         Parameters:
            obj: the object
 
            axis: it must be &#39;X&#39;, &#39;Y&#39;, &#39;Z&#39; or a Vector
+
+           frames: increment of the frame set
+
+           helical: tranlation by round
 
            local: if True the center of rotation is the location of the object
         &#34;&#34;&#34;
@@ -20002,11 +21587,13 @@ to negative angles</p></div>
                 lr = Rotation(localangle,localaxis)
         if draw:
                 self.set_origin(origin)
-                self.draw_vector(u,axis=15/u.length,positive=False,color=&#34;White&#34;)
+                self.draw_vector(u,axis=length,positive=False,color=&#34;White&#34;)
                 self.set_origin()
+        return
         r = Rotation(1/int(frames),u)
         axis, angle = r.to_axis_angle()
-        t = helical * axis
+        axis.normalize()
+        t =  helical / (angle * int(frames) * 360) * axis
         bpy.context.scene.frame_set(self.frame)
         obj.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
         obj.keyframe_insert(data_path=&#34;location&#34;,index=-1)
@@ -20102,19 +21689,18 @@ to negative angles</p></div>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.rotate_objects"><code class="name flex">
-<span>def <span class="ident">rotate_objects</span></span>(<span>self, objs=[], axis='Z', angle=90, frames=1, origin=Vector((0.0, 0.0, 0.0)), translation=[0.0, 0.0, 0.0])</span>
+<span>def <span class="ident">rotate_objects</span></span>(<span>self, objs=[], axis='Z', angle=None, frames=1, origin=Vector((0.0, 0.0, 0.0)), translation=3, rounds=1, length=25, draw=False)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Rotates an object around the axis</p>
 <h2 id="parameters">Parameters</h2>
 <p>objs: the list of objects</p>
-<p>axis: it must be 'X', 'Y', 'Z' or a Vector</p>
-<p>local: if True the center of rotation is the location of the object</p></div>
+<p>axis: it must be 'X', 'Y', 'Z' or a Vector</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def rotate_objects(self,objs=[],axis=&#39;Z&#39;,angle=90,frames=1,origin=Vector([0,0,0]),translation=[0.0,0.0,0.0]):
+<pre><code class="python">def rotate_objects(self,objs=[],axis=&#39;Z&#39;,angle=None,frames=1,origin=Vector([0,0,0]),translation=3,rounds=1,length=25,draw=False):
         &#34;&#34;&#34;
         Rotates an object around the axis
         Parameters:
@@ -20122,14 +21708,11 @@ to negative angles</p></div>
 
            axis: it must be &#39;X&#39;, &#39;Y&#39;, &#39;Z&#39; or a Vector
 
-           local: if True the center of rotation is the location of the object
         &#34;&#34;&#34;
         if objs is None or (not isinstance(objs,list) and not isinstance(objs,tuple)):
                 return None
         if not isinstance(origin,Vector):
                 origin = Vector(origin)
-        if not isinstance(translation,Vector):
-                translation = Vector(translation)
         if isinstance(axis,str):
                 axis = axis.strip().upper()
         if axis == &#39;X&#39;:
@@ -20143,14 +21726,27 @@ to negative angles</p></div>
         else:
                 u = Vector(axis)
 
+        if angle is None:
+                angle = 360
+        else:
+                rounds = 1
+
+        if draw:
+                self.set_origin(origin)
+                self.draw_vector(u,axis=length,positive=False,color=&#34;White&#34;)
+                self.set_origin()
+
         r = Rotation(1/int(frames),u)
-        t = translation / (int(frames) * angle)
+        axis, alfa = r.to_axis_angle()
+        axis.normalize()
+        r = Rotation(1/int(frames),u)
+        t =  translation / (alfa * int(frames) * 360) * axis
         bpy.context.scene.frame_set(self.frame)
         for obj in objs:
                 obj.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
                 obj.keyframe_insert(data_path=&#34;location&#34;,index=-1)
         fn = self.frame + 1
-        for i in range(int(frames) * angle):
+        for i in range(int(frames) * int(rounds) * angle):
                 for obj in objs:
                         bpy.context.scene.frame_set(fn)
                         obj.rotation_quaternion.rotate(r.quaternion)
@@ -20166,8 +21762,75 @@ to negative angles</p></div>
         bpy.context.view_layer.update()</code></pre>
 </details>
 </dd>
+<dt id="LinearAlgebra.LinearAlgebra.rotate_point"><code class="name flex">
+<span>def <span class="ident">rotate_point</span></span>(<span>self, punt=None, origen=Vector((0.0, 0.0, 0.0)), axis='Z', length=25, vectors=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Rotates a point around an affine line</p>
+<h2 id="parameters">Parameters</h2>
+<p>point: the point</p>
+<p>origen: a point of the affine line</p>
+<p>axis: it must be 'X', 'Y', 'Z' or a vector</p>
+<p>length: length of the</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def rotate_point(self,punt=None,origen=Vector([0,0,0]),axis=&#39;Z&#39;,length=25,vectors=True):
+        &#34;&#34;&#34;
+        Rotates a point around an affine line
+        Parameters:
+           point: the point
+
+           origen: a point of the affine line
+
+           axis: it must be &#39;X&#39;, &#39;Y&#39;, &#39;Z&#39; or a vector
+
+           length: length of the
+        &#34;&#34;&#34;
+        draw = False
+        if punt is None:
+                return None
+        if axis == &#39;X&#39;:
+                u = Vector([1,0,0])
+        elif axis == &#39;Y&#39;:
+                u = Vector([0,1,0])
+        elif axis == &#39;Z&#39;:
+                u = Vector([0,0,1])
+        elif isinstance(axis,Vector):
+                u = axis
+        else:
+                u = Vector(axis)
+
+        if not isinstance(origen,Vector):
+                origen = Vector(origen)
+
+        self.draw_point(radius=0.3,location=punt,name=&#34;Blue&#34;,color=&#34;Blue&#34;)
+        obj = self.draw_point(radius=0.3,location=punt,name=&#34;Red&#34;,color=&#34;Red&#34;)
+        if vectors:
+                self.set_origin(origen)
+                self.draw_vector(punt-origen,name=&#34;VBlack&#34;,color=&#34;Black&#34;)
+                obj2 = self.draw_vector(punt-origen,name=&#34;VRed&#34;,color=&#34;Red&#34;)
+        w1 = u.orthogonal().normalized()
+        vec1 = (punt-origen).project(u)
+        center = origen + vec1
+        radius = (center-punt).length
+        w3 = vec1.normalized()
+        w2 = w3.cross(w1)
+        a = vec1.length
+        b = (punt-origen-vec1).length
+        p2 = b**2/a**2
+        if vectors:
+                self.rotate_objects([obj,obj2],u,angle=360,origin=origen,length=length,draw=True)
+        else:
+                self.rotate_object(obj,u,origin=origen,length=length)
+        self.draw_circle(center=center,u1=w1,u2=w2,radius=radius,name=&#34;Circumferència&#34;,steps=128,color=&#34;Yellow&#34;)
+        self.cone(o=origen,u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color=&#34;GrayLight&#34;,opacity=0.25,thickness=0.01)
+        self.reset()</code></pre>
+</details>
+</dd>
 <dt id="LinearAlgebra.LinearAlgebra.rotate_vector"><code class="name flex">
-<span>def <span class="ident">rotate_vector</span></span>(<span>self, vector=None, axis='Z')</span>
+<span>def <span class="ident">rotate_vector</span></span>(<span>self, vector=None, axis='Z', length=25)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Rotates a vector around the axis</p>
@@ -20178,7 +21841,7 @@ to negative angles</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def rotate_vector(self,vector=None,axis=&#39;Z&#39;):
+<pre><code class="python">def rotate_vector(self,vector=None,axis=&#39;Z&#39;,length=25):
         &#34;&#34;&#34;
         Rotates a vector around the axis
         Parameters:
@@ -20209,8 +21872,8 @@ to negative angles</p></div>
         a = vec1.length
         b = (vector-vec1).length
         p2 = b**2/a**2
-        self.rotate_object(obj,u)
-        self.cone(u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color=&#34;GrayLight&#34;,opacity=0.2)</code></pre>
+        self.rotate_object(obj,u,length=length)
+        self.cone(u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color=&#34;GrayLight&#34;,opacity=0.1,thickness=0.01)</code></pre>
 </details>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.set_base"><code class="name flex">
@@ -20747,6 +22410,7 @@ the variables for the equation
         if not preserve:
                 self.set_origin()
                 self.set_base()
+                self.set_rotation()
         return axis1, axis2, hy</code></pre>
 </details>
 </dd>
@@ -21433,9 +23097,11 @@ returned in degrees</p></div>
 <ul id="index">
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
+<li><code><a title="LinearAlgebra.add_object_align_init" href="#LinearAlgebra.add_object_align_init">add_object_align_init</a></code></li>
 <li><code><a title="LinearAlgebra.createFaces" href="#LinearAlgebra.createFaces">createFaces</a></code></li>
 <li><code><a title="LinearAlgebra.create_mesh_object" href="#LinearAlgebra.create_mesh_object">create_mesh_object</a></code></li>
 <li><code><a title="LinearAlgebra.draw_parametric_surface" href="#LinearAlgebra.draw_parametric_surface">draw_parametric_surface</a></code></li>
+<li><code><a title="LinearAlgebra.object_data_add" href="#LinearAlgebra.object_data_add">object_data_add</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
@@ -21458,14 +23124,17 @@ returned in degrees</p></div>
 <li><code><a title="LinearAlgebra.LinearAlgebra.add_ligths" href="#LinearAlgebra.LinearAlgebra.add_ligths">add_ligths</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.add_material" href="#LinearAlgebra.LinearAlgebra.add_material">add_material</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.animate_revolution_surface" href="#LinearAlgebra.LinearAlgebra.animate_revolution_surface">animate_revolution_surface</a></code></li>
+<li><code><a title="LinearAlgebra.LinearAlgebra.base_adaptada" href="#LinearAlgebra.LinearAlgebra.base_adaptada">base_adaptada</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.base_canonica" href="#LinearAlgebra.LinearAlgebra.base_canonica">base_canonica</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.base_canonica_white" href="#LinearAlgebra.LinearAlgebra.base_canonica_white">base_canonica_white</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.base_cilinder" href="#LinearAlgebra.LinearAlgebra.base_cilinder">base_cilinder</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.base_cone" href="#LinearAlgebra.LinearAlgebra.base_cone">base_cone</a></code></li>
+<li><code><a title="LinearAlgebra.LinearAlgebra.base_disk" href="#LinearAlgebra.LinearAlgebra.base_disk">base_disk</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.base_is_canonica" href="#LinearAlgebra.LinearAlgebra.base_is_canonica">base_is_canonica</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.base_no_canonica" href="#LinearAlgebra.LinearAlgebra.base_no_canonica">base_no_canonica</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.canvi_base" href="#LinearAlgebra.LinearAlgebra.canvi_base">canvi_base</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.canvi_coordenades" href="#LinearAlgebra.LinearAlgebra.canvi_coordenades">canvi_coordenades</a></code></li>
+<li><code><a title="LinearAlgebra.LinearAlgebra.cilindre" href="#LinearAlgebra.LinearAlgebra.cilindre">cilindre</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.cilindre_elliptic" href="#LinearAlgebra.LinearAlgebra.cilindre_elliptic">cilindre_elliptic</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.cilindre_elliptic_simple" href="#LinearAlgebra.LinearAlgebra.cilindre_elliptic_simple">cilindre_elliptic_simple</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.cilindre_hiperbolic" href="#LinearAlgebra.LinearAlgebra.cilindre_hiperbolic">cilindre_hiperbolic</a></code></li>
@@ -21483,6 +23152,7 @@ returned in degrees</p></div>
 <li><code><a title="LinearAlgebra.LinearAlgebra.curve" href="#LinearAlgebra.LinearAlgebra.curve">curve</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.delete_base_cilinder" href="#LinearAlgebra.LinearAlgebra.delete_base_cilinder">delete_base_cilinder</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.delete_base_cone" href="#LinearAlgebra.LinearAlgebra.delete_base_cone">delete_base_cone</a></code></li>
+<li><code><a title="LinearAlgebra.LinearAlgebra.delete_base_disk" href="#LinearAlgebra.LinearAlgebra.delete_base_disk">delete_base_disk</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.distancia_rectes_encreuen" href="#LinearAlgebra.LinearAlgebra.distancia_rectes_encreuen">distancia_rectes_encreuen</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.draw_base_axis" href="#LinearAlgebra.LinearAlgebra.draw_base_axis">draw_base_axis</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.draw_circle" href="#LinearAlgebra.LinearAlgebra.draw_circle">draw_circle</a></code></li>
@@ -21490,6 +23160,7 @@ returned in degrees</p></div>
 <li><code><a title="LinearAlgebra.LinearAlgebra.draw_cone" href="#LinearAlgebra.LinearAlgebra.draw_cone">draw_cone</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.draw_cube" href="#LinearAlgebra.LinearAlgebra.draw_cube">draw_cube</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.draw_curve" href="#LinearAlgebra.LinearAlgebra.draw_curve">draw_curve</a></code></li>
+<li><code><a title="LinearAlgebra.LinearAlgebra.draw_disk" href="#LinearAlgebra.LinearAlgebra.draw_disk">draw_disk</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.draw_ellipse" href="#LinearAlgebra.LinearAlgebra.draw_ellipse">draw_ellipse</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.draw_ellipsoid" href="#LinearAlgebra.LinearAlgebra.draw_ellipsoid">draw_ellipsoid</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.draw_elliptic_cylinder" href="#LinearAlgebra.LinearAlgebra.draw_elliptic_cylinder">draw_elliptic_cylinder</a></code></li>
@@ -21538,8 +23209,11 @@ returned in degrees</p></div>
 <li><code><a title="LinearAlgebra.LinearAlgebra.hyperbolic_cylinder" href="#LinearAlgebra.LinearAlgebra.hyperbolic_cylinder">hyperbolic_cylinder</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.hyperbolic_paraboloid" href="#LinearAlgebra.LinearAlgebra.hyperbolic_paraboloid">hyperbolic_paraboloid</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.join" href="#LinearAlgebra.LinearAlgebra.join">join</a></code></li>
+<li><code><a title="LinearAlgebra.LinearAlgebra.moviment_helicoidal_cilindre" href="#LinearAlgebra.LinearAlgebra.moviment_helicoidal_cilindre">moviment_helicoidal_cilindre</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.moviment_helicoidal_ortoedre" href="#LinearAlgebra.LinearAlgebra.moviment_helicoidal_ortoedre">moviment_helicoidal_ortoedre</a></code></li>
+<li><code><a title="LinearAlgebra.LinearAlgebra.moviment_helicoidal_punt" href="#LinearAlgebra.LinearAlgebra.moviment_helicoidal_punt">moviment_helicoidal_punt</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.one_sheet_hyperboloid" href="#LinearAlgebra.LinearAlgebra.one_sheet_hyperboloid">one_sheet_hyperboloid</a></code></li>
+<li><code><a title="LinearAlgebra.LinearAlgebra.ortoedre" href="#LinearAlgebra.LinearAlgebra.ortoedre">ortoedre</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.parabola" href="#LinearAlgebra.LinearAlgebra.parabola">parabola</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.parabolic_cylinder" href="#LinearAlgebra.LinearAlgebra.parabolic_cylinder">parabolic_cylinder</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.paraboloide_elliptic" href="#LinearAlgebra.LinearAlgebra.paraboloide_elliptic">paraboloide_elliptic</a></code></li>
@@ -21570,11 +23244,13 @@ returned in degrees</p></div>
 <li><code><a title="LinearAlgebra.LinearAlgebra.rotacio_ortoedre" href="#LinearAlgebra.LinearAlgebra.rotacio_ortoedre">rotacio_ortoedre</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.rotacio_ortoedre_angles_euler" href="#LinearAlgebra.LinearAlgebra.rotacio_ortoedre_angles_euler">rotacio_ortoedre_angles_euler</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.rotacio_ortoedre_voltant_vector" href="#LinearAlgebra.LinearAlgebra.rotacio_ortoedre_voltant_vector">rotacio_ortoedre_voltant_vector</a></code></li>
+<li><code><a title="LinearAlgebra.LinearAlgebra.rotacio_punt" href="#LinearAlgebra.LinearAlgebra.rotacio_punt">rotacio_punt</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.rotacio_vector" href="#LinearAlgebra.LinearAlgebra.rotacio_vector">rotacio_vector</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.rotate_euler" href="#LinearAlgebra.LinearAlgebra.rotate_euler">rotate_euler</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.rotate_object" href="#LinearAlgebra.LinearAlgebra.rotate_object">rotate_object</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.rotate_object_by_axis_angle" href="#LinearAlgebra.LinearAlgebra.rotate_object_by_axis_angle">rotate_object_by_axis_angle</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.rotate_objects" href="#LinearAlgebra.LinearAlgebra.rotate_objects">rotate_objects</a></code></li>
+<li><code><a title="LinearAlgebra.LinearAlgebra.rotate_point" href="#LinearAlgebra.LinearAlgebra.rotate_point">rotate_point</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.rotate_vector" href="#LinearAlgebra.LinearAlgebra.rotate_vector">rotate_vector</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.set_base" href="#LinearAlgebra.LinearAlgebra.set_base">set_base</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.set_colors" href="#LinearAlgebra.LinearAlgebra.set_colors">set_colors</a></code></li>

@@ -3,7 +3,7 @@
 # Author:     Rafel Amer (rafel.amer AT upc.edu)
 # Copyright:  Rafel Amer 2020-2024
 #
-#             This file contains code from the files add_mesh_3d_function_surface.py
+#             This file contains code from the files add_mesh_3d_function_surface.
 #             and object_utils.py distributed with Blender as add_ons
 # 
 # Disclaimer: This code is presented "as is" and it has been written to learn
@@ -830,6 +830,17 @@ class LinearAlgebra():
 	#
 	#
 	#
+	def base_disk(self):
+		"""
+		Draws a base cone with radius1=1.5, radius2=0, depth=2
+		"""
+		bpy.ops.mesh.primitive_circle_add(vertices=32,fill_type='NGON',enter_editmode=False,align='WORLD',location=(0.0, 0.0, 0.0))
+		bpy.ops.object.origin_set(type='ORIGIN_CURSOR', center='MEDIAN')
+		bpy.ops.object.shade_smooth()
+		bpy.context.object.name = 'Base_disk'
+	#
+	#
+	#
 	def delete_base_cilinder(self):
 		"""
 		Removes the base cilinder
@@ -846,6 +857,16 @@ class LinearAlgebra():
 		"""
 		bpy.ops.object.select_all(action='DESELECT')
 		bpy.data.objects['Arrow_cone'].select_set(True)
+		bpy.ops.object.delete()
+	#
+	#
+	#
+	def delete_base_disk(self):
+		"""
+		Removes the base disk
+		"""
+		bpy.ops.object.select_all(action='DESELECT')
+		bpy.data.objects['Base_disk'].select_set(True)
 		bpy.ops.object.delete()
 	#
 	#
@@ -3211,21 +3232,23 @@ class LinearAlgebra():
 	#
 	# Join a list a objects
 	#
-	def join(self,list):
+	def join(self,llista):
 		"""
 		Joins a list of objects
 		Parameters:
-		   list: list of objects
+		   llista: list of objects
 		"""
-		if len(list) <= 1:
+		if len(llista) == 0:
 			return
+		if len(llista) == 1:
+			return llista[0]
 		bpy.ops.object.select_all(action='DESELECT')
-		bpy.context.view_layer.objects.active = list[0]
-		for obj in list:
+		bpy.context.view_layer.objects.active = llista[0]
+		for obj in llista:
 			obj.select_set(True)
 		bpy.ops.object.join()
 		bpy.ops.object.select_all(action='DESELECT')
-		return list[0]
+		return llista[0]
 	#
 	# Vectors to quaternion
 	#
@@ -4008,6 +4031,49 @@ class LinearAlgebra():
 	#
 	#
 	#
+	def draw_disk(self,center=Vector([0,0,0]),radius=5,u1=Vector([1,0,0]),u2=Vector([0,1,0]),thickness=0.01,name="Disc",color="AzureBlueDark"):
+		"""
+		Draws a disc in a reference R' determined by self.origin and self.base
+		Parameters:
+		   radius: radius of the disc
+
+		   thickness: thickness of the surface
+
+		   name: name of the curve
+
+		   color: color of the curve
+		"""
+		self.base_disk()
+		t = bpy.data.objects.get("Base_disk")
+		obj = t.copy()
+		obj.name = name
+		self.delete_base_disk()
+		if radius != 1.0:
+			obj.scale = (radius,radius,1)
+		modifier = obj.modifiers.new(name="SubSurf", type='SUBSURF')
+		modifier.levels = 4
+		modifier.subdivision_type = 'SIMPLE'
+		if thickness > 0.0:
+			modifier = obj.modifiers.new(name="Solidify", type='SOLIDIFY')
+			modifier.thickness = thickness
+			modifier.offset = 1.0
+		c = Colors.color(color)
+		self.add_material(obj,c.name,c.r,c.g,c.b,1.0)
+		qt = self.vectors_to_quaternion(u1,u2)
+		self.set_rotation(quaternion=qt)
+		if self.rotation is not None:
+			obj.rotation_mode = 'QUATERNION'
+			obj.rotation_quaternion.rotate(self.rotation.quaternion)
+			### obj.location.rotate(self.rotation.quaternion)
+		obj.location = center
+		self.scene.collection.objects.link(obj)
+		bpy.ops.object.shade_smooth()
+		bpy.context.view_layer.objects.active = None
+		obj.select_set(False)
+		return obj
+	#
+	#
+	#
 	def curve(self,fun=None,tmin=0.0,tmax=1.0,steps=25,thickness=0.01,name="Curve",color="White",axis=False,zaxis=True,o=Vector([0,0,0]),u1=Vector([1,0,0]),u2=Vector([0,1,0]),symmetry=None,change=False):
 		"""
 		Draws a curve in a reference R' determined by the origin o and basis {v1, v2, v3} constructed from u1 and u2 and
@@ -4107,7 +4173,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def draw_circle(self,center=[0,0,0],u1=Vector([1,0,0]),u2=Vector([0,1,0]),axis=False,zaxis=False,radius=1,steps=25,thickness=0.01,name="Circle",color="White",change=False):
+	def draw_circle(self,center=[0,0,0],u1=Vector([1,0,0]),u2=Vector([0,1,0]),axis=False,zaxis=False,radius=1,steps=128,thickness=0.01,name="Circle",color="White",fillcolor=None,change=False):
 		"""
 		Draws a circle of center 'center' and radius 'radius' in the plane determined by vectors u1 and u2
 		Parameters:
@@ -4131,10 +4197,14 @@ class LinearAlgebra():
 
 		   change: if True, set the reference self.orifin, self.base to {o; v1, v2, v3}
 		"""
+		d = None
+		if fillcolor is not None:
+			d = self.draw_disk(center=center,radius=radius,u1=u1,u2=u2,thickness=0.5*thickness,name="Disc",color=fillcolor)
+		c = self.draw_curve(lambda t: (radius*math.cos(t),radius*math.sin(t),0),tmin=0.0,tmax=2*math.pi,axis=axis,zaxis=zaxis,steps=steps,thickness=thickness,name=name,color=color,o=center,u1=u1,u2=u2)
 		if change:
 			self.set_origin(center)
 			self.set_base([u1,u2],orthonormal=True)
-		return self.draw_curve(lambda t: (radius*math.cos(t),radius*math.sin(t),0),tmin=0.0,tmax=2*math.pi,axis=axis,zaxis=zaxis,steps=steps,thickness=thickness,name=name,color=color,o=center,u1=u1,u2=u2)
+		return c, d
 	#
 	#
 	#
@@ -4587,7 +4657,7 @@ class LinearAlgebra():
 	#
 	# Helical motion or rotation of objects
 	#
-	def rotate_objects(self,objs=[],axis='Z',angle=90,frames=1,origin=Vector([0,0,0]),translation=[0.0,0.0,0.0],length=25,draw=False):
+	def rotate_objects(self,objs=[],axis='Z',angle=None,frames=1,origin=Vector([0,0,0]),translation=3,rounds=1,length=25,draw=False):
 		"""
 		Rotates an object around the axis
 		Parameters:
@@ -4595,14 +4665,11 @@ class LinearAlgebra():
 
 		   axis: it must be 'X', 'Y', 'Z' or a Vector
 
-		   local: if True the center of rotation is the location of the object
 		"""
 		if objs is None or (not isinstance(objs,list) and not isinstance(objs,tuple)):
 			return None
 		if not isinstance(origin,Vector):
 			origin = Vector(origin)
-		if not isinstance(translation,Vector):
-			translation = Vector(translation)
 		if isinstance(axis,str):
 			axis = axis.strip().upper()
 		if axis == 'X':
@@ -4616,19 +4683,27 @@ class LinearAlgebra():
 		else:
 			u = Vector(axis)
 
+		if angle is None:
+			angle = 360
+		else:
+			rounds = 1
+
 		if draw:
 			self.set_origin(origin)
 			self.draw_vector(u,axis=length,positive=False,color="White")
 			self.set_origin()
 
 		r = Rotation(1/int(frames),u)
-		t = translation / (int(frames) * angle)
+		axis, alfa = r.to_axis_angle()
+		axis.normalize()
+		r = Rotation(1/int(frames),u)
+		t =  translation / (alfa * int(frames) * 360) * axis
 		bpy.context.scene.frame_set(self.frame)
 		for obj in objs:
 			obj.keyframe_insert(data_path="rotation_quaternion",index=-1)
 			obj.keyframe_insert(data_path="location",index=-1)
 		fn = self.frame + 1
-		for i in range(int(frames) * angle):
+		for i in range(int(frames) * int(rounds) * angle):
 			for obj in objs:
 				bpy.context.scene.frame_set(fn)
 				obj.rotation_quaternion.rotate(r.quaternion)
@@ -4975,6 +5050,7 @@ class LinearAlgebra():
 			self.set_origin(origin)
 			self.draw_vector(u,axis=length,positive=False,color="White")
 			self.set_origin()
+		return
 		r = Rotation(1/int(frames),u)
 		axis, angle = r.to_axis_angle()
 		axis.normalize()
@@ -6196,7 +6272,53 @@ class LinearAlgebra():
 		co = self.cone(a2=a**2,b2=b**2,c2=c**2,u1=u1,u2=u2,xmax=pmax,canonica=True,principal=False)
 		self.reset()
 		return co
+	#
+	# Cilindre fitat
+	#
+	def cilindre(self,centre=Vector([0,0,0]),radi=1,height=5,eix='Z',color="AzureBlueDark",circlecolor="Blue"):
+		"""
+		Draws a bounded cylinder with direction eix
+		Parameters:
 
+		centre: center of the cylinder
+
+		radi: radius
+
+		height: height
+
+		eix: X, Y, Z or a vector
+
+		color: color of the cylinder
+
+		circlecolor: color of the two circles of a bounded cylinder 
+		"""
+		if not isinstance(centre,Vector):
+			centre = Vector(centre)
+		if isinstance(eix,str):
+			eix = eix.strip().upper()
+		if eix == 'X':
+			u = Vector([1,0,0])
+		elif eix == 'Y':
+			u = Vector([0,1,0])
+		elif eix == 'Z':
+			u = Vector([0,0,1])
+		elif isinstance(eix,Vector):
+			u = eix
+		else:
+			u = Vector(eix)
+		
+		u1 = u.orthogonal().normalized()
+		u2 = u.normalized().cross(u1)
+		center1 = centre + height/2 * u.normalized()
+		center2 = centre - height/2 * u.normalized()
+		
+		c1, d1 = self.draw_circle(center=center1,radius=radi,u1=u1,u2=u2,axis=False,zaxis=False,steps=128,thickness=0.02,name="Circumferències",fillcolor=color,color=circlecolor)
+		c2, d2 = self.draw_circle(center=center2,radius=radi,u1=u1,u2=u2,axis=False,zaxis=False,steps=128,thickness=0.02,name="Circumferència 2",fillcolor=color,color=circlecolor)
+		_, _, cil = self.elliptic_cylinder(o=centre,a2=radi**2,b2=radi**2,u1=u1,u2=u2,principal=False,canonica=False,zmax=height/2,color=color,thickness=0.01,name="Cilindre")
+		self.join([cil,d1,d2])
+		self.join([c1,c2])
+		self.reset()
+		return cil, c1
 	#
 	# Esfera
 	#
@@ -6319,9 +6441,9 @@ class LinearAlgebra():
 		elif eix == 'Z':
 			u = Vector([0,0,1])
 		elif isinstance(axis,Vector):
-			u = axis
+			u = eix
 		else:
-			u = Vector(axis)
+			u = Vector(eix)
 		e = vector.project(eix)
 		l = e.length
 		if l < 18:
@@ -6477,6 +6599,63 @@ class LinearAlgebra():
 			quaternion = x.rotation_difference(w1)
 			ortoedre.rotation_quaternion.rotate(quaternion)
 		self.rotate_object(ortoedre,axis=eix,origin=origen,helical=translacio,rounds=rounds)
+	#
+	# Rotation or helical motion of a cylinder
+	#
+	def moviment_helicoidal_cilindre(self,centre=Vector([0,0,0]),radi=3,altura=12,opacity=1,origen=Vector([4,3,0]),eix='Z',rounds=1,translacio=0.0,aligned=False,reverse=False):
+		"""
+		Draws an animation of the helical motion of an orthohedron around an affine line
+		Parameters:
+			centre: center of the cylinder
+
+			radi: radius of the cylinder
+
+			altura: height of the cylinder
+
+			origen: point of the affine line
+
+			eix: axis of rotation
+
+			opacity: opacity of the orthohedron
+
+			translation: translation of the helical motion (distance by round)
+			             if translation = 0.0, it's a rotation motion
+
+			aligned: if True, aligns the orthohedron with the axis of rotation
+		"""
+		if isinstance(eix,str):
+			eix = eix.strip().upper()
+		if eix == 'X':
+			u = Vector([1,0,0])
+		elif eix == 'Y':
+			u = Vector([0,1,0])
+		elif eix == 'Z':
+			u = Vector([0,0,1])
+		elif isinstance(eix,Vector):
+			u = eix
+		else:
+			u = Vector(eix)
+		
+		w1 = u.normalized()
+		w2 = u.orthogonal().normalized()
+		w3 = w1.cross(w2)
+		self.base_canonica()
+		if not isinstance(centre,Vector):
+			centre = Vector(centre)
+		if not isinstance(origen,Vector):
+			origen = Vector(origen)
+		cil, cir = self.cilindre(centre=centre,radi=radi,height=altura,eix='Z',color="AzureBlueDark",circlecolor="Blue")
+		if aligned:
+			cil.rotation_mode = 'QUATERNION'
+			cir.rotation_mode = 'QUATERNION'
+			x = Vector([0,0,1])
+			quaternion = x.rotation_difference(w1)
+			cil.rotation_quaternion.rotate(quaternion)
+			cir.rotation_quaternion.rotate(quaternion)
+			cir.location = cil.location + altura/2 * w1
+		if reverse:
+			u *= -1
+		self.rotate_objects([cil,cir],axis=u,origin=origen,translation=translacio,rounds=rounds,draw=True)
 	#
 	# Rotation or helical motion of a point
 	#
