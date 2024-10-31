@@ -4657,7 +4657,7 @@ class LinearAlgebra():
 	#
 	# Helical motion or rotation of objects
 	#
-	def rotate_objects(self,objs=[],axis='Z',angle=None,frames=1,origin=Vector([0,0,0]),translation=3,rounds=1,length=25,draw=False):
+	def rotate_objects(self,objs=[],axis='Z',angle=None,frames=1,origin=Vector([0,0,0]),helical=0,rounds=1,length=25,draw=False):
 		"""
 		Rotates an object around the axis
 		Parameters:
@@ -4697,7 +4697,7 @@ class LinearAlgebra():
 		axis, alfa = r.to_axis_angle()
 		axis.normalize()
 		r = Rotation(1/int(frames),u)
-		t =  translation / (alfa * int(frames) * 360) * axis
+		t =  helical / (alfa * int(frames) * 360) * axis
 		bpy.context.scene.frame_set(self.frame)
 		for obj in objs:
 			obj.keyframe_insert(data_path="rotation_quaternion",index=-1)
@@ -6655,11 +6655,11 @@ class LinearAlgebra():
 			cir.location = cil.location + altura/2 * w1
 		if reverse:
 			u *= -1
-		self.rotate_objects([cil,cir],axis=u,origin=origen,translation=translacio,rounds=rounds,draw=True)
+		self.rotate_objects([cil,cir],axis=u,origin=origen,helical=translacio,rounds=rounds,draw=True)
 	#
 	# Rotation or helical motion of a point
 	#
-	def moviment_helicoidal_punt(self,punt=Vector([0,0,0]),origen=Vector([-3,-3,-4]),eix='Z',rounds=5,translacio=2,reverse=False):
+	def moviment_helicoidal_punt(self,punt=Vector([0,0,0]),origen=Vector([-3,-3,-4]),eix='Z',rounds=5,translacio=2,vectors=True,reverse=False):
 		"""
 		Draws an animation of the helical motion of an orthohedron around an affine line
 		Parameters:
@@ -6691,12 +6691,23 @@ class LinearAlgebra():
 			punt = Vector(punt)
 		if not isinstance(origen,Vector):
 			origen = Vector(origen)
-		self.draw_point(radius=0.3,location=punt,name="Blue",color="Blue")
-		obj = self.draw_point(radius=0.3,location=punt,name="Red",color="Red")
-		if reverse:
-			self.rotate_object(obj,axis=-u,origin=origen,helical=translacio,rounds=rounds)
+		self.draw_point(radius=0.2,location=punt,name="Blue",color="Blue")
+		obj = self.draw_point(radius=0.2,location=punt,name="Red",color="Red")
+		obj2 = None
+		if vectors:
+			self.set_origin(origen)
+			self.draw_vector(punt-origen,name="VBlack",color="Black")
+			obj2 = self.draw_vector(punt-origen,name="VRed",color="Red")
+		if obj2 is None:
+			if reverse:
+				self.rotate_object(obj,axis=-u,origin=origen,helical=translacio,rounds=rounds,draw=True)
+			else:
+				self.rotate_object(obj,axis=u,origin=origen,helical=translacio,rounds=rounds,draw=True)
 		else:
-			self.rotate_object(obj,axis=u,origin=origen,helical=translacio,rounds=rounds)
+			if reverse:
+				self.rotate_objects([obj,obj2],axis=-u,origin=origen,helical=translacio,rounds=rounds,draw=True)
+			else:
+				self.rotate_objects([obj,obj2],axis=u,origin=origen,helical=translacio,rounds=rounds,draw=True)
 		vec1 = (punt-origen).project(u)
 		center = origen + vec1
 		w1 = (punt-center).normalized()
@@ -6704,6 +6715,7 @@ class LinearAlgebra():
 		w2 = w3.cross(w1)
 		radius = (center-punt).length
 		self.curve(lambda t: (radius*cos(t),radius*sin(t),translacio*t/(2*pi)),tmin=-2*rounds*pi,tmax=2*rounds*pi,steps=128*rounds,thickness=0.005,name="Hèlix",color="Yellow",o=center,u1=w1,u2=w2)
+		self.reset()
 	#
 	# Gir en el pla d'un poligon
 	#
