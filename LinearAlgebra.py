@@ -6005,11 +6005,11 @@ class LinearAlgebra():
 			punt: if it's a value between 0 and pi, the animation shows a rotating point
 		"""
 		if direccio == 'X' or direccio == 'x':
-			F = lambda t: (a*cos(t),0,b*sin(t))
+			F = lambda t: (a*math.cos(t),0,b*math.sin(t))
 		elif direccio == 'Y' or direccio == 'y':
-			F = lambda t: (0,a*cos(t),b*sin(t))
+			F = lambda t: (0,a*math.cos(t),b*math.sin(t))
 		else:
-			F = lambda t: (b*sin(t),0,a*cos(t))
+			F = lambda t: (b*math.sin(t),0,a*math.cos(t))
 		self.base_canonica()
 		self.animate_revolution_surface(F,tmin=0,tmax=math.pi,steps=128,axis=direccio,point=punt)
 	#
@@ -6714,7 +6714,7 @@ class LinearAlgebra():
 		w3 = u.normalized()
 		w2 = w3.cross(w1)
 		radius = (center-punt).length
-		self.curve(lambda t: (radius*cos(t),radius*sin(t),translacio*t/(2*pi)),tmin=-2*rounds*pi,tmax=2*rounds*pi,steps=128*rounds,thickness=0.005,name="Hèlix",color="Yellow",o=center,u1=w1,u2=w2)
+		self.curve(lambda t: (radius*math.cos(t),radius*math.sin(t),translacio*t/(2*math.pi)),tmin=-2*rounds*math.pi,tmax=2*rounds*math.pi,steps=128*rounds,thickness=0.005,name="Hèlix",color="Yellow",o=center,u1=w1,u2=w2)
 		self.reset()
 	#
 	# Gir en el pla d'un poligon
