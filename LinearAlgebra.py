@@ -5050,7 +5050,6 @@ class LinearAlgebra():
 			self.set_origin(origin)
 			self.draw_vector(u,axis=length,positive=False,color="White")
 			self.set_origin()
-		return
 		r = Rotation(1/int(frames),u)
 		axis, angle = r.to_axis_angle()
 		axis.normalize()
