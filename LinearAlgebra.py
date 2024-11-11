@@ -4836,7 +4836,7 @@ class LinearAlgebra():
 			return
 
 		self.draw_base_axis(axis = amax,scale=scaleaxis,positive=False,name="Base canònica")
-		self.draw_vector(u,scale=0.1,axis=amax,positive=False,color="Black",name="Eix rotació")
+		self.draw_vector(u,scale=0.1,axis=amax,positive=False,color="White",name="Eix rotació")
 
 		num = int(angle)
 		alfa = angle / num
