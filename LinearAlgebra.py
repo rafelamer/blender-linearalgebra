@@ -6439,7 +6439,7 @@ class LinearAlgebra():
 			u = Vector([0,1,0])
 		elif eix == 'Z':
 			u = Vector([0,0,1])
-		elif isinstance(axis,Vector):
+		elif isinstance(eix,Vector):
 			u = eix
 		else:
 			u = Vector(eix)
