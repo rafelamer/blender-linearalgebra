@@ -1044,7 +1044,7 @@ class LinearAlgebra():
 			principled_bsdf.inputs['Base Color'].default_value = (r, g, b, opacity)
 			principled_bsdf.inputs['IOR'].default_value = 0.0
 			principled_bsdf.inputs['Metallic'].default_value = 1.0
-			principled_bsdf.inputs['Roughness'].default_value = 1.0
+			principled_bsdf.inputs['Roughness'].default_value = 0.6
 			if bpy.app.version[0] < 4:
 				principled_bsdf.inputs['Specular'].default_value = 1.0
 			else:
@@ -4657,7 +4657,7 @@ class LinearAlgebra():
 	#
 	# Helical motion or rotation of objects
 	#
-	def rotate_objects(self,objs=[],axis='Z',angle=None,frames=1,origin=Vector([0,0,0]),helical=0,rounds=1,length=25,draw=False):
+	def rotate_objects(self,objs=[],axis='Z',angle=None,frames=1,origin=Vector([0,0,0]),translation=0,rounds=1,length=25,draw=False):
 		"""
 		Rotates an object around the axis
 		Parameters:
@@ -4697,7 +4697,7 @@ class LinearAlgebra():
 		axis, alfa = r.to_axis_angle()
 		axis.normalize()
 		r = Rotation(1/int(frames),u)
-		t =  helical / (alfa * int(frames) * 360) * axis
+		t =  translation / (alfa * int(frames) * 360) * axis
 		bpy.context.scene.frame_set(self.frame)
 		for obj in objs:
 			obj.keyframe_insert(data_path="rotation_quaternion",index=-1)
@@ -5004,7 +5004,7 @@ class LinearAlgebra():
 	#
 	# Rotate objects or helical motion
 	#
-	def rotate_object(self,obj=None,axis='Z',frames=1,origin=Vector([0,0,0]),localaxis=None,localangle=None,helical=0.0,rounds=1,length=25,draw=True):
+	def rotate_object(self,obj=None,axis='Z',frames=1,origin=Vector([0,0,0]),localaxis=None,localangle=None,translation=0.0,rounds=1,length=25,draw=True):
 		"""
 		Rotates an object around the axis
 		Parameters:
@@ -5014,7 +5014,7 @@ class LinearAlgebra():
 
 		   frames: increment of the frame set
 
-		   helical: tranlation by round
+		   traslation: tranlation by round
 
 		   local: if True the center of rotation is the location of the object
 		"""
@@ -5053,7 +5053,7 @@ class LinearAlgebra():
 		r = Rotation(1/int(frames),u)
 		axis, angle = r.to_axis_angle()
 		axis.normalize()
-		t =  helical / (angle * int(frames) * 360) * axis
+		t =  translation / (angle * int(frames) * 360) * axis
 		bpy.context.scene.frame_set(self.frame)
 		obj.keyframe_insert(data_path="rotation_quaternion",index=-1)
 		obj.keyframe_insert(data_path="location",index=-1)
@@ -6597,7 +6597,7 @@ class LinearAlgebra():
 			x = Vector([1,0,0])
 			quaternion = x.rotation_difference(w1)
 			ortoedre.rotation_quaternion.rotate(quaternion)
-		self.rotate_object(ortoedre,axis=eix,origin=origen,helical=translacio,rounds=rounds)
+		self.rotate_object(ortoedre,axis=eix,origin=origen,translation=translacio,rounds=rounds)
 	#
 	# Rotation or helical motion of a cylinder
 	#
@@ -6654,7 +6654,7 @@ class LinearAlgebra():
 			cir.location = cil.location + altura/2 * w1
 		if reverse:
 			u *= -1
-		self.rotate_objects([cil,cir],axis=u,origin=origen,helical=translacio,rounds=rounds,draw=True)
+		self.rotate_objects([cil,cir],axis=u,origin=origen,translation=translacio,rounds=rounds,draw=True)
 	#
 	# Rotation or helical motion of a point
 	#
@@ -6699,14 +6699,14 @@ class LinearAlgebra():
 			obj2 = self.draw_vector(punt-origen,name="VRed",color="Red")
 		if obj2 is None:
 			if reverse:
-				self.rotate_object(obj,axis=-u,origin=origen,helical=translacio,rounds=rounds,draw=True)
+				self.rotate_object(obj,axis=-u,origin=origen,translation=translacio,rounds=rounds,draw=True)
 			else:
-				self.rotate_object(obj,axis=u,origin=origen,helical=translacio,rounds=rounds,draw=True)
+				self.rotate_object(obj,axis=u,origin=origen,translation=translacio,rounds=rounds,draw=True)
 		else:
 			if reverse:
-				self.rotate_objects([obj,obj2],axis=-u,origin=origen,helical=translacio,rounds=rounds,draw=True)
+				self.rotate_objects([obj,obj2],axis=-u,origin=origen,translation=translacio,rounds=rounds,draw=True)
 			else:
-				self.rotate_objects([obj,obj2],axis=u,origin=origen,helical=translacio,rounds=rounds,draw=True)
+				self.rotate_objects([obj,obj2],axis=u,origin=origen,translation=translacio,rounds=rounds,draw=True)
 		vec1 = (punt-origen).project(u)
 		center = origen + vec1
 		w1 = (punt-center).normalized()
