@@ -1,3 +1,4 @@
+
 #########################################################################################
 # Filename:   LinearAlgebra.py
 # Author:     Rafel Amer (rafel.amer AT upc.edu)
@@ -5782,7 +5783,7 @@ class LinearAlgebra():
 	#
 	# Punt en referència canònica
 	#
-	def punt_referencia_canonica(self,punt=Vector([-4,7,6]),radius=0.1,length=12,name="Punt p",coordenades=True):
+	def punt_referencia_canonica(self,punt=Vector([-4,7,6]),radius=0.1,length=12,name="Punt p",coordenades=True,vector=True):
 		"""
 		Draws a point expressed in the canonical reference
 		Parameters:
@@ -5792,7 +5793,9 @@ class LinearAlgebra():
 
 		   name: name of the point
 
-		   components: if True draws lines representing the coordinates
+		   coordenades: if True draws lines representing the coordinates
+
+		   vector: if True, it draws the position vector
 		"""
 		self.base_canonica(length=length)
 		if not isinstance(punt,Vector):
@@ -5800,6 +5803,8 @@ class LinearAlgebra():
 		self.draw_point(location=punt,color="Black",radius=radius,name=name)
 		if coordenades:
 			self.draw_components(punt,name="Coordenades en referència canònica")
+		if vector:
+			self.draw_vector(punt)
 	#
 	# Referència no canònica
 	#
@@ -5832,7 +5837,7 @@ class LinearAlgebra():
 	#
 	# Punt en referencia no canònica
 	#
-	def punt_referencia_no_canonica(self,punt=Vector([5,6,-5]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),length=12,scale=0.04,radius=0.1,name="Punt p"):
+	def punt_referencia_no_canonica(self,punt=Vector([5,6,-5]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),length=12,scale=0.04,radius=0.1,name="Punt p",vector=True):
 		"""
 		Draws a point expressed in the reference {o,u1,u2,u3} with origin in the point origin and sets the default
 		origin and default base to them
@@ -5848,12 +5853,16 @@ class LinearAlgebra():
 			scale: scale of the axis
 
 			name: name of the reference
+
+			vector: if True, it draws the position vector
 		"""
 		self.referencia_no_canonica(origin=origin,u1=u1,u2=u2,u3=u3,length=length,scale=scale,name="Referència R'")
 		if not isinstance(punt,Vector):
 			punt = Vector(punt)
 		self.draw_point(location=punt,color="Black",radius=radius,name=name)
 		self.draw_components(punt,scale=0.015,name="Coordenades en referència R'")
+		if vector:
+			self.draw_vector(punt)
 	#
 	# Canvi de coordenades
 	#
