@@ -1045,7 +1045,7 @@ class LinearAlgebra():
 			principled_bsdf.inputs['Base Color'].default_value = (r, g, b, opacity)
 			principled_bsdf.inputs['IOR'].default_value = 0.0
 			principled_bsdf.inputs['Metallic'].default_value = 1.0
-			principled_bsdf.inputs['Roughness'].default_value = 0.6
+			principled_bsdf.inputs['Roughness'].default_value = 0.55
 			if bpy.app.version[0] < 4:
 				principled_bsdf.inputs['Specular'].default_value = 1.0
 			else:
@@ -6363,7 +6363,7 @@ class LinearAlgebra():
 			centre = Vector(centre)
 		def F(t):
 			return (centre + Vector([radi*math.cos(t),0,radi*math.sin(t)]))
-		self.animate_revolution_surface(F,tmin=0,tmax=2*pi,steps=128,axis='Z',point=punt)
+		self.animate_revolution_surface(F,tmin=0,tmax=2*math.pi,steps=128,axis='Z',point=punt)
 	#
 	# Revolució d'una paràbola que no és un paraboloide
 	#
@@ -6799,7 +6799,7 @@ class LinearAlgebra():
 			# L'altre vèrtex està dins o fora de la circumferència x^2 + y^2 = radi^2
 			#
 			if (sol[0][x] == radi and abs(x0 - a) < radi) or (sol[0][x] == - radi and abs(x0 + a) < radi):
-				self.curve(F,tmin=0,tmax=2*pi,steps=512,thickness=0.05,color="Black",symmetry='XY',name="Corba intersecció")
+				self.curve(F,tmin=0,tmax=2*math.pi,steps=512,thickness=0.05,color="Black",symmetry='XY',name="Corba intersecció")
 			else:
 				self.draw_point(radius=0.2,location=(sol[0][x],sol[0][y],0),name="Punt intersecció",color="Black",opacity=1.0)
 		#
@@ -6827,7 +6827,7 @@ class LinearAlgebra():
 					theta = [math.atan2(sol[i][y]/b,(sol[i][x] - x0)/a) for i in range(2)]
 					theta.sort()
 					if x0 > 0:
-						self.curve(F,tmin=theta[1],tmax=2*pi-theta[1],steps=512,thickness=0.05,color="Black",symmetry='XY',name="Corba intersecció")
+						self.curve(F,tmin=theta[1],tmax=2*math.pi-theta[1],steps=512,thickness=0.05,color="Black",symmetry='XY',name="Corba intersecció")
 					else:
 						self.curve(F,tmin=theta[0],tmax=theta[1],steps=512,thickness=0.05,color="Black",symmetry='XY',name="Corba intersecció")
 				else:
@@ -6877,4 +6877,4 @@ class LinearAlgebra():
 			return (x,y,z)
 		self.cone(a2=a2,b2=b2,c2=c2,principal=False,canonica=True,color="GrayLight",thickness=0.0001,name="Con",xmax=xmax,cmax=xmax+5,opacity=1.0)
 		self.elliptic_cylinder(o=[x0,0,0],a2=a**2,b2=b**2,principal=False,canonica=False,zmax=2*(zmax+3),thickness=0.01,name="Cilindre")
-		self.curve(F,tmin=0,tmax=2*pi,steps=512,thickness=0.05,color="Black",symmetry='XY',name="Corba intersecció")
+		self.curve(F,tmin=0,tmax=2*math.pi,steps=512,thickness=0.05,color="Black",symmetry='XY',name="Corba intersecció")
