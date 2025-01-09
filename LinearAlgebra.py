@@ -3891,8 +3891,8 @@ class LinearAlgebra():
 		coef = 1.0
 		if p < 0:
 			coef = -1
-		xmax /= sqrt(2*coef*p)
-		pa = self.draw_parabolic_cylinder(p=coef,xmin=0.0,xmax=xmax,length=ymax,color=color,name=name,scale=[sqrt(2*coef*p),1,1],thickness=thickness,opacity=opacity)
+		xmax /= math.sqrt(2*coef*p)
+		pa = self.draw_parabolic_cylinder(p=coef,xmin=0.0,xmax=xmax,length=ymax,color=color,name=name,scale=[math.sqrt(2*coef*p),1,1],thickness=thickness,opacity=opacity)
 		if not preserve:
 			self.set_origin()
 			self.set_base()
@@ -5146,7 +5146,7 @@ class LinearAlgebra():
 		#
 		# Here is sqrt from sympy
 		#
-		Tnorm = sqrt(sum([u**2 for u in T]))
+		Tnorm = math.sqrt(sum([u**2 for u in T]))
 		A = [diff(u,var) for u in T]
 		p0 = Vector([u.subs(var,tmin) for u in fun])
 		v0 = Vector([N(u.subs(var,tmin)) for u in T])
@@ -6211,13 +6211,13 @@ class LinearAlgebra():
 	#
 	# Cilindre parabòlic
 	#
-	def cilindre_parabolic_simple(self,a=3,direccio='Z',pmax=15,hmax=20):
+	def cilindre_parabolic_simple(self,a=3,direccio='Z',pmax=12,hmax=45):
 		r"""
 		Draws a parabolic cylinder with direction X, Y or Z
 		Parameters:
 			a: the initial parabola has equation of type z=\pm x^2/a^2
 
-			direccio: direction of translation of the hyperbole
+			direccio: direction of translation of the parabola
 
 			pmax = maximum value of the independent variable
 
