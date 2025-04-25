@@ -1,8 +1,7 @@
-
 #########################################################################################
 # Filename:   LinearAlgebra.py
 # Author:     Rafel Amer (rafel.amer AT upc.edu)
-# Copyright:  Rafel Amer 2020-2024
+# Copyright:  Rafel Amer 2020-2025
 #
 #             This file contains code from the files add_mesh_3d_function_surface.
 #             and object_utils.py distributed with Blender as add_ons
@@ -31,7 +30,7 @@ import math
 import bpy
 import bmesh
 import random
-
+import numpy as np
 try:
 	from sympy import *
 except:
@@ -778,6 +777,58 @@ class Rotation():
 		if phi > T:
 			phi = 0.0
 		return psi, theta, phi
+#
+#
+#
+class EuclideanReference():
+	"""
+	Class used to work with Eucliean References
+	"""
+	def __init__(self,o=Vector([0,0,0]),u1=Vector([1,0,0]),u2=Vector([0,1,0])):
+		"""
+		Initializes the elements of the reference from the origin and two independent vectors
+		Parameters:
+		   o: origin of 
+		   u1, u2: vectors
+		"""
+		if isinstance(o,Vector):
+			self.origin = o
+		else:
+			self.origin = Vector(o)
+		if isinstance(u1,Vector):
+			v1 = u1
+		else:
+			v1 = Vector(v1)
+		if isinstance(u2,Vector):
+			v2 = u2
+		else:
+			v2 = Vector(u2)
+		v2 = v2 - v2.project(v1)
+		v1.normalize()
+		v2.normalize()
+		v3 = v1.cross(v2)
+		self.matrix = Matrix([v1,v2,v3]).transposed()
+	#
+	#
+	#
+	def coordinates(self,u=Vector([0,0,0])):
+		"""
+		Returns the coordinates of a point (expressed in the canonical reference) in the actual reference 
+		Parameters:
+		   u: coordinates of a point in the canonical reference 
+		"""	
+		if not isinstance(u,Vector):
+			u = Vector(u)
+		return self.matrix.transposed() @ (u - self.origin)
+	#
+	#
+	#
+	def base(self):
+		"""
+		Returns the columns of the matrix
+		"""
+		mat = self.matrix.transposed()
+		return [mat.row[0],mat.row[1],mat.row[2]]
 #
 #
 #
@@ -2373,7 +2424,7 @@ class LinearAlgebra():
 
 		   thickness: thickness of the surface
 		"""
-		bpy.ops.mesh.primitive_uv_sphere_add(segments=128, ring_count=128, radius=radius, enter_editmode=False, location=(0, 0, 0))
+		bpy.ops.mesh.primitive_uv_sphere_add(segments=256, ring_count=256, radius=radius, enter_editmode=False, location=(0, 0, 0))
 		bpy.context.object.name = name
 		obj = bpy.data.objects.get(name)
 
@@ -3349,7 +3400,7 @@ class LinearAlgebra():
 		"""
 		Draws a sphere of center 'o' and radius squared equal to 'r2'
 		Parameters:
-		   o: center of the spherecmax=15
+		   o: center of the sphere
 
 		   r2: radius of the sphere squared
 
@@ -4104,7 +4155,7 @@ class LinearAlgebra():
 
 		   symmetry: list of values in ('XY','XZ','YZ','X','Y','Z','O'). For every value S, draw the symmetric curve respect to S
 
-		   change: if True, set the reference self.orifin, self.base to {o; v1, v2, v3}
+		   change: if True, set the reference self.origin, self.base to {o; v1, v2, v3}
 		"""
 		if fun is None:
 			return None
@@ -6763,6 +6814,7 @@ class LinearAlgebra():
 	cilindre_elliptic = elliptic_cylinder
 	cilindre_hiperbolic = hyperbolic_cylinder
 	cilindre_parabolic = parabolic_cylinder
+	esfera = sphere
 	#
 	# Esfera i cilindre el·liptic
 	#
@@ -6878,3 +6930,75 @@ class LinearAlgebra():
 		self.cone(a2=a2,b2=b2,c2=c2,principal=False,canonica=True,color="GrayLight",thickness=0.0001,name="Con",xmax=xmax,cmax=xmax+5,opacity=1.0)
 		self.elliptic_cylinder(o=[x0,0,0],a2=a**2,b2=b**2,principal=False,canonica=False,zmax=2*(zmax+3),thickness=0.01,name="Cilindre")
 		self.curve(F,tmin=0,tmax=2*math.pi,steps=512,thickness=0.05,color="Black",symmetry='XY',name="Corba intersecció")
+	#
+	# Segment esfèric
+	#
+	def segment_esferic(self,r=10,p1=math.pi/2,s1=0,p2=math.pi/2,s2=math.pi/2,name="Segment"):
+		"""
+		Draws an spheric segment in a sphere centered at origin with radius r from the point
+		whith spherical coordinates (radi,p1,s1) to the point (radi,p2,s2).
+		Parameters:
+		   r: radius of the sphere
+		   p1: polar angle of the first point
+		   s1: azimuthal angle of the first point
+		   p2: polar angle of the second point
+		   s2: azimuthal angle of the second point
+		"""
+		x = Vector([r*math.sin(p1)*math.cos(s1),r*math.sin(p1)*math.sin(s1),r*math.cos(p1)])
+		y = Vector([r*math.sin(p2)*math.cos(s2),r*math.sin(p2)*math.sin(s2),r*math.cos(p2)])
+		R = EuclideanReference(u1=x,u2=y)
+		x1 = R.coordinates(x)
+		y1 = R.coordinates(y)
+		b = R.base()
+		t0 = math.atan2(x1[1],x1[0])
+		t1 = math.atan2(y1[1],y1[0])
+		def F(t):
+			x = r*math.cos(t)
+			y = r*math.sin(t)
+			z = 0
+			return (x,y,z)
+		c = self.draw_curve(F,tmin=t0,tmax=t1,steps=256,thickness=0.05,color="Red",name=name,u1=b[0],u2=b[1])
+		return c
+	#
+	# Triangle esfèric
+	#
+	def triangle_esferic(self,r=10,p1=math.pi/2,s1=0,p2=math.pi/2,s2=math.pi/2,p3=0,s3=0):
+		"""
+		Draws an spheric triangle in a sphere centered at origin with radius r  with vetices
+		whith spherical coordinates (radi,p1,s1), (radi,p2,s2) and (radi,p2,s2).
+		Parameters:
+		   r: radius of the sphere
+		   p1: polar angle of the first point
+		   s1: azimuthal angle of the first point
+		   p2: polar angle of the second point
+		   s2: azimuthal angle of the second point
+		   p3: polar angle of the third point
+		   s3: azimuthal angle of the third point
+		"""
+		es = self.esfera(r2=r**2,canonica=False,principal=False,thickness=0.001,name="Esfera")
+		c1 = self.segment_esferic(r=r,p1=p1,s1=s1,p2=p2,s2=s2,name="Costat 1")
+		c2 = self.segment_esferic(r=r,p1=p2,s1=s2,p2=p3,s2=s3,name="Costat 2")
+		c3 = self.segment_esferic(r=r,p1=p3,s1=s3,p2=p1,s2=s1,name="Costat 3")
+	#
+	# Triangle esfèric aleatori
+	#
+	def triangle_esferic_aleatori(self,r=10):
+		"""
+		Draws a random spheric triangle in a sphere centered at origin with radius r 
+		Parameters:
+		   r: radius of the sphere
+		"""
+		std = math.pi/9
+		mean = math.pi/2
+		nums = np.random.normal(loc=mean, scale=std, size=20)
+		nums = [x for x in nums if x > 0 and x < math.pi]
+		p1, p2, p3 = nums[0:3]
+
+		std = math.pi/6
+		mean = 0
+		nums = np.random.normal(loc=mean, scale=std, size=20)
+		nums = [x for x in nums if x < math.pi/2 and x > -math.pi/2]
+		s1, s2, s3 = nums[0:3]
+		print(s1,s2,s3)
+		self.triangle_esferic(r=r,p1=p1,s1=s1,p2=p2,s2=s2,p3=p3,s3=s3)
+
