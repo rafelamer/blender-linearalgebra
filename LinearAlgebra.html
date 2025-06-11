@@ -1303,10 +1303,13 @@ u1, u2: vectors</p></div>
         #
         #
         #
-        def draw_vector(self,vector=None,canonica=False,color=&#34;Black&#34;,scale=0.05,arrow=True,head_height=None,axis=0,name=&#34;Vector&#34;,positive=True):
+        def draw_vector(self,origin=Vector([0,0,0]),vector=None,canonica=False,color=&#34;Black&#34;,scale=0.05,arrow=True,head_height=None,axis=0,name=&#34;Vector&#34;,positive=True):
                 &#34;&#34;&#34;
-                Draw the vector with components &#39;vector&#39;
+                Draw the vector with components &#39;vector&#39; trough &#39;origin&#39;
                 Parameters:
+
+                   origin: point of the line
+                
                    vector: components of the vector
 
                    canonica: if True, the components are in the canonical basis, else they are in the basis self.base. Finally,
@@ -1333,12 +1336,16 @@ u1, u2: vectors</p></div>
                         vec = vector
                 else:
                         vec = Vector(vector)
+                if isinstance(origin,Vector):
+                        orig = origin
+                else:
+                        orig = Vector(origin)
                 if vec.length == 0:
                         return None
                 self.base_cilinder()
                 self.base_cone()
                 o = Vector([0,0,0])
-                op = Vector(self.origin)
+                op = Vector(self.origin + orig)
                 if color is not None:
                         color = Colors.color(color)
                 v = vec
@@ -1428,6 +1435,7 @@ u1, u2: vectors</p></div>
                         return obj
                 if axis != 0:
                         return obj3
+                self.set_origin()
                 return None
         #
         #
@@ -1577,7 +1585,7 @@ u1, u2: vectors</p></div>
                         else:
                                 this = f&#34;Vector{count}&#34;
                         count += 1
-                        t = self.draw_vector(v,canonica,color=color,scale=scale,head_height=head_height,axis=axis,name=this)
+                        t = self.draw_vector(vector=v,canonica=canonica,color=color,scale=scale,head_height=head_height,axis=axis,name=this)
                 t = bpy.data.objects.get(name)
                 list = [t]
                 for count in range(1,len(vectors)+1):
@@ -5494,7 +5502,7 @@ u1, u2: vectors</p></div>
                         if normal is not None:
                                 self.draw_vector(normal,color=&#34;Blue&#34;)
                         else:
-                                self.draw_vectors([v1,v2],color=&#34;Blue&#34;)
+                                self.draw_vectors(vectors=[v1,v2],canonica=canonica,color=&#34;Blue&#34;)
                         self.set_origin()
         #
         # Posició relativa de tres plans
@@ -5652,7 +5660,7 @@ u1, u2: vectors</p></div>
         #
         # Projecció ortogonal i simètric d&#39;un punt sobre un pla afí
         #
-        def projeccio_ortogonal_simetric_pla_afi(self,punt=Vector([6,-5,8]),p0=Vector([3,-2,-3]),v1=Vector([3,-1,1]),v2=Vector([1,0.5,0.5]),radi=0.15,sizex=35,sizey=30,canonica=True):
+        def projeccio_ortogonal_simetric_pla_afi(self,punt=Vector([6,-5,8]),p0=Vector([3,-2,-3]),v1=Vector([3,-1,1]),v2=Vector([1,0.5,0.5]),radi=0.15,sizex=35,sizey=30,line=1.8,canonica=True):
                 &#34;&#34;&#34;
                 Draws the orthogonal projection and the symmetric of a point with respect an affine plane
                 Parameters:
@@ -5666,6 +5674,8 @@ u1, u2: vectors</p></div>
 
                         sizex, sizey: sizes of the affine plane
 
+                        factor: how to draw the perpendicular line
+
                         canonica: if True, draws the x, y and z axis
                 &#34;&#34;&#34;
                 if not isinstance(punt,Vector):
@@ -5676,20 +5686,20 @@ u1, u2: vectors</p></div>
                         v1 = Vector(v1)
                 if not isinstance(v2,Vector):
                         v2 = Vector(v2)
-                self.draw_point(location=punt,color=&#34;Black&#34;,radius=radi)
+                self.draw_point(location=punt,color=&#34;Black&#34;,radius=radi,name=&#34;Punt&#34;)
                 w = v1.cross(v2)
-                self.pla_afi(punt=p0,v1=v1,v2=v2,sizex=sizex,sizey=sizey,canonica=canonica)
+                self.pla_afi(punt=p0,v1=v1,v2=v2,sizex=sizex,sizey=sizey,color=&#34;AzureBlueMedium&#34;,canonica=canonica,elements=False)
                 u = punt - p0
                 up = punt - u.project(w)
-                self.draw_point(location=up,color=&#34;Red&#34;,radius=radi)
+                self.draw_point(location=up,color=&#34;Red&#34;,radius=radi,name=&#34;Projecció ortogonal&#34;)
                 us = punt - 2*u.project(w)
-                self.draw_point(location=us,color=&#34;Green&#34;,radius=radi)
+                self.draw_point(location=us,color=&#34;Green&#34;,radius=radi,name=&#34;Simètric&#34;)
                 u = punt - up
-                self.draw_line(start=up-1.5*u,end=up+1.5*u,scale=0.04,color=&#34;White&#34;)
+                self.draw_line(start=up-line*u,end=up+line*u,scale=0.04,color=&#34;White&#34;,name=&#34;Recta perpendicular al pla&#34;)
         #
         # Projecció ortogonal i simètric d&#39;un punt sobre una recta afí
         #
-        def projeccio_ortogonal_simetric_recta_afi(self,punt=Vector([6,-5,8]),p0=Vector([3,-2,-3]),v1=Vector([3,-1,1]),scale=0.1,radi=0.15,canonica=True):
+        def projeccio_ortogonal_simetric_recta_afi(self,punt=Vector([6,-5,8]),p0=Vector([3,-2,-3]),v1=Vector([3,-1,1]),scale=0.1,radi=0.15,sizex=10,sizey=10,canonica=True):
                 &#34;&#34;&#34;
                 Draws the orthogonal projection and the symmetric of a point with respect an affine line
                 Parameters:
@@ -5701,8 +5711,18 @@ u1, u2: vectors</p></div>
 
                         radi: radius of the points
 
+                        sizex, sizey: sizes of the affine plane
+
                         canonica: if True, draws the x, y and z axis
                 &#34;&#34;&#34;
+                if not isinstance(punt,Vector):
+                        punt = Vector(punt)
+                if not isinstance(p0,Vector):
+                        p0 = Vector(p0)
+                if not isinstance(v1,Vector):
+                        v1 = Vector(v1)
+                if canonica:
+                        self.base_canonica(length=0.75*sizex,name=&#34;Referència canònica&#34;)
                 self.draw_point(location=p0,color=&#34;Blue&#34;,radius=radi,name=&#34;Punt de la recta&#34;)
                 self.set_origin(p0)
                 self.draw_vector(vector=v1,canonica=canonica,scale=scale,head_height=0.15,axis=20,name=&#34;Recta afí&#34;,color=&#34;Blue&#34;,positive=False)
@@ -5710,11 +5730,8 @@ u1, u2: vectors</p></div>
                 self.draw_point(location=punt,color=&#34;Black&#34;,radius=radi,name=&#34;Punt inicial&#34;)
                 u = punt - p0
                 p1 = p0 + u.project(v1)
-                size = 4 * (p1-p0).length
-                if size &lt; 20:
-                        size = 20
                 self.draw_point(location=p1,color=&#34;Red&#34;,radius=radi,name=&#34;Projecció ortogonal&#34;)
-                self.draw_plane_surface(origin=p1,normal=v1,name=&#34;Pla perpendicular a la recta&#34;,sizex=size,sizey=size)
+                self.draw_plane_surface(origin=p1,normal=v1,name=&#34;Pla perpendicular a la recta&#34;,sizex=sizex,sizey=sizey,color=&#34;AzureBlueMedium&#34;)
                 self.draw_point(location=2*p1-punt,color=&#34;Green&#34;,radius=radi,name=&#34;Simètric&#34;)
                 self.draw_line(start=punt,end=2*p1-punt,scale=0.04,color=&#34;White&#34;)
         #
@@ -5796,7 +5813,7 @@ u1, u2: vectors</p></div>
         #
         # Referència no canònica
         #
-        def referencia_no_canonica(self,origin=Vector([0,0,0]),u1=Vector([1,-1,0]),u2=1/2*Vector([-1,2,1]),u3=Vector([-1,0,1]),length=12,scale=0.04,name=&#34;Referència R&#39;&#34;):
+        def referencia_no_canonica(self,origin=Vector([0,0,0]),u1=Vector([1,-1,0]),u2=1/2*Vector([-1,2,1]),u3=Vector([-1,0,1]),length=12,scale=0.04,preserve=True,name=&#34;Referència R&#39;&#34;):
                 &#34;&#34;&#34;
                 Draws the reference {o;u1,u2,u3} with origin in the point origin and sets the default
                 origin and default base to them
@@ -5822,6 +5839,10 @@ u1, u2: vectors</p></div>
                 self.set_origin(origin)
                 self.set_base([u1,u2,u3])
                 self.draw_base_axis(axis=length,positive=False,scale=scale,name=name)
+                if not preserve:
+                        self.set_origin()
+                        self.set_base()
+                        self.set_rotation()
         #
         # Punt en referencia no canònica
         #
@@ -5854,7 +5875,7 @@ u1, u2: vectors</p></div>
         #
         # Canvi de coordenades
         #
-        def canvi_coordenades(self,punt=Vector([8,-6,7]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),length=12,radius=0.1):
+        def canvi_coordenades(self,punt=Vector([8,-6,7]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),canonica=False,length=12,radius=0.1):
                 &#34;&#34;&#34;
                 Draw the coordinates of a point in the canonical reference and in the reference {o;u1,u2,u3}. Sets the default
                 origin and default base to them
@@ -5865,13 +5886,18 @@ u1, u2: vectors</p></div>
 
                         u1, u2, u3: vectors of the base
 
+                        canonica: if True, the coordinates of punt are in the canonical reference
+
                         length: length of the axis
                 &#34;&#34;&#34;
-                self.punt_referencia_canonica(punt=punt,length=length,radius=radius)
-                self.set_colors([&#34;Magenta&#34;,&#34;Yellow&#34;,&#34;Cyan&#34;])
-                self.referencia_no_canonica(origin=origin,u1=u1,u2=u2,u3=u3,length=length)
-                p = self.coordinates_en_referencia(punt)
-                self.draw_components(p,color=&#34;White&#34;,name=&#34;Coordenades en la referència R&#39;&#34;)
+                if canonica:
+                        self.punt_referencia_canonica(punt=punt,length=length,radius=radius)
+                else:
+                        self.set_colors([&#34;Magenta&#34;,&#34;Yellow&#34;,&#34;Cyan&#34;])
+                        self.punt_referencia_no_canonica(punt=punt,origin=origin,u1=u1,u2=u2,u3=u3,length=length,radius=radius)
+                        p = self.coordinates_en_canonica(punt)
+                self.reset()
+                self.draw_components(p,color=&#34;Magenta&#34;,name=&#34;Coordenades en referència canònica&#34;)
         #
         # El·lipse
         #
@@ -7474,14 +7500,14 @@ origin and default base to them</p>
 <p>length: length of the axis</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.canvi_coordenades"><code class="name flex">
-<span>def <span class="ident">canvi_coordenades</span></span>(<span>self,<br>punt=Vector((8.0, -6.0, 7.0)),<br>origin=Vector((-2.0, 3.0, 3.0)),<br>u1=Vector((-0.3333333432674408, -0.6666666865348816, 0.6666666865348816)),<br>u2=Vector((0.6666666865348816, 0.3333333432674408, 0.6666666865348816)),<br>u3=Vector((-0.6666666865348816, 0.6666666865348816, 0.3333333432674408)),<br>length=12,<br>radius=0.1)</span>
+<span>def <span class="ident">canvi_coordenades</span></span>(<span>self,<br>punt=Vector((8.0, -6.0, 7.0)),<br>origin=Vector((-2.0, 3.0, 3.0)),<br>u1=Vector((-0.3333333432674408, -0.6666666865348816, 0.6666666865348816)),<br>u2=Vector((0.6666666865348816, 0.3333333432674408, 0.6666666865348816)),<br>u3=Vector((-0.6666666865348816, 0.6666666865348816, 0.3333333432674408)),<br>canonica=False,<br>length=12,<br>radius=0.1)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def canvi_coordenades(self,punt=Vector([8,-6,7]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),length=12,radius=0.1):
+<pre><code class="python">def canvi_coordenades(self,punt=Vector([8,-6,7]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),canonica=False,length=12,radius=0.1):
         &#34;&#34;&#34;
         Draw the coordinates of a point in the canonical reference and in the reference {o;u1,u2,u3}. Sets the default
         origin and default base to them
@@ -7492,13 +7518,18 @@ origin and default base to them</p>
 
                 u1, u2, u3: vectors of the base
 
+                canonica: if True, the coordinates of punt are in the canonical reference
+
                 length: length of the axis
         &#34;&#34;&#34;
-        self.punt_referencia_canonica(punt=punt,length=length,radius=radius)
-        self.set_colors([&#34;Magenta&#34;,&#34;Yellow&#34;,&#34;Cyan&#34;])
-        self.referencia_no_canonica(origin=origin,u1=u1,u2=u2,u3=u3,length=length)
-        p = self.coordinates_en_referencia(punt)
-        self.draw_components(p,color=&#34;White&#34;,name=&#34;Coordenades en la referència R&#39;&#34;)</code></pre>
+        if canonica:
+                self.punt_referencia_canonica(punt=punt,length=length,radius=radius)
+        else:
+                self.set_colors([&#34;Magenta&#34;,&#34;Yellow&#34;,&#34;Cyan&#34;])
+                self.punt_referencia_no_canonica(punt=punt,origin=origin,u1=u1,u2=u2,u3=u3,length=length,radius=radius)
+                p = self.coordinates_en_canonica(punt)
+        self.reset()
+        self.draw_components(p,color=&#34;Magenta&#34;,name=&#34;Coordenades en referència canònica&#34;)</code></pre>
 </details>
 <div class="desc"><p>Draw the coordinates of a point in the canonical reference and in the reference {o;u1,u2,u3}. Sets the default
 origin and default base to them</p>
@@ -7506,6 +7537,7 @@ origin and default base to them</p>
 <p>punt: point to draw</p>
 <p>origin: origin of the reference</p>
 <p>u1, u2, u3: vectors of the base</p>
+<p>canonica: if True, the coordinates of punt are in the canonical reference</p>
 <p>length: length of the axis</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.cilindre"><code class="name flex">
@@ -11665,17 +11697,20 @@ Only normal or base can be not None</p>
 <p>thickness: thickness of the surface</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.draw_vector"><code class="name flex">
-<span>def <span class="ident">draw_vector</span></span>(<span>self,<br>vector=None,<br>canonica=False,<br>color='Black',<br>scale=0.05,<br>arrow=True,<br>head_height=None,<br>axis=0,<br>name='Vector',<br>positive=True)</span>
+<span>def <span class="ident">draw_vector</span></span>(<span>self,<br>origin=Vector((0.0, 0.0, 0.0)),<br>vector=None,<br>canonica=False,<br>color='Black',<br>scale=0.05,<br>arrow=True,<br>head_height=None,<br>axis=0,<br>name='Vector',<br>positive=True)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def draw_vector(self,vector=None,canonica=False,color=&#34;Black&#34;,scale=0.05,arrow=True,head_height=None,axis=0,name=&#34;Vector&#34;,positive=True):
+<pre><code class="python">def draw_vector(self,origin=Vector([0,0,0]),vector=None,canonica=False,color=&#34;Black&#34;,scale=0.05,arrow=True,head_height=None,axis=0,name=&#34;Vector&#34;,positive=True):
         &#34;&#34;&#34;
-        Draw the vector with components &#39;vector&#39;
+        Draw the vector with components &#39;vector&#39; trough &#39;origin&#39;
         Parameters:
+
+           origin: point of the line
+        
            vector: components of the vector
 
            canonica: if True, the components are in the canonical basis, else they are in the basis self.base. Finally,
@@ -11702,12 +11737,16 @@ Only normal or base can be not None</p>
                 vec = vector
         else:
                 vec = Vector(vector)
+        if isinstance(origin,Vector):
+                orig = origin
+        else:
+                orig = Vector(origin)
         if vec.length == 0:
                 return None
         self.base_cilinder()
         self.base_cone()
         o = Vector([0,0,0])
-        op = Vector(self.origin)
+        op = Vector(self.origin + orig)
         if color is not None:
                 color = Colors.color(color)
         v = vec
@@ -11797,10 +11836,12 @@ Only normal or base can be not None</p>
                 return obj
         if axis != 0:
                 return obj3
+        self.set_origin()
         return None</code></pre>
 </details>
-<div class="desc"><p>Draw the vector with components 'vector'</p>
+<div class="desc"><p>Draw the vector with components 'vector' trough 'origin'</p>
 <h2 id="parameters">Parameters</h2>
+<p>origin: point of the line</p>
 <p>vector: components of the vector</p>
 <p>canonica: if True, the components are in the canonical basis, else they are in the basis self.base. Finally,
 self.rotation is applied</p>
@@ -11934,7 +11975,7 @@ generated by the vector</p></div>
                 else:
                         this = f&#34;Vector{count}&#34;
                 count += 1
-                t = self.draw_vector(v,canonica,color=color,scale=scale,head_height=head_height,axis=axis,name=this)
+                t = self.draw_vector(vector=v,canonica=canonica,color=color,scale=scale,head_height=head_height,axis=axis,name=this)
         t = bpy.data.objects.get(name)
         list = [t]
         for count in range(1,len(vectors)+1):
@@ -13891,7 +13932,7 @@ a: The constant of the initial parabola</p>
                 if normal is not None:
                         self.draw_vector(normal,color=&#34;Blue&#34;)
                 else:
-                        self.draw_vectors([v1,v2],color=&#34;Blue&#34;)
+                        self.draw_vectors(vectors=[v1,v2],canonica=canonica,color=&#34;Blue&#34;)
                 self.set_origin()</code></pre>
 </details>
 <div class="desc"><p>Draws the affine plane generated by two vectors passing through a point</p>
@@ -14021,14 +14062,14 @@ a: The constant of the initial parabola</p>
 <p>u, v: two Vectors</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.projeccio_ortogonal_simetric_pla_afi"><code class="name flex">
-<span>def <span class="ident">projeccio_ortogonal_simetric_pla_afi</span></span>(<span>self,<br>punt=Vector((6.0, -5.0, 8.0)),<br>p0=Vector((3.0, -2.0, -3.0)),<br>v1=Vector((3.0, -1.0, 1.0)),<br>v2=Vector((1.0, 0.5, 0.5)),<br>radi=0.15,<br>sizex=35,<br>sizey=30,<br>canonica=True)</span>
+<span>def <span class="ident">projeccio_ortogonal_simetric_pla_afi</span></span>(<span>self,<br>punt=Vector((6.0, -5.0, 8.0)),<br>p0=Vector((3.0, -2.0, -3.0)),<br>v1=Vector((3.0, -1.0, 1.0)),<br>v2=Vector((1.0, 0.5, 0.5)),<br>radi=0.15,<br>sizex=35,<br>sizey=30,<br>line=1.8,<br>canonica=True)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def projeccio_ortogonal_simetric_pla_afi(self,punt=Vector([6,-5,8]),p0=Vector([3,-2,-3]),v1=Vector([3,-1,1]),v2=Vector([1,0.5,0.5]),radi=0.15,sizex=35,sizey=30,canonica=True):
+<pre><code class="python">def projeccio_ortogonal_simetric_pla_afi(self,punt=Vector([6,-5,8]),p0=Vector([3,-2,-3]),v1=Vector([3,-1,1]),v2=Vector([1,0.5,0.5]),radi=0.15,sizex=35,sizey=30,line=1.8,canonica=True):
         &#34;&#34;&#34;
         Draws the orthogonal projection and the symmetric of a point with respect an affine plane
         Parameters:
@@ -14042,6 +14083,8 @@ a: The constant of the initial parabola</p>
 
                 sizex, sizey: sizes of the affine plane
 
+                factor: how to draw the perpendicular line
+
                 canonica: if True, draws the x, y and z axis
         &#34;&#34;&#34;
         if not isinstance(punt,Vector):
@@ -14052,16 +14095,16 @@ a: The constant of the initial parabola</p>
                 v1 = Vector(v1)
         if not isinstance(v2,Vector):
                 v2 = Vector(v2)
-        self.draw_point(location=punt,color=&#34;Black&#34;,radius=radi)
+        self.draw_point(location=punt,color=&#34;Black&#34;,radius=radi,name=&#34;Punt&#34;)
         w = v1.cross(v2)
-        self.pla_afi(punt=p0,v1=v1,v2=v2,sizex=sizex,sizey=sizey,canonica=canonica)
+        self.pla_afi(punt=p0,v1=v1,v2=v2,sizex=sizex,sizey=sizey,color=&#34;AzureBlueMedium&#34;,canonica=canonica,elements=False)
         u = punt - p0
         up = punt - u.project(w)
-        self.draw_point(location=up,color=&#34;Red&#34;,radius=radi)
+        self.draw_point(location=up,color=&#34;Red&#34;,radius=radi,name=&#34;Projecció ortogonal&#34;)
         us = punt - 2*u.project(w)
-        self.draw_point(location=us,color=&#34;Green&#34;,radius=radi)
+        self.draw_point(location=us,color=&#34;Green&#34;,radius=radi,name=&#34;Simètric&#34;)
         u = punt - up
-        self.draw_line(start=up-1.5*u,end=up+1.5*u,scale=0.04,color=&#34;White&#34;)</code></pre>
+        self.draw_line(start=up-line*u,end=up+line*u,scale=0.04,color=&#34;White&#34;,name=&#34;Recta perpendicular al pla&#34;)</code></pre>
 </details>
 <div class="desc"><p>Draws the orthogonal projection and the symmetric of a point with respect an affine plane</p>
 <h2 id="parameters">Parameters</h2>
@@ -14070,6 +14113,7 @@ a: The constant of the initial parabola</p>
 <p>v1, v2: generators of the plane</p>
 <p>radi: radius of the points</p>
 <p>sizex, sizey: sizes of the affine plane</p>
+<p>factor: how to draw the perpendicular line</p>
 <p>canonica: if True, draws the x, y and z axis</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.projeccio_ortogonal_simetric_pla_vectorial"><code class="name flex">
@@ -14130,14 +14174,14 @@ a: The constant of the initial parabola</p>
 <p>canonica: if True, draws the x, y and z axis</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.projeccio_ortogonal_simetric_recta_afi"><code class="name flex">
-<span>def <span class="ident">projeccio_ortogonal_simetric_recta_afi</span></span>(<span>self,<br>punt=Vector((6.0, -5.0, 8.0)),<br>p0=Vector((3.0, -2.0, -3.0)),<br>v1=Vector((3.0, -1.0, 1.0)),<br>scale=0.1,<br>radi=0.15,<br>canonica=True)</span>
+<span>def <span class="ident">projeccio_ortogonal_simetric_recta_afi</span></span>(<span>self,<br>punt=Vector((6.0, -5.0, 8.0)),<br>p0=Vector((3.0, -2.0, -3.0)),<br>v1=Vector((3.0, -1.0, 1.0)),<br>scale=0.1,<br>radi=0.15,<br>sizex=10,<br>sizey=10,<br>canonica=True)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def projeccio_ortogonal_simetric_recta_afi(self,punt=Vector([6,-5,8]),p0=Vector([3,-2,-3]),v1=Vector([3,-1,1]),scale=0.1,radi=0.15,canonica=True):
+<pre><code class="python">def projeccio_ortogonal_simetric_recta_afi(self,punt=Vector([6,-5,8]),p0=Vector([3,-2,-3]),v1=Vector([3,-1,1]),scale=0.1,radi=0.15,sizex=10,sizey=10,canonica=True):
         &#34;&#34;&#34;
         Draws the orthogonal projection and the symmetric of a point with respect an affine line
         Parameters:
@@ -14149,8 +14193,18 @@ a: The constant of the initial parabola</p>
 
                 radi: radius of the points
 
+                sizex, sizey: sizes of the affine plane
+
                 canonica: if True, draws the x, y and z axis
         &#34;&#34;&#34;
+        if not isinstance(punt,Vector):
+                punt = Vector(punt)
+        if not isinstance(p0,Vector):
+                p0 = Vector(p0)
+        if not isinstance(v1,Vector):
+                v1 = Vector(v1)
+        if canonica:
+                self.base_canonica(length=0.75*sizex,name=&#34;Referència canònica&#34;)
         self.draw_point(location=p0,color=&#34;Blue&#34;,radius=radi,name=&#34;Punt de la recta&#34;)
         self.set_origin(p0)
         self.draw_vector(vector=v1,canonica=canonica,scale=scale,head_height=0.15,axis=20,name=&#34;Recta afí&#34;,color=&#34;Blue&#34;,positive=False)
@@ -14158,11 +14212,8 @@ a: The constant of the initial parabola</p>
         self.draw_point(location=punt,color=&#34;Black&#34;,radius=radi,name=&#34;Punt inicial&#34;)
         u = punt - p0
         p1 = p0 + u.project(v1)
-        size = 4 * (p1-p0).length
-        if size &lt; 20:
-                size = 20
         self.draw_point(location=p1,color=&#34;Red&#34;,radius=radi,name=&#34;Projecció ortogonal&#34;)
-        self.draw_plane_surface(origin=p1,normal=v1,name=&#34;Pla perpendicular a la recta&#34;,sizex=size,sizey=size)
+        self.draw_plane_surface(origin=p1,normal=v1,name=&#34;Pla perpendicular a la recta&#34;,sizex=sizex,sizey=sizey,color=&#34;AzureBlueMedium&#34;)
         self.draw_point(location=2*p1-punt,color=&#34;Green&#34;,radius=radi,name=&#34;Simètric&#34;)
         self.draw_line(start=punt,end=2*p1-punt,scale=0.04,color=&#34;White&#34;)</code></pre>
 </details>
@@ -14172,6 +14223,7 @@ a: The constant of the initial parabola</p>
 <p>p0: point of the affine line</p>
 <p>v1: generator of the line</p>
 <p>radi: radius of the points</p>
+<p>sizex, sizey: sizes of the affine plane</p>
 <p>canonica: if True, draws the x, y and z axis</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.projeccio_ortogonal_simetric_recta_vectorial"><code class="name flex">
@@ -14396,14 +14448,14 @@ origin and default base to them</p>
 <p>name: name of the object</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.referencia_no_canonica"><code class="name flex">
-<span>def <span class="ident">referencia_no_canonica</span></span>(<span>self,<br>origin=Vector((0.0, 0.0, 0.0)),<br>u1=Vector((1.0, -1.0, 0.0)),<br>u2=Vector((-0.5, 1.0, 0.5)),<br>u3=Vector((-1.0, 0.0, 1.0)),<br>length=12,<br>scale=0.04,<br>name="Referència R'")</span>
+<span>def <span class="ident">referencia_no_canonica</span></span>(<span>self,<br>origin=Vector((0.0, 0.0, 0.0)),<br>u1=Vector((1.0, -1.0, 0.0)),<br>u2=Vector((-0.5, 1.0, 0.5)),<br>u3=Vector((-1.0, 0.0, 1.0)),<br>length=12,<br>scale=0.04,<br>preserve=True,<br>name="Referència R'")</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def referencia_no_canonica(self,origin=Vector([0,0,0]),u1=Vector([1,-1,0]),u2=1/2*Vector([-1,2,1]),u3=Vector([-1,0,1]),length=12,scale=0.04,name=&#34;Referència R&#39;&#34;):
+<pre><code class="python">def referencia_no_canonica(self,origin=Vector([0,0,0]),u1=Vector([1,-1,0]),u2=1/2*Vector([-1,2,1]),u3=Vector([-1,0,1]),length=12,scale=0.04,preserve=True,name=&#34;Referència R&#39;&#34;):
         &#34;&#34;&#34;
         Draws the reference {o;u1,u2,u3} with origin in the point origin and sets the default
         origin and default base to them
@@ -14428,7 +14480,11 @@ origin and default base to them</p>
                 u3 = Vector(u3)
         self.set_origin(origin)
         self.set_base([u1,u2,u3])
-        self.draw_base_axis(axis=length,positive=False,scale=scale,name=name)</code></pre>
+        self.draw_base_axis(axis=length,positive=False,scale=scale,name=name)
+        if not preserve:
+                self.set_origin()
+                self.set_base()
+                self.set_rotation()</code></pre>
 </details>
 <div class="desc"><p>Draws the reference {o;u1,u2,u3} with origin in the point origin and sets the default
 origin and default base to them</p>
