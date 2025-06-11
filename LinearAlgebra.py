@@ -923,13 +923,16 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def set_colors(self,names):
+	def set_colors(self,names=None):
 		"""
 		Set self.colors to the list of colors with names 'names'
 		Parameters:
 		   names: list of name colors
 		"""
-		self.colors = Colors.colors(names)
+		if names is None:
+			self.colors = Colors.colors(["Red","GreenDarkHard","Blue"])
+		else:
+			self.colors = Colors.colors(names)
 	#
 	#
 	#
@@ -937,7 +940,7 @@ class LinearAlgebra():
 		"""
 		Set self.colors to default colors
 		"""
-		self.colors= Colors.colors(["Red","GreenDarkHard","Blue"])
+		self.colors = Colors.colors(["Red","GreenDarkHard","Blue"])
 	#
 	#
 	#
@@ -1207,6 +1210,29 @@ class LinearAlgebra():
 		mat.transpose()
 		mat.invert()
 		u = mat @ (u - Vector(self.origin))
+		return u
+	#
+	#
+	#
+	def coordinates_en_canonica(self,point=None):
+		"""
+		Returns the coordinates of the point 'point' in the reference determined by
+		self.origin, self.rotation and the basis self.base
+		Parameters:
+		   point: coordinates of the point in the reference {self.origin;self.base}
+		"""
+		if point is None:
+			return Vector([0,0,0])
+		if isinstance(point,Vector):
+			u = point
+		else:
+			u = Vector(point)
+		if self.rotation is not None:
+			mat = self.rotation.quaternion.to_matrix()
+			u = mat @ u
+		mat = Matrix(self.base)
+		mat.transpose()
+		u = Vector(self.origin) + mat @ u
 		return u
 	#
 	#
