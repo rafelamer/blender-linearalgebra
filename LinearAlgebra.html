@@ -1558,7 +1558,7 @@ u1, u2: vectors</p></div>
                 Parameters:
                    vectors: list of vectors
 
-                   anonica: if True, the the vectors are expressed in the canonical basis.
+                   canonica: if True, the the vectors are expressed in the canonical basis.
 
                    color: color of the vectors
 
@@ -5315,7 +5315,7 @@ u1, u2: vectors</p></div>
         #
         # Base no canònica
         #
-        def base_no_canonica(self,origin=Vector([0,0,0]),u1=Vector([1,-1,0]),u2=1/2*Vector([1,-1,-1]),u3=Vector([-1,0,1]),length=12,scale=0.04,name=&#34;Base B&#39;&#34;):
+        def base_no_canonica(self,origin=Vector([0,0,0]),u1=Vector([1,-1,0]),u2=1/2*Vector([1,-1,-1]),u3=Vector([-1,0,1]),length=12,scale=0.04,preserve=False,name=&#34;Base B&#39;&#34;):
                 &#34;&#34;&#34;
                 Draws the base {u1,u2,u3} with origin in the point origin and sets the default
                 origin and default base to them
@@ -5329,6 +5329,8 @@ u1, u2: vectors</p></div>
                         scale: scale of the base
 
                         name: name of the base
+
+                        preserve: 
                 &#34;&#34;&#34;
                 if not isinstance(origin,Vector):
                         origin = Vector(origin)
@@ -5341,6 +5343,10 @@ u1, u2: vectors</p></div>
                 self.set_origin(origin)
                 self.set_base([u1,u2,u3])
                 self.draw_base_axis(axis=length,positive=False,scale=scale,name=name)
+                if not preserve:
+                        self.set_origin()
+                        self.set_base()
+                        self.set_rotation()
         #
         # Base a partir d&#39;un eix
         #
@@ -5373,7 +5379,7 @@ u1, u2: vectors</p></div>
         #
         # Vector en base no canònica
         #
-        def vector_base_no_canonica(self,vector=Vector([5,6,-5]),origin=Vector([0,0,0]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),length=12,scale=0.04,name=&#34;Base B&#39;&#34;):
+        def vector_base_no_canonica(self,vector=Vector([5,6,-5]),origin=Vector([0,0,0]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),length=12,scale=0.04,name=&#34;Base B&#39;&#34;,canonica=True,preserve=False):
                 &#34;&#34;&#34;
                 Draws a vector expressed in the base {u1,u2,u3} with origin in the point origin and sets the default
                 origin and default base to them
@@ -5390,11 +5396,17 @@ u1, u2: vectors</p></div>
 
                         name: name of the base
                 &#34;&#34;&#34;
-                self.base_no_canonica(origin=origin,u1=u1,u2=u2,u3=u3,length=length,scale=scale,name=name)
+                self.base_no_canonica(origin=origin,u1=u1,u2=u2,u3=u3,length=length,scale=scale,preserve=preserve,name=name)
                 if not isinstance(vector,Vector):
                         vector = Vector(vector)
+                if canonica:
+                        vector = self.coordinates_en_referencia(vector)
                 self.draw_vector(vector,scale=0.06,head_height=0.25)
                 self.draw_components(vector,scale=0.015,name=&#34;Components en base B&#39;&#34;)
+                if not preserve:
+                        self.set_origin()
+                        self.set_base()
+                        self.set_rotation()
         #
         # Canvi de base
         #
@@ -5596,13 +5608,15 @@ u1, u2: vectors</p></div>
         #
         # Projecció ortogonal i simètric sobre un pla vectorial
         #
-        def projeccio_ortogonal_simetric_pla_vectorial(self,vector=Vector([7,-1,12]),v1=Vector([3,-1,1]),v2=Vector([1,0.5,0.5]),canonica=True):
+        def projeccio_ortogonal_simetric_pla_vectorial(self,vector=Vector([7,-1,12]),v1=Vector([3,-1,1]),v2=Vector([1,0.5,0.5]),sizex=None,sizey=None,canonica=True):
                 &#34;&#34;&#34;
                 Draws the otoghonal projection and the symmetric of a vector with respecte a plane
                 Parameters:
                         vector: the initial vector
 
                         v1, v2: generators of the plane
+
+                        sizex, sizey: size of the plane
 
                         canonica: if True, draws the x, y and z axis
                 &#34;&#34;&#34;
@@ -5616,7 +5630,11 @@ u1, u2: vectors</p></div>
                 w = v1.cross(v2)
                 vp = vector - vector.project(w)
                 self.draw_vector(vp,color=&#34;Red&#34;)
-                self.pla_vectorial(v1,v2,sizex=3*vp.length,sizey=2.6*vp.length,canonica=canonica)
+                if sizex is None:
+                        sizex = 4*vp.length
+                if sizey is None:
+                        sizey = 4*vp.length     
+                self.pla_vectorial(v1,v2,sizex=sizex,sizey=sizey,canonica=canonica,color=&#34;AzureLightHard&#34;)
                 self.set_origin(vp)
                 self.draw_vector(vector.project(w),scale=0.025,color=&#34;White&#34;)
                 self.set_origin()
@@ -5702,7 +5720,7 @@ u1, u2: vectors</p></div>
         #
         # Projecció ortogonal i simètric sobre una recta vectorial
         #
-        def projeccio_ortogonal_simetric_recta_vectorial(self,vector=Vector([7,-1,12]),v1=Vector([3,-1,1]),canonica=True):
+        def projeccio_ortogonal_simetric_recta_vectorial(self,vector=Vector([7,-1,12]),v1=Vector([3,-1,1]),canonica=True,length=15):
                 &#34;&#34;&#34;
                 Draws the otoghonal projection and the symmetric of a vector with respecte a line
                 Parameters:
@@ -5711,14 +5729,16 @@ u1, u2: vectors</p></div>
                         v1: generator of the line
 
                         canonica: if True, draws the x, y and z axis
+
+                        length: length for x, y and z axis and v1 axis
                 &#34;&#34;&#34;
                 if not isinstance(vector,Vector):
                         vector = Vector(vector)
                 if not isinstance(v1,Vector):
                         v1 = Vector(v1)
                 if canonica:
-                        self.base_canonica()
-                self.draw_vector(v1,axis=20,positive=False,color=&#34;Blue&#34;,scale=0.066)
+                        self.base_canonica(length=length)
+                self.draw_vector(v1,axis=length,positive=False,color=&#34;Blue&#34;,scale=0.066)
                 self.draw_vector(vector)
                 vp = vector.project(v1)
                 self.draw_vector(vp,color=&#34;Red&#34;)
@@ -7371,14 +7391,14 @@ origin and default base to them</p>
 <div class="desc"><p>Returns True if self.base is the canonical basis</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.base_no_canonica"><code class="name flex">
-<span>def <span class="ident">base_no_canonica</span></span>(<span>self,<br>origin=Vector((0.0, 0.0, 0.0)),<br>u1=Vector((1.0, -1.0, 0.0)),<br>u2=Vector((0.5, -0.5, -0.5)),<br>u3=Vector((-1.0, 0.0, 1.0)),<br>length=12,<br>scale=0.04,<br>name="Base B'")</span>
+<span>def <span class="ident">base_no_canonica</span></span>(<span>self,<br>origin=Vector((0.0, 0.0, 0.0)),<br>u1=Vector((1.0, -1.0, 0.0)),<br>u2=Vector((0.5, -0.5, -0.5)),<br>u3=Vector((-1.0, 0.0, 1.0)),<br>length=12,<br>scale=0.04,<br>preserve=False,<br>name="Base B'")</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def base_no_canonica(self,origin=Vector([0,0,0]),u1=Vector([1,-1,0]),u2=1/2*Vector([1,-1,-1]),u3=Vector([-1,0,1]),length=12,scale=0.04,name=&#34;Base B&#39;&#34;):
+<pre><code class="python">def base_no_canonica(self,origin=Vector([0,0,0]),u1=Vector([1,-1,0]),u2=1/2*Vector([1,-1,-1]),u3=Vector([-1,0,1]),length=12,scale=0.04,preserve=False,name=&#34;Base B&#39;&#34;):
         &#34;&#34;&#34;
         Draws the base {u1,u2,u3} with origin in the point origin and sets the default
         origin and default base to them
@@ -7392,6 +7412,8 @@ origin and default base to them</p>
                 scale: scale of the base
 
                 name: name of the base
+
+                preserve: 
         &#34;&#34;&#34;
         if not isinstance(origin,Vector):
                 origin = Vector(origin)
@@ -7403,7 +7425,11 @@ origin and default base to them</p>
                 u3 = Vector(u3)
         self.set_origin(origin)
         self.set_base([u1,u2,u3])
-        self.draw_base_axis(axis=length,positive=False,scale=scale,name=name)</code></pre>
+        self.draw_base_axis(axis=length,positive=False,scale=scale,name=name)
+        if not preserve:
+                self.set_origin()
+                self.set_base()
+                self.set_rotation()</code></pre>
 </details>
 <div class="desc"><p>Draws the base {u1,u2,u3} with origin in the point origin and sets the default
 origin and default base to them</p>
@@ -7412,7 +7438,8 @@ origin and default base to them</p>
 <p>u1, u2, u3: vectors of the base</p>
 <p>length: length of the axis</p>
 <p>scale: scale of the base</p>
-<p>name: name of the base</p></div>
+<p>name: name of the base</p>
+<p>preserve:</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.canvi_base"><code class="name flex">
 <span>def <span class="ident">canvi_base</span></span>(<span>self,<br>vector=Vector((8.0, -6.0, 7.0)),<br>u1=Vector((-0.3333333432674408, -0.6666666865348816, 0.6666666865348816)),<br>u2=Vector((0.6666666865348816, 0.3333333432674408, 0.6666666865348816)),<br>u3=Vector((-0.6666666865348816, 0.6666666865348816, 0.3333333432674408)),<br>length=12)</span>
@@ -11888,7 +11915,7 @@ generated by the vector</p></div>
         Parameters:
            vectors: list of vectors
 
-           anonica: if True, the the vectors are expressed in the canonical basis.
+           canonica: if True, the the vectors are expressed in the canonical basis.
 
            color: color of the vectors
 
@@ -11920,7 +11947,7 @@ generated by the vector</p></div>
 <div class="desc"><p>Draws a list of vectors.</p>
 <h2 id="parameters">Parameters</h2>
 <p>vectors: list of vectors</p>
-<p>anonica: if True, the the vectors are expressed in the canonical basis.</p>
+<p>canonica: if True, the the vectors are expressed in the canonical basis.</p>
 <p>color: color of the vectors</p>
 <p>scale: scale of the cylinder</p>
 <p>head_height: height of the head of the vector</p>
@@ -14046,20 +14073,22 @@ a: The constant of the initial parabola</p>
 <p>canonica: if True, draws the x, y and z axis</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.projeccio_ortogonal_simetric_pla_vectorial"><code class="name flex">
-<span>def <span class="ident">projeccio_ortogonal_simetric_pla_vectorial</span></span>(<span>self,<br>vector=Vector((7.0, -1.0, 12.0)),<br>v1=Vector((3.0, -1.0, 1.0)),<br>v2=Vector((1.0, 0.5, 0.5)),<br>canonica=True)</span>
+<span>def <span class="ident">projeccio_ortogonal_simetric_pla_vectorial</span></span>(<span>self,<br>vector=Vector((7.0, -1.0, 12.0)),<br>v1=Vector((3.0, -1.0, 1.0)),<br>v2=Vector((1.0, 0.5, 0.5)),<br>sizex=None,<br>sizey=None,<br>canonica=True)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def projeccio_ortogonal_simetric_pla_vectorial(self,vector=Vector([7,-1,12]),v1=Vector([3,-1,1]),v2=Vector([1,0.5,0.5]),canonica=True):
+<pre><code class="python">def projeccio_ortogonal_simetric_pla_vectorial(self,vector=Vector([7,-1,12]),v1=Vector([3,-1,1]),v2=Vector([1,0.5,0.5]),sizex=None,sizey=None,canonica=True):
         &#34;&#34;&#34;
         Draws the otoghonal projection and the symmetric of a vector with respecte a plane
         Parameters:
                 vector: the initial vector
 
                 v1, v2: generators of the plane
+
+                sizex, sizey: size of the plane
 
                 canonica: if True, draws the x, y and z axis
         &#34;&#34;&#34;
@@ -14073,7 +14102,11 @@ a: The constant of the initial parabola</p>
         w = v1.cross(v2)
         vp = vector - vector.project(w)
         self.draw_vector(vp,color=&#34;Red&#34;)
-        self.pla_vectorial(v1,v2,sizex=3*vp.length,sizey=2.6*vp.length,canonica=canonica)
+        if sizex is None:
+                sizex = 4*vp.length
+        if sizey is None:
+                sizey = 4*vp.length     
+        self.pla_vectorial(v1,v2,sizex=sizex,sizey=sizey,canonica=canonica,color=&#34;AzureLightHard&#34;)
         self.set_origin(vp)
         self.draw_vector(vector.project(w),scale=0.025,color=&#34;White&#34;)
         self.set_origin()
@@ -14093,6 +14126,7 @@ a: The constant of the initial parabola</p>
 <h2 id="parameters">Parameters</h2>
 <p>vector: the initial vector</p>
 <p>v1, v2: generators of the plane</p>
+<p>sizex, sizey: size of the plane</p>
 <p>canonica: if True, draws the x, y and z axis</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.projeccio_ortogonal_simetric_recta_afi"><code class="name flex">
@@ -14141,14 +14175,14 @@ a: The constant of the initial parabola</p>
 <p>canonica: if True, draws the x, y and z axis</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.projeccio_ortogonal_simetric_recta_vectorial"><code class="name flex">
-<span>def <span class="ident">projeccio_ortogonal_simetric_recta_vectorial</span></span>(<span>self,<br>vector=Vector((7.0, -1.0, 12.0)),<br>v1=Vector((3.0, -1.0, 1.0)),<br>canonica=True)</span>
+<span>def <span class="ident">projeccio_ortogonal_simetric_recta_vectorial</span></span>(<span>self,<br>vector=Vector((7.0, -1.0, 12.0)),<br>v1=Vector((3.0, -1.0, 1.0)),<br>canonica=True,<br>length=15)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def projeccio_ortogonal_simetric_recta_vectorial(self,vector=Vector([7,-1,12]),v1=Vector([3,-1,1]),canonica=True):
+<pre><code class="python">def projeccio_ortogonal_simetric_recta_vectorial(self,vector=Vector([7,-1,12]),v1=Vector([3,-1,1]),canonica=True,length=15):
         &#34;&#34;&#34;
         Draws the otoghonal projection and the symmetric of a vector with respecte a line
         Parameters:
@@ -14157,14 +14191,16 @@ a: The constant of the initial parabola</p>
                 v1: generator of the line
 
                 canonica: if True, draws the x, y and z axis
+
+                length: length for x, y and z axis and v1 axis
         &#34;&#34;&#34;
         if not isinstance(vector,Vector):
                 vector = Vector(vector)
         if not isinstance(v1,Vector):
                 v1 = Vector(v1)
         if canonica:
-                self.base_canonica()
-        self.draw_vector(v1,axis=20,positive=False,color=&#34;Blue&#34;,scale=0.066)
+                self.base_canonica(length=length)
+        self.draw_vector(v1,axis=length,positive=False,color=&#34;Blue&#34;,scale=0.066)
         self.draw_vector(vector)
         vp = vector.project(v1)
         self.draw_vector(vp,color=&#34;Red&#34;)
@@ -14178,7 +14214,8 @@ a: The constant of the initial parabola</p>
 <h2 id="parameters">Parameters</h2>
 <p>vector: the initial vector</p>
 <p>v1: generator of the line</p>
-<p>canonica: if True, draws the x, y and z axis</p></div>
+<p>canonica: if True, draws the x, y and z axis</p>
+<p>length: length for x, y and z axis and v1 axis</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.punt_referencia_canonica"><code class="name flex">
 <span>def <span class="ident">punt_referencia_canonica</span></span>(<span>self,<br>punt=Vector((-4.0, 7.0, 6.0)),<br>radius=0.1,<br>length=12,<br>name='Punt p',<br>coordenades=True,<br>vector=True)</span>
@@ -15990,14 +16027,14 @@ s3: azimuthal angle of the third point</p></div>
 <p>components: if True draws lines representing the components</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.vector_base_no_canonica"><code class="name flex">
-<span>def <span class="ident">vector_base_no_canonica</span></span>(<span>self,<br>vector=Vector((5.0, 6.0, -5.0)),<br>origin=Vector((0.0, 0.0, 0.0)),<br>u1=Vector((-0.3333333432674408, -0.6666666865348816, 0.6666666865348816)),<br>u2=Vector((0.6666666865348816, 0.3333333432674408, 0.6666666865348816)),<br>u3=Vector((-0.6666666865348816, 0.6666666865348816, 0.3333333432674408)),<br>length=12,<br>scale=0.04,<br>name="Base B'")</span>
+<span>def <span class="ident">vector_base_no_canonica</span></span>(<span>self,<br>vector=Vector((5.0, 6.0, -5.0)),<br>origin=Vector((0.0, 0.0, 0.0)),<br>u1=Vector((-0.3333333432674408, -0.6666666865348816, 0.6666666865348816)),<br>u2=Vector((0.6666666865348816, 0.3333333432674408, 0.6666666865348816)),<br>u3=Vector((-0.6666666865348816, 0.6666666865348816, 0.3333333432674408)),<br>length=12,<br>scale=0.04,<br>name="Base B'",<br>canonica=True,<br>preserve=False)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def vector_base_no_canonica(self,vector=Vector([5,6,-5]),origin=Vector([0,0,0]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),length=12,scale=0.04,name=&#34;Base B&#39;&#34;):
+<pre><code class="python">def vector_base_no_canonica(self,vector=Vector([5,6,-5]),origin=Vector([0,0,0]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),length=12,scale=0.04,name=&#34;Base B&#39;&#34;,canonica=True,preserve=False):
         &#34;&#34;&#34;
         Draws a vector expressed in the base {u1,u2,u3} with origin in the point origin and sets the default
         origin and default base to them
@@ -16014,11 +16051,17 @@ s3: azimuthal angle of the third point</p></div>
 
                 name: name of the base
         &#34;&#34;&#34;
-        self.base_no_canonica(origin=origin,u1=u1,u2=u2,u3=u3,length=length,scale=scale,name=name)
+        self.base_no_canonica(origin=origin,u1=u1,u2=u2,u3=u3,length=length,scale=scale,preserve=preserve,name=name)
         if not isinstance(vector,Vector):
                 vector = Vector(vector)
+        if canonica:
+                vector = self.coordinates_en_referencia(vector)
         self.draw_vector(vector,scale=0.06,head_height=0.25)
-        self.draw_components(vector,scale=0.015,name=&#34;Components en base B&#39;&#34;)</code></pre>
+        self.draw_components(vector,scale=0.015,name=&#34;Components en base B&#39;&#34;)
+        if not preserve:
+                self.set_origin()
+                self.set_base()
+                self.set_rotation()</code></pre>
 </details>
 <div class="desc"><p>Draws a vector expressed in the base {u1,u2,u3} with origin in the point origin and sets the default
 origin and default base to them</p>

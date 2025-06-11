@@ -1667,7 +1667,7 @@ class LinearAlgebra():
 		Parameters:
 		   vectors: list of vectors
 
-		   anonica: if True, the the vectors are expressed in the canonical basis.
+		   canonica: if True, the the vectors are expressed in the canonical basis.
 
 		   color: color of the vectors
 
@@ -5424,7 +5424,7 @@ class LinearAlgebra():
 	#
 	# Base no canònica
 	#
-	def base_no_canonica(self,origin=Vector([0,0,0]),u1=Vector([1,-1,0]),u2=1/2*Vector([1,-1,-1]),u3=Vector([-1,0,1]),length=12,scale=0.04,name="Base B'"):
+	def base_no_canonica(self,origin=Vector([0,0,0]),u1=Vector([1,-1,0]),u2=1/2*Vector([1,-1,-1]),u3=Vector([-1,0,1]),length=12,scale=0.04,preserve=False,name="Base B'"):
 		"""
 		Draws the base {u1,u2,u3} with origin in the point origin and sets the default
 		origin and default base to them
@@ -5438,6 +5438,8 @@ class LinearAlgebra():
 			scale: scale of the base
 
 			name: name of the base
+
+			preserve: 
 		"""
 		if not isinstance(origin,Vector):
 			origin = Vector(origin)
@@ -5450,6 +5452,10 @@ class LinearAlgebra():
 		self.set_origin(origin)
 		self.set_base([u1,u2,u3])
 		self.draw_base_axis(axis=length,positive=False,scale=scale,name=name)
+		if not preserve:
+			self.set_origin()
+			self.set_base()
+			self.set_rotation()
 	#
 	# Base a partir d'un eix
 	#
@@ -5482,7 +5488,7 @@ class LinearAlgebra():
 	#
 	# Vector en base no canònica
 	#
-	def vector_base_no_canonica(self,vector=Vector([5,6,-5]),origin=Vector([0,0,0]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),length=12,scale=0.04,name="Base B'"):
+	def vector_base_no_canonica(self,vector=Vector([5,6,-5]),origin=Vector([0,0,0]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),length=12,scale=0.04,name="Base B'",canonica=True,preserve=False):
 		"""
 		Draws a vector expressed in the base {u1,u2,u3} with origin in the point origin and sets the default
 		origin and default base to them
@@ -5499,11 +5505,17 @@ class LinearAlgebra():
 
 			name: name of the base
 		"""
-		self.base_no_canonica(origin=origin,u1=u1,u2=u2,u3=u3,length=length,scale=scale,name=name)
+		self.base_no_canonica(origin=origin,u1=u1,u2=u2,u3=u3,length=length,scale=scale,preserve=preserve,name=name)
 		if not isinstance(vector,Vector):
 			vector = Vector(vector)
+		if canonica:
+			vector = self.coordinates_en_referencia(vector)
 		self.draw_vector(vector,scale=0.06,head_height=0.25)
 		self.draw_components(vector,scale=0.015,name="Components en base B'")
+		if not preserve:
+			self.set_origin()
+			self.set_base()
+			self.set_rotation()
 	#
 	# Canvi de base
 	#
@@ -5705,13 +5717,15 @@ class LinearAlgebra():
 	#
 	# Projecció ortogonal i simètric sobre un pla vectorial
 	#
-	def projeccio_ortogonal_simetric_pla_vectorial(self,vector=Vector([7,-1,12]),v1=Vector([3,-1,1]),v2=Vector([1,0.5,0.5]),canonica=True):
+	def projeccio_ortogonal_simetric_pla_vectorial(self,vector=Vector([7,-1,12]),v1=Vector([3,-1,1]),v2=Vector([1,0.5,0.5]),sizex=None,sizey=None,canonica=True):
 		"""
 		Draws the otoghonal projection and the symmetric of a vector with respecte a plane
 		Parameters:
 			vector: the initial vector
 
 			v1, v2: generators of the plane
+
+			sizex, sizey: size of the plane
 
 			canonica: if True, draws the x, y and z axis
 		"""
@@ -5725,7 +5739,11 @@ class LinearAlgebra():
 		w = v1.cross(v2)
 		vp = vector - vector.project(w)
 		self.draw_vector(vp,color="Red")
-		self.pla_vectorial(v1,v2,sizex=3*vp.length,sizey=2.6*vp.length,canonica=canonica)
+		if sizex is None:
+			sizex = 4*vp.length
+		if sizey is None:
+			sizey = 4*vp.length	
+		self.pla_vectorial(v1,v2,sizex=sizex,sizey=sizey,canonica=canonica,color="AzureLightHard")
 		self.set_origin(vp)
 		self.draw_vector(vector.project(w),scale=0.025,color="White")
 		self.set_origin()
@@ -5811,7 +5829,7 @@ class LinearAlgebra():
 	#
 	# Projecció ortogonal i simètric sobre una recta vectorial
 	#
-	def projeccio_ortogonal_simetric_recta_vectorial(self,vector=Vector([7,-1,12]),v1=Vector([3,-1,1]),canonica=True):
+	def projeccio_ortogonal_simetric_recta_vectorial(self,vector=Vector([7,-1,12]),v1=Vector([3,-1,1]),canonica=True,length=15):
 		"""
 		Draws the otoghonal projection and the symmetric of a vector with respecte a line
 		Parameters:
@@ -5820,14 +5838,16 @@ class LinearAlgebra():
 			v1: generator of the line
 
 			canonica: if True, draws the x, y and z axis
+
+			length: length for x, y and z axis and v1 axis
 		"""
 		if not isinstance(vector,Vector):
 			vector = Vector(vector)
 		if not isinstance(v1,Vector):
 			v1 = Vector(v1)
 		if canonica:
-			self.base_canonica()
-		self.draw_vector(v1,axis=20,positive=False,color="Blue",scale=0.066)
+			self.base_canonica(length=length)
+		self.draw_vector(v1,axis=length,positive=False,color="Blue",scale=0.066)
 		self.draw_vector(vector)
 		vp = vector.project(v1)
 		self.draw_vector(vp,color="Red")
