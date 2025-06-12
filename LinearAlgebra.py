@@ -1094,8 +1094,6 @@ class LinearAlgebra():
 		material.use_nodes = True
 		principled_bsdf = material.node_tree.nodes['Principled BSDF']
 		if principled_bsdf is not None:
-			#for i, o in enumerate(principled_bsdf.inputs):
-			#	print(i, o.name)
 			principled_bsdf.inputs['Base Color'].default_value = (r, g, b, opacity)
 			principled_bsdf.inputs['IOR'].default_value = 0.0
 			principled_bsdf.inputs['Metallic'].default_value = 1.0
@@ -1731,7 +1729,6 @@ class LinearAlgebra():
 			return
 		bpy.ops.mesh.primitive_plane_add(size=sizex,enter_editmode=True,location=(0, 0, 0))
 		bpy.context.object.name = name
-		##### bpy.ops.mesh.subdivide(number_cuts=6,quadcorner='INNERVERT')
 		bpy.ops.object.mode_set(mode='OBJECT')
 		obj = bpy.data.objects.get(name)
 		if sizey is not None and sizey != 0.0:
@@ -2458,7 +2455,7 @@ class LinearAlgebra():
 
 		   thickness: thickness of the surface
 		"""
-		bpy.ops.mesh.primitive_uv_sphere_add(segments=256, ring_count=256, radius=radius, enter_editmode=False, location=(0, 0, 0))
+		bpy.ops.mesh.primitive_uv_sphere_add(segments=128, ring_count=128, radius=radius, enter_editmode=False, location=(0, 0, 0))
 		bpy.context.object.name = name
 		obj = bpy.data.objects.get(name)
 
@@ -3098,7 +3095,7 @@ class LinearAlgebra():
 	#
 	# Draw a polygon
 	#
-	def draw_polygon(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color="AzureBlueDark",linecolor="OrangeObscureDull",name='Polygon',opacity=1.0,thickness=0.0,vectors=None,scalevectors=0.01):
+	def draw_polygon(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color="AzureBlueMedium",linecolor="AzureBlueDark",name='Polygon',opacity=1.0,thickness=0.0,vectors=None,scalevectors=0.01):
 		"""
 		Draws a polygon
 		Parameters:
@@ -3300,7 +3297,39 @@ class LinearAlgebra():
 			self.draw_line(start=v[1],end=m02,scale=0.05,name="Mitjana 2",color="White")
 			self.draw_line(start=v[2],end=m01,scale=0.05,name="Mitjana 2",color="White")
 		self.draw_triangle(origin=v[0],u1=v[1]-v[0],u2=v[2]-v[0],scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)
-			 
+	#
+	# Draw a rectangle 
+	# 
+	def rectangle(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],scalelines=0.1,color="AzureBlueMedium",linecolor="AzureBlueDark",name="Rectangle",sizex=10,sizey=10,opacity=1.0,thickness=0.0):
+		"""
+		Draws a rectangle
+		Parameters:
+		   origin: base vertex of the rectangle
+
+		   u1, u2: base vectors for the rectangle
+
+		   scalelines: scale of the edges of the rectangle
+
+		   color: color of the rectangle
+
+		   linecolor: color of the edges
+
+		   name: name of the rectangle
+
+		   sizex, sizey: sizes of the rectangle
+
+		   opacity: opacity of the rectangle
+
+		   thickness: thickness of the rectangle
+		"""
+		if not isinstance(u1,Vector):
+			u1 = Vector(u1)
+		if not isinstance(u2,Vector):
+			u2 = Vector(u2)	
+		u1.normalize()
+		u2.normalize()
+		points = [(0,0),(sizex,0),(sizex,sizey),(0,sizey)]	
+		self.draw_polygon(origin=origin,u1=u1,u2=u2,points=points,scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)
 	#
 	# Draw a list of points
 	#
@@ -4701,6 +4730,7 @@ class LinearAlgebra():
 
 		   point: if not None draw three points and a cercle. Must be a float between tmax and tmin
 		"""
+
 		if radians:
 			angle *= 180/math.pi
 		stepsr = int(360/angle) + 1
@@ -4786,6 +4816,7 @@ class LinearAlgebra():
 		bpy.context.scene.frame_end = self.frame
 		bpy.context.scene.frame_set(0)
 		bpy.context.view_layer.update()
+		
 	#
 	# Helical motion or rotation of objects
 	#
@@ -6499,7 +6530,7 @@ class LinearAlgebra():
 	#
 	# Esfera
 	#
-	def esfera(self,centre=Vector([0,0,0]),radi=10,cmax=20):
+	def esfera(self,centre=Vector([0,0,0]),radi=10,cmax=20,name="Esfera"):
 		"""
 		Draws a sphere
 		Parametre:
@@ -6509,7 +6540,7 @@ class LinearAlgebra():
 
 			cmax: maximum values of the x, y and z coordinates
 		"""
-		return self.sphere(o=centre,r2=radi**2,canonica=True,principal=False,cmax=cmax)
+		return self.sphere(o=centre,r2=radi**2,canonica=True,principal=False,cmax=cmax,preserve=False,name=name,thickness=0.001)
 	#
 	# Tor
 	#
@@ -6932,7 +6963,6 @@ class LinearAlgebra():
 	cilindre_elliptic = elliptic_cylinder
 	cilindre_hiperbolic = hyperbolic_cylinder
 	cilindre_parabolic = parabolic_cylinder
-	esfera = sphere
 	#
 	# Esfera i cilindre el·liptic
 	#

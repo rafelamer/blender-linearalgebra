@@ -985,8 +985,6 @@ u1, u2: vectors</p></div>
                 material.use_nodes = True
                 principled_bsdf = material.node_tree.nodes[&#39;Principled BSDF&#39;]
                 if principled_bsdf is not None:
-                        #for i, o in enumerate(principled_bsdf.inputs):
-                        #       print(i, o.name)
                         principled_bsdf.inputs[&#39;Base Color&#39;].default_value = (r, g, b, opacity)
                         principled_bsdf.inputs[&#39;IOR&#39;].default_value = 0.0
                         principled_bsdf.inputs[&#39;Metallic&#39;].default_value = 1.0
@@ -1622,7 +1620,6 @@ u1, u2: vectors</p></div>
                         return
                 bpy.ops.mesh.primitive_plane_add(size=sizex,enter_editmode=True,location=(0, 0, 0))
                 bpy.context.object.name = name
-                ##### bpy.ops.mesh.subdivide(number_cuts=6,quadcorner=&#39;INNERVERT&#39;)
                 bpy.ops.object.mode_set(mode=&#39;OBJECT&#39;)
                 obj = bpy.data.objects.get(name)
                 if sizey is not None and sizey != 0.0:
@@ -2349,7 +2346,7 @@ u1, u2: vectors</p></div>
 
                    thickness: thickness of the surface
                 &#34;&#34;&#34;
-                bpy.ops.mesh.primitive_uv_sphere_add(segments=256, ring_count=256, radius=radius, enter_editmode=False, location=(0, 0, 0))
+                bpy.ops.mesh.primitive_uv_sphere_add(segments=128, ring_count=128, radius=radius, enter_editmode=False, location=(0, 0, 0))
                 bpy.context.object.name = name
                 obj = bpy.data.objects.get(name)
 
@@ -2989,7 +2986,7 @@ u1, u2: vectors</p></div>
         #
         # Draw a polygon
         #
-        def draw_polygon(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color=&#34;AzureBlueDark&#34;,linecolor=&#34;OrangeObscureDull&#34;,name=&#39;Polygon&#39;,opacity=1.0,thickness=0.0,vectors=None,scalevectors=0.01):
+        def draw_polygon(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color=&#34;AzureBlueMedium&#34;,linecolor=&#34;AzureBlueDark&#34;,name=&#39;Polygon&#39;,opacity=1.0,thickness=0.0,vectors=None,scalevectors=0.01):
                 &#34;&#34;&#34;
                 Draws a polygon
                 Parameters:
@@ -3120,7 +3117,7 @@ u1, u2: vectors</p></div>
         #
         # Draw a triangle
         #
-        def draw_triangle(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color=&#34;AzureBlueDark&#34;,linecolor=&#34;OrangeObscureDull&#34;,name=&#34;Triangle&#34;,opacity=1.0,thickness=0.0):
+        def draw_triangle(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color=&#34;AzureBlueMedium&#34;,linecolor=&#34;OrangeObscureDull&#34;,name=&#34;Triangle&#34;,opacity=1.0,thickness=0.0):
                 &#34;&#34;&#34;
                 Draws a triangle. It&#39;s a polygon with three vertices
                 Parameters:
@@ -3145,7 +3142,85 @@ u1, u2: vectors</p></div>
                 if len(points) != 3:
                         return
                 self.draw_polygon(origin=origin,u1=u1,u2=u2,points=points,scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)
+        #
+        # Draw a triangle from vertices
+        #
+        def triangle(self,vertices=[[0,0,0],[1,0,0],[0,1,0]],scalelines=0.075,color=&#34;AzureBlueMedium&#34;,linecolor=&#34;Blue&#34;,name=&#34;Triangle&#34;,baricentre=False,factors=(2,2,-2),ortocentre=False,opacity=1.0,thickness=0.0):
+                &#34;&#34;&#34;
+                Draws a triangle from the vertices
+                Parameters:
+                   vertices: vertices of the triangle
 
+                   scalelines: scale of the edges of the triangle
+
+                   color: color of the triangle
+
+                   linecolor: color of the edges
+
+                   name: name of the triangle
+
+                   opacity: opacity of the triangle
+
+                   thickness: thickness of the triangle
+                &#34;&#34;&#34;
+                if len(vertices) != 3:
+                        return None
+                if len(factors) != 3:
+                        return None
+                v = [Vector(x) for x in vertices]
+                if ortocentre:
+                        u1 = v[1]-v[0]
+                        u2 = v[2]-v[0]
+                        u3 = v[2] - v[1] 
+                        p0 = v[1] - u1.project(u3) 
+                        self.draw_line(start=v[0],end=v[0]+factors[0]*(p0-v[0]),scale=0.05,name=&#34;Altura 1&#34;,color=&#34;White&#34;)
+                        p1 = v[2] - u3.project(u2) 
+                        self.draw_line(start=v[1],end=v[1]+factors[1]*(p1-v[1]),scale=0.05,name=&#34;Altura 2&#34;,color=&#34;White&#34;)
+                        p2 = v[0] + u2.project(u1) 
+                        self.draw_line(start=v[2],end=v[2]+factors[2]*(p2-v[2]),scale=0.05,name=&#34;Altura 3&#34;,color=&#34;White&#34;)
+                        
+                if baricentre:
+                        m01 = (v[0]+v[1])/2
+                        m02 = (v[0]+v[2])/2
+                        m12 = (v[1]+v[2])/2
+                        m = (v[0]+v[1]+v[2])/3
+                        self.draw_line(start=v[0],end=m12,scale=0.05,name=&#34;Mitjana 1&#34;,color=&#34;White&#34;)
+                        self.draw_line(start=v[1],end=m02,scale=0.05,name=&#34;Mitjana 2&#34;,color=&#34;White&#34;)
+                        self.draw_line(start=v[2],end=m01,scale=0.05,name=&#34;Mitjana 2&#34;,color=&#34;White&#34;)
+                self.draw_triangle(origin=v[0],u1=v[1]-v[0],u2=v[2]-v[0],scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)
+        #
+        # Draw a rectangle 
+        # 
+        def rectangle(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],scalelines=0.1,color=&#34;AzureBlueMedium&#34;,linecolor=&#34;AzureBlueDark&#34;,name=&#34;Rectangle&#34;,sizex=10,sizey=10,opacity=1.0,thickness=0.0):
+                &#34;&#34;&#34;
+                Draws a rectangle
+                Parameters:
+                   origin: base vertex of the rectangle
+
+                   u1, u2: base vectors for the rectangle
+
+                   scalelines: scale of the edges of the rectangle
+
+                   color: color of the rectangle
+
+                   linecolor: color of the edges
+
+                   name: name of the rectangle
+
+                   sizex, sizey: sizes of the rectangle
+
+                   opacity: opacity of the rectangle
+
+                   thickness: thickness of the rectangle
+                &#34;&#34;&#34;
+                if not isinstance(u1,Vector):
+                        u1 = Vector(u1)
+                if not isinstance(u2,Vector):
+                        u2 = Vector(u2) 
+                u1.normalize()
+                u2.normalize()
+                points = [(0,0),(sizex,0),(sizex,sizey),(0,sizey)]      
+                self.draw_polygon(origin=origin,u1=u1,u2=u2,points=points,scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)
         #
         # Draw a list of points
         #
@@ -4546,6 +4621,7 @@ u1, u2: vectors</p></div>
 
                    point: if not None draw three points and a cercle. Must be a float between tmax and tmin
                 &#34;&#34;&#34;
+
                 if radians:
                         angle *= 180/math.pi
                 stepsr = int(360/angle) + 1
@@ -4631,6 +4707,7 @@ u1, u2: vectors</p></div>
                 bpy.context.scene.frame_end = self.frame
                 bpy.context.scene.frame_set(0)
                 bpy.context.view_layer.update()
+                
         #
         # Helical motion or rotation of objects
         #
@@ -6344,7 +6421,7 @@ u1, u2: vectors</p></div>
         #
         # Esfera
         #
-        def esfera(self,centre=Vector([0,0,0]),radi=10,cmax=20):
+        def esfera(self,centre=Vector([0,0,0]),radi=10,cmax=20,name=&#34;Esfera&#34;):
                 &#34;&#34;&#34;
                 Draws a sphere
                 Parametre:
@@ -6354,7 +6431,7 @@ u1, u2: vectors</p></div>
 
                         cmax: maximum values of the x, y and z coordinates
                 &#34;&#34;&#34;
-                return self.sphere(o=centre,r2=radi**2,canonica=True,principal=False,cmax=cmax)
+                return self.sphere(o=centre,r2=radi**2,canonica=True,principal=False,cmax=cmax,preserve=False,name=name,thickness=0.001)
         #
         # Tor
         #
@@ -6777,7 +6854,6 @@ u1, u2: vectors</p></div>
         cilindre_elliptic = elliptic_cylinder
         cilindre_hiperbolic = hyperbolic_cylinder
         cilindre_parabolic = parabolic_cylinder
-        esfera = sphere
         #
         # Esfera i cilindre el·liptic
         #
@@ -7058,8 +7134,6 @@ u1, u2: vectors</p></div>
         material.use_nodes = True
         principled_bsdf = material.node_tree.nodes[&#39;Principled BSDF&#39;]
         if principled_bsdf is not None:
-                #for i, o in enumerate(principled_bsdf.inputs):
-                #       print(i, o.name)
                 principled_bsdf.inputs[&#39;Base Color&#39;].default_value = (r, g, b, opacity)
                 principled_bsdf.inputs[&#39;IOR&#39;].default_value = 0.0
                 principled_bsdf.inputs[&#39;Metallic&#39;].default_value = 1.0
@@ -7122,6 +7196,7 @@ u1, u2: vectors</p></div>
 
            point: if not None draw three points and a cercle. Must be a float between tmax and tmin
         &#34;&#34;&#34;
+
         if radians:
                 angle *= 180/math.pi
         stepsr = int(360/angle) + 1
@@ -9342,7 +9417,7 @@ self.rotation and the basis self.base</p>
 
            thickness: thickness of the surface
         &#34;&#34;&#34;
-        bpy.ops.mesh.primitive_uv_sphere_add(segments=256, ring_count=256, radius=radius, enter_editmode=False, location=(0, 0, 0))
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=128, ring_count=128, radius=radius, enter_editmode=False, location=(0, 0, 0))
         bpy.context.object.name = name
         obj = bpy.data.objects.get(name)
 
@@ -10676,7 +10751,6 @@ self.rotation and the basis self.base is used</p>
                 return
         bpy.ops.mesh.primitive_plane_add(size=sizex,enter_editmode=True,location=(0, 0, 0))
         bpy.context.object.name = name
-        ##### bpy.ops.mesh.subdivide(number_cuts=6,quadcorner=&#39;INNERVERT&#39;)
         bpy.ops.object.mode_set(mode=&#39;OBJECT&#39;)
         obj = bpy.data.objects.get(name)
         if sizey is not None and sizey != 0.0:
@@ -11020,14 +11094,14 @@ Only normal or base can be not None</p>
 <p>opacity: opacity of the points</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.draw_polygon"><code class="name flex">
-<span>def <span class="ident">draw_polygon</span></span>(<span>self,<br>origin=[0, 0, 0],<br>u1=[1, 0, 0],<br>u2=[0, 1, 0],<br>points=[[0, 0], [1, 0], [0, 1]],<br>scalelines=0.075,<br>color='AzureBlueDark',<br>linecolor='OrangeObscureDull',<br>name='Polygon',<br>opacity=1.0,<br>thickness=0.0,<br>vectors=None,<br>scalevectors=0.01)</span>
+<span>def <span class="ident">draw_polygon</span></span>(<span>self,<br>origin=[0, 0, 0],<br>u1=[1, 0, 0],<br>u2=[0, 1, 0],<br>points=[[0, 0], [1, 0], [0, 1]],<br>scalelines=0.075,<br>color='AzureBlueMedium',<br>linecolor='AzureBlueDark',<br>name='Polygon',<br>opacity=1.0,<br>thickness=0.0,<br>vectors=None,<br>scalevectors=0.01)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def draw_polygon(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color=&#34;AzureBlueDark&#34;,linecolor=&#34;OrangeObscureDull&#34;,name=&#39;Polygon&#39;,opacity=1.0,thickness=0.0,vectors=None,scalevectors=0.01):
+<pre><code class="python">def draw_polygon(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color=&#34;AzureBlueMedium&#34;,linecolor=&#34;AzureBlueDark&#34;,name=&#39;Polygon&#39;,opacity=1.0,thickness=0.0,vectors=None,scalevectors=0.01):
         &#34;&#34;&#34;
         Draws a polygon
         Parameters:
@@ -11557,14 +11631,14 @@ Only normal or base can be not None</p>
 <p>thickness: thickness of the tetrahedron</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.draw_triangle"><code class="name flex">
-<span>def <span class="ident">draw_triangle</span></span>(<span>self,<br>origin=[0, 0, 0],<br>u1=[1, 0, 0],<br>u2=[0, 1, 0],<br>points=[[0, 0], [1, 0], [0, 1]],<br>scalelines=0.075,<br>color='AzureBlueDark',<br>linecolor='OrangeObscureDull',<br>name='Triangle',<br>opacity=1.0,<br>thickness=0.0)</span>
+<span>def <span class="ident">draw_triangle</span></span>(<span>self,<br>origin=[0, 0, 0],<br>u1=[1, 0, 0],<br>u2=[0, 1, 0],<br>points=[[0, 0], [1, 0], [0, 1]],<br>scalelines=0.075,<br>color='AzureBlueMedium',<br>linecolor='OrangeObscureDull',<br>name='Triangle',<br>opacity=1.0,<br>thickness=0.0)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def draw_triangle(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color=&#34;AzureBlueDark&#34;,linecolor=&#34;OrangeObscureDull&#34;,name=&#34;Triangle&#34;,opacity=1.0,thickness=0.0):
+<pre><code class="python">def draw_triangle(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color=&#34;AzureBlueMedium&#34;,linecolor=&#34;OrangeObscureDull&#34;,name=&#34;Triangle&#34;,opacity=1.0,thickness=0.0):
         &#34;&#34;&#34;
         Draws a triangle. It&#39;s a polygon with three vertices
         Parameters:
@@ -12425,56 +12499,30 @@ a, b: semiaxis of the initial ellipse</p>
 <p>preserve: Keep self.origin and self.base as the principal reference</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.esfera"><code class="name flex">
-<span>def <span class="ident">esfera</span></span>(<span>self,<br>o=[0, 0, 0],<br>r2=1,<br>principal=True,<br>canonica=True,<br>color='AzureBlueDark',<br>name='Sphere',<br>cmax=15,<br>pmax=15,<br>thickness=0.02,<br>opacity=1.0,<br>preserve=True)</span>
+<span>def <span class="ident">esfera</span></span>(<span>self, centre=Vector((0.0, 0.0, 0.0)), radi=10, cmax=20, name='Esfera')</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def sphere(self,o=[0,0,0],r2=1,principal=True,canonica=True,color=&#34;AzureBlueDark&#34;,name=&#34;Sphere&#34;,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+<pre><code class="python">def esfera(self,centre=Vector([0,0,0]),radi=10,cmax=20,name=&#34;Esfera&#34;):
         &#34;&#34;&#34;
-        Draws a sphere of center &#39;o&#39; and radius squared equal to &#39;r2&#39;
-        Parameters:
-           o: center of the sphere
+        Draws a sphere
+        Parametre:
+                centre: center of the sphere
 
-           r2: radius of the sphere squared
+                radi: radius of the sphere
 
-           principal: if True, the principal axis are drawn
-
-           canonica: if True, the canonical axis are drawn
-
-           color: color of the surface
-
-           name: name of the sphere
-
-           cmax: the canonical axis are drawn between -cmax and cmax
-
-           pmax: the principal axis are drawn between -cmax and cmax
-
-           thickness: thickness of the sphere
-
-           opacity: opacity of the sphere
-
-           preserve: Keep self.origin and self.base as the principal reference
+                cmax: maximum values of the x, y and z coordinates
         &#34;&#34;&#34;
-        u1 = Vector([1,0,0])
-        u2 = Vector([0,1,0])
-        return self.ellipsoid(o=o,u1=u1,u2=u2,a2=r2,b2=r2,c2=r2,principal=principal,canonica=canonica,color=color,name=name,cmax=cmax,pmax=pmax,thickness=thickness,opacity=opacity,preserve=preserve)</code></pre>
+        return self.sphere(o=centre,r2=radi**2,canonica=True,principal=False,cmax=cmax,preserve=False,name=name,thickness=0.001)</code></pre>
 </details>
-<div class="desc"><p>Draws a sphere of center 'o' and radius squared equal to 'r2'</p>
-<h2 id="parameters">Parameters</h2>
-<p>o: center of the sphere</p>
-<p>r2: radius of the sphere squared</p>
-<p>principal: if True, the principal axis are drawn</p>
-<p>canonica: if True, the canonical axis are drawn</p>
-<p>color: color of the surface</p>
-<p>name: name of the sphere</p>
-<p>cmax: the canonical axis are drawn between -cmax and cmax</p>
-<p>pmax: the principal axis are drawn between -cmax and cmax</p>
-<p>thickness: thickness of the sphere</p>
-<p>opacity: opacity of the sphere</p>
-<p>preserve: Keep self.origin and self.base as the principal reference</p></div>
+<div class="desc"><p>Draws a sphere</p>
+<h2 id="parametre">Parametre</h2>
+<p>centre: center of the sphere</p>
+<p>radi: radius of the sphere</p>
+<p>cmax: maximum values of the x, y and z coordinates</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.esfera_cilindre_elliptic"><code class="name flex">
 <span>def <span class="ident">esfera_cilindre_elliptic</span></span>(<span>self, radi=10, x0=5, a=5, b=5)</span>
@@ -14412,6 +14460,57 @@ origin and default base to them</p>
 <p>size: lenght of the line</p>
 <p>scale: scale of the line</p></div>
 </dd>
+<dt id="LinearAlgebra.LinearAlgebra.rectangle"><code class="name flex">
+<span>def <span class="ident">rectangle</span></span>(<span>self,<br>origin=[0, 0, 0],<br>u1=[1, 0, 0],<br>u2=[0, 1, 0],<br>scalelines=0.1,<br>color='AzureBlueMedium',<br>linecolor='AzureBlueDark',<br>name='Rectangle',<br>sizex=10,<br>sizey=10,<br>opacity=1.0,<br>thickness=0.0)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def rectangle(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],scalelines=0.1,color=&#34;AzureBlueMedium&#34;,linecolor=&#34;AzureBlueDark&#34;,name=&#34;Rectangle&#34;,sizex=10,sizey=10,opacity=1.0,thickness=0.0):
+        &#34;&#34;&#34;
+        Draws a rectangle
+        Parameters:
+           origin: base vertex of the rectangle
+
+           u1, u2: base vectors for the rectangle
+
+           scalelines: scale of the edges of the rectangle
+
+           color: color of the rectangle
+
+           linecolor: color of the edges
+
+           name: name of the rectangle
+
+           sizex, sizey: sizes of the rectangle
+
+           opacity: opacity of the rectangle
+
+           thickness: thickness of the rectangle
+        &#34;&#34;&#34;
+        if not isinstance(u1,Vector):
+                u1 = Vector(u1)
+        if not isinstance(u2,Vector):
+                u2 = Vector(u2) 
+        u1.normalize()
+        u2.normalize()
+        points = [(0,0),(sizex,0),(sizex,sizey),(0,sizey)]      
+        self.draw_polygon(origin=origin,u1=u1,u2=u2,points=points,scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)</code></pre>
+</details>
+<div class="desc"><p>Draws a rectangle</p>
+<h2 id="parameters">Parameters</h2>
+<p>origin: base vertex of the rectangle</p>
+<p>u1, u2: base vectors for the rectangle</p>
+<p>scalelines: scale of the edges of the rectangle</p>
+<p>color: color of the rectangle</p>
+<p>linecolor: color of the edges</p>
+<p>name: name of the rectangle</p>
+<p>sizex, sizey: sizes of the rectangle</p>
+<p>opacity: opacity of the rectangle</p>
+<p>thickness: thickness of the rectangle</p></div>
+</dd>
 <dt id="LinearAlgebra.LinearAlgebra.referencia_canonica"><code class="name flex">
 <span>def <span class="ident">referencia_canonica</span></span>(<span>self,<br>origin=Vector((0.0, 0.0, 0.0)),<br>length=15,<br>scale=0.04,<br>zaxis=True,<br>name='Referència canònica')</span>
 </code></dt>
@@ -15892,6 +15991,68 @@ the variables for the equation
 <p>cmax: maximum values of the x, y and z coordinates</p>
 <p>punt: if it's a float value, draws a moving poing</p></div>
 </dd>
+<dt id="LinearAlgebra.LinearAlgebra.triangle"><code class="name flex">
+<span>def <span class="ident">triangle</span></span>(<span>self,<br>vertices=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],<br>scalelines=0.075,<br>color='AzureBlueMedium',<br>linecolor='Blue',<br>name='Triangle',<br>baricentre=False,<br>factors=(2, 2, -2),<br>ortocentre=False,<br>opacity=1.0,<br>thickness=0.0)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def triangle(self,vertices=[[0,0,0],[1,0,0],[0,1,0]],scalelines=0.075,color=&#34;AzureBlueMedium&#34;,linecolor=&#34;Blue&#34;,name=&#34;Triangle&#34;,baricentre=False,factors=(2,2,-2),ortocentre=False,opacity=1.0,thickness=0.0):
+        &#34;&#34;&#34;
+        Draws a triangle from the vertices
+        Parameters:
+           vertices: vertices of the triangle
+
+           scalelines: scale of the edges of the triangle
+
+           color: color of the triangle
+
+           linecolor: color of the edges
+
+           name: name of the triangle
+
+           opacity: opacity of the triangle
+
+           thickness: thickness of the triangle
+        &#34;&#34;&#34;
+        if len(vertices) != 3:
+                return None
+        if len(factors) != 3:
+                return None
+        v = [Vector(x) for x in vertices]
+        if ortocentre:
+                u1 = v[1]-v[0]
+                u2 = v[2]-v[0]
+                u3 = v[2] - v[1] 
+                p0 = v[1] - u1.project(u3) 
+                self.draw_line(start=v[0],end=v[0]+factors[0]*(p0-v[0]),scale=0.05,name=&#34;Altura 1&#34;,color=&#34;White&#34;)
+                p1 = v[2] - u3.project(u2) 
+                self.draw_line(start=v[1],end=v[1]+factors[1]*(p1-v[1]),scale=0.05,name=&#34;Altura 2&#34;,color=&#34;White&#34;)
+                p2 = v[0] + u2.project(u1) 
+                self.draw_line(start=v[2],end=v[2]+factors[2]*(p2-v[2]),scale=0.05,name=&#34;Altura 3&#34;,color=&#34;White&#34;)
+                
+        if baricentre:
+                m01 = (v[0]+v[1])/2
+                m02 = (v[0]+v[2])/2
+                m12 = (v[1]+v[2])/2
+                m = (v[0]+v[1]+v[2])/3
+                self.draw_line(start=v[0],end=m12,scale=0.05,name=&#34;Mitjana 1&#34;,color=&#34;White&#34;)
+                self.draw_line(start=v[1],end=m02,scale=0.05,name=&#34;Mitjana 2&#34;,color=&#34;White&#34;)
+                self.draw_line(start=v[2],end=m01,scale=0.05,name=&#34;Mitjana 2&#34;,color=&#34;White&#34;)
+        self.draw_triangle(origin=v[0],u1=v[1]-v[0],u2=v[2]-v[0],scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)</code></pre>
+</details>
+<div class="desc"><p>Draws a triangle from the vertices</p>
+<h2 id="parameters">Parameters</h2>
+<p>vertices: vertices of the triangle</p>
+<p>scalelines: scale of the edges of the triangle</p>
+<p>color: color of the triangle</p>
+<p>linecolor: color of the edges</p>
+<p>name: name of the triangle</p>
+<p>opacity: opacity of the triangle</p>
+<p>thickness: thickness of the triangle</p></div>
+</dd>
 <dt id="LinearAlgebra.LinearAlgebra.triangle_esferic"><code class="name flex">
 <span>def <span class="ident">triangle_esferic</span></span>(<span>self,<br>r=10,<br>p1=1.5707963267948966,<br>s1=0,<br>p2=1.5707963267948966,<br>s2=1.5707963267948966,<br>p3=0,<br>s3=0)</span>
 </code></dt>
@@ -16844,6 +17005,7 @@ returned in degrees</p></div>
 <li><code><a title="LinearAlgebra.LinearAlgebra.punt_referencia_canonica" href="#LinearAlgebra.LinearAlgebra.punt_referencia_canonica">punt_referencia_canonica</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.punt_referencia_no_canonica" href="#LinearAlgebra.LinearAlgebra.punt_referencia_no_canonica">punt_referencia_no_canonica</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.recta_afi" href="#LinearAlgebra.LinearAlgebra.recta_afi">recta_afi</a></code></li>
+<li><code><a title="LinearAlgebra.LinearAlgebra.rectangle" href="#LinearAlgebra.LinearAlgebra.rectangle">rectangle</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.referencia_canonica" href="#LinearAlgebra.LinearAlgebra.referencia_canonica">referencia_canonica</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.referencia_no_canonica" href="#LinearAlgebra.LinearAlgebra.referencia_no_canonica">referencia_no_canonica</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.reset" href="#LinearAlgebra.LinearAlgebra.reset">reset</a></code></li>
@@ -16876,6 +17038,7 @@ returned in degrees</p></div>
 <li><code><a title="LinearAlgebra.LinearAlgebra.sphere" href="#LinearAlgebra.LinearAlgebra.sphere">sphere</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.superficie_revolucio_parabola" href="#LinearAlgebra.LinearAlgebra.superficie_revolucio_parabola">superficie_revolucio_parabola</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.tor" href="#LinearAlgebra.LinearAlgebra.tor">tor</a></code></li>
+<li><code><a title="LinearAlgebra.LinearAlgebra.triangle" href="#LinearAlgebra.LinearAlgebra.triangle">triangle</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.triangle_esferic" href="#LinearAlgebra.LinearAlgebra.triangle_esferic">triangle_esferic</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.triangle_esferic_aleatori" href="#LinearAlgebra.LinearAlgebra.triangle_esferic_aleatori">triangle_esferic_aleatori</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.two_sheets_hyperboloid" href="#LinearAlgebra.LinearAlgebra.two_sheets_hyperboloid">two_sheets_hyperboloid</a></code></li>
