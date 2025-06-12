@@ -3229,7 +3229,7 @@ class LinearAlgebra():
 	#
 	# Draw a triangle
 	#
-	def draw_triangle(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color="AzureBlueDark",linecolor="OrangeObscureDull",name="Triangle",opacity=1.0,thickness=0.0):
+	def draw_triangle(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color="AzureBlueMedium",linecolor="OrangeObscureDull",name="Triangle",opacity=1.0,thickness=0.0):
 		"""
 		Draws a triangle. It's a polygon with three vertices
 		Parameters:
@@ -3254,7 +3254,53 @@ class LinearAlgebra():
 		if len(points) != 3:
 			return
 		self.draw_polygon(origin=origin,u1=u1,u2=u2,points=points,scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)
+	#
+	# Draw a triangle from vertices
+	#
+	def triangle(self,vertices=[[0,0,0],[1,0,0],[0,1,0]],scalelines=0.075,color="AzureBlueMedium",linecolor="Blue",name="Triangle",baricentre=False,factors=(2,2,-2),ortocentre=False,opacity=1.0,thickness=0.0):
+		"""
+		Draws a triangle from the vertices
+		Parameters:
+		   vertices: vertices of the triangle
 
+		   scalelines: scale of the edges of the triangle
+
+		   color: color of the triangle
+
+		   linecolor: color of the edges
+
+		   name: name of the triangle
+
+		   opacity: opacity of the triangle
+
+		   thickness: thickness of the triangle
+		"""
+		if len(vertices) != 3:
+			return None
+		if len(factors) != 3:
+			return None
+		v = [Vector(x) for x in vertices]
+		if ortocentre:
+			u1 = v[1]-v[0]
+			u2 = v[2]-v[0]
+			u3 = v[2] - v[1] 
+			p0 = v[1] - u1.project(u3) 
+			self.draw_line(start=v[0],end=v[0]+factors[0]*(p0-v[0]),scale=0.05,name="Altura 1",color="White")
+			p1 = v[2] - u3.project(u2) 
+			self.draw_line(start=v[1],end=v[1]+factors[1]*(p1-v[1]),scale=0.05,name="Altura 2",color="White")
+			p2 = v[0] + u2.project(u1) 
+			self.draw_line(start=v[2],end=v[2]+factors[2]*(p2-v[2]),scale=0.05,name="Altura 3",color="White")
+			
+		if baricentre:
+			m01 = (v[0]+v[1])/2
+			m02 = (v[0]+v[2])/2
+			m12 = (v[1]+v[2])/2
+			m = (v[0]+v[1]+v[2])/3
+			self.draw_line(start=v[0],end=m12,scale=0.05,name="Mitjana 1",color="White")
+			self.draw_line(start=v[1],end=m02,scale=0.05,name="Mitjana 2",color="White")
+			self.draw_line(start=v[2],end=m01,scale=0.05,name="Mitjana 2",color="White")
+		self.draw_triangle(origin=v[0],u1=v[1]-v[0],u2=v[2]-v[0],scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)
+			 
 	#
 	# Draw a list of points
 	#
