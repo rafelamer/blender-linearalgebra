@@ -4704,7 +4704,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def animate_revolution_surface(self,fun=None,tmin=0.0,tmax=1.0,steps=256,curvethicknes=0.025,thickness=0.025,frames=3,angle=3,radians=False,axis='Z',symmetry=None,name="Revolution surface",color="AzureBlueDark",point=None):
+	def animate_revolution_surface(self,fun=None,tmin=0.0,tmax=1.0,steps=256,curvethicknes=0.025,thickness=0.025,frames=3,angle=3,radians=False,axis='Z',origin=Vector([0,0,0]),symmetry=None,name="Revolution surface",color="AzureBlueDark",point=None):
 		"""
 		Draws and animates a revolution surface from a curve
 		Parameters:
@@ -4722,6 +4722,8 @@ class LinearAlgebra():
 
 		   axis: axis of revolution. It must be 'X', 'Y' or 'Z'
 
+		   origin: point of the axis of revolution
+
 		   symmetry: symmetry used to draw the curve
 
 		   name: name of the surface
@@ -4730,13 +4732,15 @@ class LinearAlgebra():
 
 		   point: if not None draw three points and a cercle. Must be a float between tmax and tmin
 		"""
-
 		if radians:
 			angle *= 180/math.pi
 		stepsr = int(360/angle) + 1
 		angle = 360/stepsr
 		if fun is None:
 			return None
+
+		if not isinstance(origin,Vector):
+			origin = Vector(origin)
 
 		if axis == 'X':
 			r = Rotation(angle,Vector([1,0,0]))
@@ -4768,15 +4772,17 @@ class LinearAlgebra():
 
 		p2 = self.curve(fun,tmin=tmin,tmax=tmax,steps=steps,thickness=curvethicknes,color="Red",symmetry=symmetry,name="Rotating curve")
 		p1 = self.curve(fun,tmin=tmin,tmax=tmax,steps=steps,thickness=1.05*curvethicknes,color="Blue",symmetry=symmetry,name="Curve")
-		obj = self.simple_curve(fun,tmin=tmin,tmax=tmax,steps=steps,name="Surface of revolution",symmetry=symmetry)
+		obj = self.simple_curve(fun,tmin=tmin,tmax=tmax,steps=steps,name=name,symmetry=symmetry)
+
 		if point is not None:
 			m1 = self.draw_point(radius=0.1,location=zp,name="Punt p0",color="Red")
-			m2 = self.draw_point(radius=0.1,location=zp,name="Punt p1",color="Black")
+			m2 = self.draw_point(radius=0.2,location=zp,name="Punt p1",color="Black")
 			m3 = self.draw_point(radius=0.1,location=z0,name="Punt p2",color="Blue")
 			l1 = self.draw_line(start=z0,end=zp,scale=0.04,name="Línia 1",color="Black")
 			l2 = self.draw_line(start=z0,end=zp,scale=0.03,name="Línia 2",color="Red")
+			l1 = self.join([l1,m2])
 			self.draw_circle(center=z0,u1=d1,u2=d2,radius=(zp-z0).length,steps=128,thickness=0.005,name="Circle",color="Cyan")
-
+	
 		m = obj.modifiers.new(name="SubSurf", type='SUBSURF')
 		m.levels = 4
 		m.subdivision_type = 'SIMPLE'
@@ -4797,8 +4803,9 @@ class LinearAlgebra():
 		p2.keyframe_insert(data_path="rotation_quaternion",index=-1)
 		if point is not None:
 			l1.keyframe_insert(data_path="rotation_quaternion",index=-1)
-			m2.keyframe_insert(data_path="location",index=-1)
+			# m2.keyframe_insert(data_path="location",index=-1)
 		fn = frames + self.frame
+		w = Vector([-1,0,3])
 		for i in range(0,stepsr):
 			bpy.context.scene.frame_set(fn)
 			p2.rotation_quaternion.rotate(r.quaternion)
@@ -4809,14 +4816,18 @@ class LinearAlgebra():
 			if point is not None:
 				l1.rotation_quaternion.rotate(r.quaternion)
 				l1.keyframe_insert(data_path="rotation_quaternion",index=-1)
-				m2.location.rotate(r.quaternion)
-				m2.keyframe_insert(data_path="location",index=-1)
+				#m2.location.rotate(r.quaternion)
+				# m2.location = m2.location + w
+				#m2.keyframe_insert(data_path="location",index=-1)
 			fn += frames
 		self.frame = fn - frames
 		bpy.context.scene.frame_end = self.frame
-		bpy.context.scene.frame_set(0)
 		bpy.context.view_layer.update()
-		
+		self.reset()
+		bpy.context.scene.frame_set(0)
+		bpy.ops.object.select_all(action='SELECT')
+		bpy.ops.transform.translate(value=origin)
+		bpy.ops.object.select_all(action='DESELECT')
 	#
 	# Helical motion or rotation of objects
 	#
