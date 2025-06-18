@@ -4704,7 +4704,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def animate_revolution_surface(self,fun=None,tmin=0.0,tmax=1.0,steps=256,curvethicknes=0.025,thickness=0.025,frames=3,angle=3,radians=False,axis='Z',origin=Vector([0,0,0]),symmetry=None,name="Revolution surface",color="AzureBlueDark",point=None):
+	def animate_revolution_surface(self,fun=None,tmin=0.0,tmax=1.0,steps=256,curvethicknes=0.025,thickness=0.025,frames=3,angle=3,radians=False,axis='Z',origin=Vector([0,0,0]),line=0,canonica=0,symmetry=None,name="Revolution surface",color="AzureBlueDark",point=None):
 		"""
 		Draws and animates a revolution surface from a curve
 		Parameters:
@@ -4747,14 +4747,17 @@ class LinearAlgebra():
 
 		if axis == 'X':
 			r = Rotation(angle,Vector([1,0,0]))
+			d0 = Vector([1,0,0])
 			d1 = Vector([0,1,0])
 			d2 = Vector([0,0,1])
 		elif axis == 'Y':
 			r = Rotation(angle,Vector([0,1,0]))
+			d0 = Vector([0,1,0])
 			d1 = Vector([0,0,1])
 			d2 = Vector([1,0,0])
 		elif axis == 'Z':
 			r = Rotation(angle,Vector([0,0,1]))
+			d0 = Vector([0,0,1])
 			d1 = Vector([1,0,0])
 			d2 = Vector([0,1,0])
 		else:
@@ -4772,6 +4775,15 @@ class LinearAlgebra():
 			zp = Vector(myfun(tp))
 			e = d1.cross(d2)
 			z0 = zp.project(e)
+
+		if line > 0:
+			self.draw_line(start=-line*d0,end=line*d0,scale=0.1,name="Eix de rotació")
+
+		if canonica > 0:
+			self.set_origin(-origin)
+			self.draw_base_axis(axis=canonica,positive=False,scale=0.05,name="Referència canònica") 
+			self.set_origin()
+
 
 		p2 = self.curve(myfun,tmin=tmin,tmax=tmax,steps=steps,thickness=curvethicknes,color="Red",symmetry=symmetry,name="Rotating curve")
 		p1 = self.curve(myfun,tmin=tmin,tmax=tmax,steps=steps,thickness=1.05*curvethicknes,color="Blue",symmetry=symmetry,name="Curve")
