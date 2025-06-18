@@ -4846,7 +4846,7 @@ class LinearAlgebra():
 	#
 	# Helical motion or rotation of objects
 	#
-	def rotate_objects(self,objs=[],axis='Z',angle=None,frames=1,origin=Vector([0,0,0]),translation=0,rounds=1,length=25,draw=False):
+	def rotate_objects(self,objs=[],axis='Z',angle=None,frames=1,origin=Vector([0,0,0]),translation=0,rounds=1,length=25,stop=0,draw=False):
 		"""
 		Rotates an object around the axis
 		Parameters:
@@ -4879,7 +4879,7 @@ class LinearAlgebra():
 
 		if draw:
 			self.set_origin(origin)
-			self.draw_vector(u,axis=length,positive=False,color="White")
+			self.draw_vector(vector=u,axis=length,positive=False,color="White")
 			self.set_origin()
 
 		r = Rotation(1/int(frames),u)
@@ -4903,13 +4903,13 @@ class LinearAlgebra():
 				obj.keyframe_insert(data_path="location",index=-1)
 			fn += 1
 		self.frame = fn - frames
-		bpy.context.scene.frame_end = self.frame
+		bpy.context.scene.frame_end = self.frame + stop
 		bpy.context.scene.frame_set(0)
 		bpy.context.view_layer.update()
 	#
 	# Rotation of a vector
 	#
-	def rotate_vector(self,vector=None,axis='Z',length=25):
+	def rotate_vector(self,vector=None,axis='Z',length=25,angle=360,stop=0):
 		"""
 		Rotates a vector around the axis
 		Parameters:
@@ -4930,9 +4930,8 @@ class LinearAlgebra():
 			u = axis
 		else:
 			u = Vector(axis)
-
-		self.draw_vector(vector,color="Black")
-		obj = self.draw_vector(vector,color="Red")
+		self.draw_vector(vector=vector,color="Black",scale=0.1,name="Vector inicial")
+		obj = self.draw_vector(vector=vector,color="Red",scale=0.1,name="Vector que gira")
 		w1 = u.orthogonal().normalized()
 		vec1 = vector.project(u)
 		w3 = vec1.normalized()
@@ -4940,12 +4939,12 @@ class LinearAlgebra():
 		a = vec1.length
 		b = (vector-vec1).length
 		p2 = b**2/a**2
-		self.rotate_object(obj,u,length=length)
-		self.cone(u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color="GrayLight",opacity=0.1,thickness=0.01)
+		self.rotate_object(obj,u,angle=angle,stop=stop,length=length)
+		self.cone(u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color="GrayLight",opacity=0.7,thickness=0.04)
 	#
 	# Rotation of a point
 	#
-	def rotate_point(self,punt=None,origen=Vector([0,0,0]),axis='Z',length=25,vectors=True):
+	def rotate_point(self,punt=None,origen=Vector([0,0,0]),axis='Z',angle=360,length=25,stop=0,vectors=True):
 		"""
 		Rotates a point around an affine line
 		Parameters:
@@ -4974,12 +4973,12 @@ class LinearAlgebra():
 		if not isinstance(origen,Vector):
 			origen = Vector(origen)
 
-		self.draw_point(radius=0.3,location=punt,name="Blue",color="Blue")
-		obj = self.draw_point(radius=0.3,location=punt,name="Red",color="Red")
+		self.draw_point(radius=0.2,location=punt,name="Blue",color="Blue")
+		obj = self.draw_point(radius=0.2,location=punt,name="Red",color="Red")
 		if vectors:
 			self.set_origin(origen)
-			self.draw_vector(punt-origen,name="VBlack",color="Black")
-			obj2 = self.draw_vector(punt-origen,name="VRed",color="Red")
+			self.draw_vector(vector=punt-origen,name="VBlack",color="Black")
+			obj2 = self.draw_vector(vector=punt-origen,name="VRed",color="Red")
 		w1 = u.orthogonal().normalized()
 		vec1 = (punt-origen).project(u)
 		center = origen + vec1
@@ -4990,9 +4989,9 @@ class LinearAlgebra():
 		b = (punt-origen-vec1).length
 		p2 = b**2/a**2
 		if vectors:
-			self.rotate_objects([obj,obj2],u,angle=360,origin=origen,length=length,draw=True)
+			self.rotate_objects([obj,obj2],u,angle=angle,origin=origen,length=length,stop=stop,draw=True)
 		else:
-			self.rotate_object(obj,u,origin=origen,length=length)
+			self.rotate_object(obj,u,origin=origen,angle=angle,stop=stop,length=length)
 		self.draw_circle(center=center,u1=w1,u2=w2,radius=radius,name="Circumferència",steps=128,color="Yellow")
 		self.cone(o=origen,u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color="GrayLight",opacity=0.25,thickness=0.01)
 		self.reset()
@@ -5053,7 +5052,7 @@ class LinearAlgebra():
 	#
 	# Rotation by Euler's angles
 	#
-	def rotate_euler(self,obj=None,psi=0.0,theta=0.0,phi=0.0,frames=3,axis='ZXZ',amax=15,scaleaxis=0.075,reverse=False,local=False,radians=False,canonica=True,positive=False):
+	def rotate_euler(self,obj=None,psi=0.0,theta=0.0,phi=0.0,frames=3,axis='ZXZ',amax=15,scaleaxis=0.075,reverse=False,local=False,stop=0,radians=False,canonica=True,positive=False):
 		"""
 		Rotates an object by the Euler angles psi, theta and phi
 		Parameters:
@@ -5063,7 +5062,7 @@ class LinearAlgebra():
 
 		   axis: it must be 'XYZ', 'XZY', 'YXZ', 'YZX', 'ZXY', 'ZYX', 'XYX', 'XZX', 'YXY', 'YZY', 'ZXZ' or 'ZYZ'
 
-		   amax: axis valur for draw_base_axis
+		   amax: axis value for draw_base_axis
 
 		   scaleaxis: scale value for draw_base_axis
 
@@ -5071,7 +5070,7 @@ class LinearAlgebra():
 
 		   radians: if True, psi, theta and phi must be in radians
 
-		   positive: if False and psi, theta or phi are greather than 180 degrees, they rae converted
+		   positive: if False and psi, theta or phi are greather than 180 degrees, they are converted
 		             to negative angles
 		"""
 		def vector_from_axis(axis):
@@ -5187,13 +5186,13 @@ class LinearAlgebra():
 			fn += frames
 
 		self.frame = fn - frames
-		bpy.context.scene.frame_end = self.frame
+		bpy.context.scene.frame_end = self.frame + stop
 		bpy.context.scene.frame_set(0)
 		bpy.context.view_layer.update()
 	#
 	# Rotate objects or helical motion
 	#
-	def rotate_object(self,obj=None,axis='Z',frames=1,origin=Vector([0,0,0]),localaxis=None,localangle=None,translation=0.0,rounds=1,length=25,draw=True):
+	def rotate_object(self,obj=None,axis='Z',frames=1,origin=Vector([0,0,0]),angle=360,localaxis=None,localangle=None,translation=0.0,rounds=1,stop=0,length=25,draw=True):
 		"""
 		Rotates an object around the axis
 		Parameters:
@@ -5224,6 +5223,9 @@ class LinearAlgebra():
 		else:
 			u = Vector(axis)
 
+		if angle != 360:
+			rounds = 1
+
 		line = None
 		if localaxis is not None and localangle is not None:
 			old = self.origin
@@ -5240,14 +5242,14 @@ class LinearAlgebra():
 			self.draw_vector(u,axis=length,positive=False,color="White")
 			self.set_origin()
 		r = Rotation(1/int(frames),u)
-		axis, angle = r.to_axis_angle()
+		axis, alpha = r.to_axis_angle()
 		axis.normalize()
-		t =  translation / (angle * int(frames) * 360) * axis
+		t =  translation / (alpha * int(frames) * alpha) * axis
 		bpy.context.scene.frame_set(self.frame)
 		obj.keyframe_insert(data_path="rotation_quaternion",index=-1)
 		obj.keyframe_insert(data_path="location",index=-1)
 		fn = self.frame + 1
-		for i in range(int(frames) * int(rounds) * 360):
+		for i in range(int(frames) * int(rounds) * angle):
 			bpy.context.scene.frame_set(fn)
 			if line is None:
 				obj.rotation_quaternion.rotate(r.quaternion)
@@ -5263,7 +5265,7 @@ class LinearAlgebra():
 			obj.keyframe_insert(data_path="location",index=-1)
 			fn += 1
 		self.frame = fn - frames
-		bpy.context.scene.frame_end = self.frame
+		bpy.context.scene.frame_end = self.frame + stop
 		bpy.context.scene.frame_set(0)
 		bpy.context.view_layer.update()
 	#
@@ -5594,7 +5596,9 @@ class LinearAlgebra():
 		u2 = u1.orthogonal().normalized()
 		u3 = u1.cross(u2)
 		self.set_base([u1,u2,u3])
+		self.set_colors(["Magenta","Yellow","Cyan"])
 		self.draw_base_axis(axis=length,positive=False,scale=scale,name=name)
+		self.set_colors()
 		self.reset()
 	#
 	# Vector en base no canònica
@@ -6634,7 +6638,7 @@ class LinearAlgebra():
 	#
 	# Rotació d'un ortoedre
 	#
-	def rotacio_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([8,5,4]),eix='Z',opacity=1):
+	def rotacio_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([8,5,4]),eix='Z',angle=360,stop=0,opacity=1):
 		"""
 		Draws an animation of an orthohedron rotating around a vectorial line
 		Parameters:
@@ -6652,11 +6656,11 @@ class LinearAlgebra():
 		if not isinstance(costats,Vector):
 			costats = Vector(costats)
 		ortoedre = self.draw_cube(origin=centre,scale=costats,color="AzureBlueDark",opacity=opacity,thickness=0.015,scalelines=0.025,linecolor="Orange",name="Ortoedre")
-		self.rotate_object(ortoedre,axis=eix,draw=False)
+		self.rotate_object(ortoedre,axis=eix,angle=angle,stop=stop,draw=False)
 	#
 	# Rotació d'un vector
 	#
-	def rotacio_vector(self,vector=Vector([6,8,5]),eix=Vector([1,1,1]),adaptada=False):
+	def rotacio_vector(self,vector=Vector([6,8,5]),eix=Vector([1,1,1]),angle=360,stop=0,adaptada=False):
 		"""
 		Draws an animation of a vector rotating around a vectorial line
 		Parameters:
@@ -6685,11 +6689,11 @@ class LinearAlgebra():
 		if adaptada:
 			self.base_adaptada(axis=eix,length=l)
 		self.base_canonica(length=l)
-		self.rotate_vector(vector,eix,length=l)
+		self.rotate_vector(vector,eix,length=l,angle=angle,stop=stop)
     # 
 	# Rotació d'un punt al voltant d'un eix
 	#
-	def rotacio_punt(self,punt=Vector([6,8,5]),origen=Vector([4,3,0]),eix=Vector([1,1,1]),vectors=True):
+	def rotacio_punt(self,punt=Vector([6,8,5]),origen=Vector([4,3,0]),angle=360,eix=Vector([1,1,1]),stop=0,vectors=True):
 		"""
 		Draws an animation of a point rotating around an afine line
 		Parameters:
@@ -6719,7 +6723,7 @@ class LinearAlgebra():
 		if l < 18:
 			l = 18
 		self.base_canonica(length=l)
-		self.rotate_point(punt,origen,u,length=l,vectors=vectors)
+		self.rotate_point(punt,origen,u,angle=angle,length=l,stop=stop,vectors=vectors)
 	#
 	# Rotació d'un ortoedre a partir dels angles d'Euler
 	#
