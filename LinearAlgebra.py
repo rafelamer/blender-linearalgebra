@@ -5244,7 +5244,7 @@ class LinearAlgebra():
 		r = Rotation(1/int(frames),u)
 		axis, alpha = r.to_axis_angle()
 		axis.normalize()
-		t =  translation / (alpha * int(frames) * alpha) * axis
+		t =  translation / (alpha * int(frames) * angle) * axis
 		bpy.context.scene.frame_set(self.frame)
 		obj.keyframe_insert(data_path="rotation_quaternion",index=-1)
 		obj.keyframe_insert(data_path="location",index=-1)
@@ -6687,7 +6687,7 @@ class LinearAlgebra():
 		if l < 18:
 			l = 18
 		if adaptada:
-			self.base_adaptada(axis=eix,length=l)
+			self.base_adaptada(axis=eix,length=l,scale=0.1)
 		self.base_canonica(length=l)
 		self.rotate_vector(vector,eix,length=l,angle=angle,stop=stop)
     # 
