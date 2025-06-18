@@ -4738,6 +4738,9 @@ class LinearAlgebra():
 		angle = 360/stepsr
 		if fun is None:
 			return None
+		
+		def myfun(t):
+			return Vector(fun(t)) - origin
 
 		if not isinstance(origin,Vector):
 			origin = Vector(origin)
@@ -4766,13 +4769,13 @@ class LinearAlgebra():
 				return None
 			if tp < tmin or tp > tmax:
 				tp = random.uniform(tmin,tmax)
-			zp = Vector(fun(tp))
+			zp = Vector(myfun(tp))
 			e = d1.cross(d2)
 			z0 = zp.project(e)
 
-		p2 = self.curve(fun,tmin=tmin,tmax=tmax,steps=steps,thickness=curvethicknes,color="Red",symmetry=symmetry,name="Rotating curve")
-		p1 = self.curve(fun,tmin=tmin,tmax=tmax,steps=steps,thickness=1.05*curvethicknes,color="Blue",symmetry=symmetry,name="Curve")
-		obj = self.simple_curve(fun,tmin=tmin,tmax=tmax,steps=steps,name=name,symmetry=symmetry)
+		p2 = self.curve(myfun,tmin=tmin,tmax=tmax,steps=steps,thickness=curvethicknes,color="Red",symmetry=symmetry,name="Rotating curve")
+		p1 = self.curve(myfun,tmin=tmin,tmax=tmax,steps=steps,thickness=1.05*curvethicknes,color="Blue",symmetry=symmetry,name="Curve")
+		obj = self.simple_curve(myfun,tmin=tmin,tmax=tmax,steps=steps,name=name,symmetry=symmetry)
 
 		if point is not None:
 			m1 = self.draw_point(radius=0.1,location=zp,name="Punt p0",color="Red")
