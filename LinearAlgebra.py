@@ -4641,7 +4641,7 @@ class LinearAlgebra():
 					if not isinstance(v,Vector):
 						v = Vector(v)
 					self.set_origin(o)
-					vec = self.draw_vector(v,color=color,name=f"Vector{count}",scale=scale,head_height=head_height)
+					vec = self.draw_vector(vector=v,color=color,name=f"Vector{count}",scale=scale,head_height=head_height)
 					if vec is not None:
 						vectors.append(vec)
 					z += zstep
@@ -4854,6 +4854,13 @@ class LinearAlgebra():
 
 		   axis: it must be 'X', 'Y', 'Z' or a Vector
 
+		   angle: angle of rotation
+
+		   frames: number of frames between 
+
+		   origin: origin of rotation
+
+		   translation: translation betwwen intial and final positions
 		"""
 		if objs is None or (not isinstance(objs,list) and not isinstance(objs,tuple)):
 			return None
@@ -4878,15 +4885,11 @@ class LinearAlgebra():
 			rounds = 1
 
 		if draw:
-			self.set_origin(origin)
-			self.draw_vector(vector=u,axis=length,positive=False,color="White")
-			self.set_origin()
-
+			self.draw_vector(origin=origin,vector=u,axis=length,positive=False,color="White")
 		r = Rotation(1/int(frames),u)
 		axis, alfa = r.to_axis_angle()
 		axis.normalize()
-		r = Rotation(1/int(frames),u)
-		t =  translation / (alfa * int(frames) * 360) * axis
+		t =  translation / (alfa * int(frames) * angle) * u
 		bpy.context.scene.frame_set(self.frame)
 		for obj in objs:
 			obj.keyframe_insert(data_path="rotation_quaternion",index=-1)
@@ -5024,7 +5027,7 @@ class LinearAlgebra():
 			return
 
 		self.draw_base_axis(axis = amax,scale=scaleaxis,positive=False,name="Base canònica")
-		self.draw_vector(u,scale=0.1,axis=amax,positive=False,color="White",name="Eix rotació")
+		self.draw_vector(vector=u,scale=0.1,axis=amax,positive=False,color="White",name="Eix rotació")
 
 		num = int(angle)
 		alfa = angle / num
@@ -5231,7 +5234,7 @@ class LinearAlgebra():
 			old = self.origin
 			self.set_origin(obj.location)
 			l = obj.dimensions.length / 2
-			line = self.draw_vector(localaxis,axis=l,scale=0.1,arrow=False,positive=False,color="Orange",name="Eix rotació local")
+			line = self.draw_vector(vector=localaxis,axis=l,scale=0.1,arrow=False,positive=False,color="Orange",name="Eix rotació local")
 			line.select_set(True)
 			bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS', center='MEDIAN')
 			line.select_set(False)
@@ -5239,7 +5242,7 @@ class LinearAlgebra():
 			lr = Rotation(localangle,localaxis)
 		if draw:
 			self.set_origin(origin)
-			self.draw_vector(u,axis=length,positive=False,color="White")
+			self.draw_vector(vector=u,axis=length,positive=False,color="White")
 			self.set_origin()
 		r = Rotation(1/int(frames),u)
 		axis, alpha = r.to_axis_angle()
@@ -5361,17 +5364,17 @@ class LinearAlgebra():
 			else:
 				vp = v0
 			if not units:
-				v = self.draw_vector(vp,color="Red",scale=0.035,head_height=0.3)
+				v = self.draw_vector(vector=vp,color="Red",scale=0.035,head_height=0.3)
 				v.scale.z *= l / 5.0
 			else:
-				v = self.draw_vector(vp,color="Red",scale=0.035,head_height=0.2)
+				v = self.draw_vector(vector=vp,color="Red",scale=0.035,head_height=0.2)
 			v.keyframe_insert(data_path="location",index=-1)
 			v.keyframe_insert(data_path="scale",index=-1)
 			v.keyframe_insert(data_path="rotation_quaternion",index=-1)
 		if acceleration:
 			l = a0.length
 			ap = 5*a0.normalized()
-			a = self.draw_vector(ap,color="Green",scale=0.035,head_height=0.2)
+			a = self.draw_vector(vector=ap,color="Green",scale=0.035,head_height=0.2)
 			a.scale.z *= l / 5.0
 			a.keyframe_insert(data_path="location",index=-1)
 			a.keyframe_insert(data_path="scale",index=-1)
@@ -5383,10 +5386,10 @@ class LinearAlgebra():
 			else:
 				np = n0
 			if not units:
-				n = self.draw_vector(np,color="Red",scale=0.035,head_height=0.2)
+				n = self.draw_vector(vector=np,color="Red",scale=0.035,head_height=0.2)
 				n.scale.z *= l / 5.0
 			else:
-				n = self.draw_vector(np,color="Red",scale=0.035,head_height=0.1)
+				n = self.draw_vector(vector=np,color="Red",scale=0.035,head_height=0.1)
 			n.keyframe_insert(data_path="location",index=-1)
 			n.keyframe_insert(data_path="scale",index=-1)
 			n.keyframe_insert(data_path="rotation_quaternion",index=-1)
@@ -5531,7 +5534,7 @@ class LinearAlgebra():
 		self.base_canonica(length=length)
 		if not isinstance(vector,Vector):
 			vector = Vector(vector)
-		self.draw_vector(vector,name=name)
+		self.draw_vector(vector=vector,name=name)
 		if components:
 			self.draw_components(vector,name="Components en base canònica")
 	#
@@ -5625,7 +5628,7 @@ class LinearAlgebra():
 			vector = Vector(vector)
 		if canonica:
 			vector = self.coordinates_en_referencia(vector)
-		self.draw_vector(vector,scale=0.06,head_height=0.25)
+		self.draw_vector(vector=vector,scale=0.06,head_height=0.25)
 		self.draw_components(vector,scale=0.015,name="Components en base B'")
 		if not preserve:
 			self.set_origin()
@@ -5716,7 +5719,7 @@ class LinearAlgebra():
 			self.set_origin(punt)
 			self.draw_point(color="Blue")
 			if normal is not None:
-				self.draw_vector(normal,color="Blue")
+				self.draw_vector(vector=normal,color="Blue")
 			else:
 				self.draw_vectors(vectors=[v1,v2],canonica=canonica,color="Blue")
 			self.set_origin()
@@ -5791,7 +5794,7 @@ class LinearAlgebra():
 		if elements:
 			self.set_origin(punt)
 			self.draw_point(color=color,radius=2 * scale)
-			self.draw_vector(v,color=color)
+			self.draw_vector(vector=v,color=color)
 			self.set_origin()
 	#
 	# Distància entre dues rectes que s'encreuen
@@ -5850,17 +5853,17 @@ class LinearAlgebra():
 			v1 = Vector(v1)
 		if not isinstance(v2,Vector):
 			v2 = Vector(v2)
-		self.draw_vector(vector)
+		self.draw_vector(vector=vector)
 		w = v1.cross(v2)
 		vp = vector - vector.project(w)
-		self.draw_vector(vp,color="Red")
+		self.draw_vector(vector=vp,color="Red")
 		if sizex is None:
 			sizex = 4*vp.length
 		if sizey is None:
 			sizey = 4*vp.length	
 		self.pla_vectorial(v1,v2,sizex=sizex,sizey=sizey,canonica=canonica,color="AzureLightHard")
 		self.set_origin(vp)
-		self.draw_vector(vector.project(w),scale=0.025,color="White")
+		self.draw_vector(vector=vector.project(w),scale=0.025,color="White")
 		self.set_origin()
 		self.set_base([v1,v2,w])
 		vb = self.components_in_base(vector)
@@ -5871,7 +5874,7 @@ class LinearAlgebra():
 		self.draw_line(start=[0,0,0],end=p2,scale=0.04,color="Blue")
 		self.draw_line(start=vp,end=p1,scale=0.04,color="Blue")
 		self.draw_line(start=vp,end=p2,scale=0.04,color="Blue")
-		self.draw_vector(2 * vp - vector,color="Green")
+		self.draw_vector(vector=2 * vp - vector,color="Green")
 		self.draw_line(start=2 * vp - vector,end=vp,scale=0.04,color="White")
 	#
 	# Projecció ortogonal i simètric d'un punt sobre un pla afí
@@ -5971,14 +5974,12 @@ class LinearAlgebra():
 			v1 = Vector(v1)
 		if canonica:
 			self.base_canonica(length=length)
-		self.draw_vector(v1,axis=length,positive=False,color="Blue",scale=0.066)
-		self.draw_vector(vector)
+		self.draw_vector(vector=v1,axis=length,positive=False,color="Blue",scale=0.066)
+		self.draw_vector(vector=vector)
 		vp = vector.project(v1)
-		self.draw_vector(vp,color="Red")
-		self.set_origin(vp)
-		self.draw_vector(vector - vp,scale=0.025,color="White")
-		self.set_origin()
-		self.draw_vector(2 * vp - vector,color="Green")
+		self.draw_vector(vector=vp,color="Red")
+		self.draw_vector(origin=vp,vector=vector - vp,scale=0.025,color="White")
+		self.draw_vector(vector=2 * vp - vector,color="Green")
 		self.draw_line(start=2 * vp - vector,end=vp,scale=0.04,color="White")
 	#
 	# Referència canònica
@@ -6025,7 +6026,7 @@ class LinearAlgebra():
 		if coordenades:
 			self.draw_components(punt,name="Coordenades en referència canònica")
 		if vector:
-			self.draw_vector(punt)
+			self.draw_vector(vector=punt)
 	#
 	# Referència no canònica
 	#
@@ -6087,7 +6088,7 @@ class LinearAlgebra():
 		self.draw_point(location=punt,color="Black",radius=radius,name=name)
 		self.draw_components(punt,scale=0.015,name="Coordenades en referència R'")
 		if vector:
-			self.draw_vector(punt)
+			self.draw_vector(vector=punt)
 	#
 	# Canvi de coordenades
 	#
@@ -6897,7 +6898,7 @@ class LinearAlgebra():
 	#
 	# Rotation or helical motion of a point
 	#
-	def moviment_helicoidal_punt(self,punt=Vector([0,0,0]),origen=Vector([-3,-3,-4]),eix='Z',rounds=5,translacio=2,vectors=True,reverse=False):
+	def moviment_helicoidal_punt(self,punt=Vector([0,0,0]),origen=Vector([-3,-3,-4]),eix='Z',rounds=5,angle=360,stop=0,translacio=2,vectors=True,reverse=False):
 		"""
 		Draws an animation of the helical motion of an orthohedron around an affine line
 		Parameters:
@@ -6924,6 +6925,9 @@ class LinearAlgebra():
 			u = eix
 		else:
 			u = Vector(eix)
+
+		if angle < 360:
+			rounds = 1
 		self.base_canonica()
 		if not isinstance(punt,Vector):
 			punt = Vector(punt)
@@ -6933,26 +6937,28 @@ class LinearAlgebra():
 		obj = self.draw_point(radius=0.2,location=punt,name="Red",color="Red")
 		obj2 = None
 		if vectors:
-			self.set_origin(origen)
-			self.draw_vector(punt-origen,name="VBlack",color="Black")
-			obj2 = self.draw_vector(punt-origen,name="VRed",color="Red")
+			self.draw_vector(origin=origen,vector=punt-origen,name="VBlack",color="Black")
+			obj2 = self.draw_vector(origin=origen,vector=punt-origen,name="VRed",color="Red")
 		if obj2 is None:
 			if reverse:
-				self.rotate_object(obj,axis=-u,origin=origen,translation=translacio,rounds=rounds,draw=True)
+				self.rotate_object(obj,axis=-u,origin=origen,translation=translacio,angle=angle,stop=stop,rounds=rounds,draw=True)
 			else:
-				self.rotate_object(obj,axis=u,origin=origen,translation=translacio,rounds=rounds,draw=True)
+				self.rotate_object(obj,axis=u,origin=origen,translation=translacio,angle=angle,stop=stop,rounds=rounds,draw=True)
 		else:
 			if reverse:
-				self.rotate_objects([obj,obj2],axis=-u,origin=origen,translation=translacio,rounds=rounds,draw=True)
+				self.rotate_objects([obj,obj2],axis=-u,origin=origen,translation=translacio,angle=angle,stop=stop,rounds=rounds,draw=True)
 			else:
-				self.rotate_objects([obj,obj2],axis=u,origin=origen,translation=translacio,rounds=rounds,draw=True)
+				self.rotate_objects([obj,obj2],axis=u,origin=origen,translation=translacio,angle=angle,stop=stop,rounds=rounds,draw=True)
 		vec1 = (punt-origen).project(u)
 		center = origen + vec1
 		w1 = (punt-center).normalized()
 		w3 = u.normalized()
 		w2 = w3.cross(w1)
 		radius = (center-punt).length
-		self.curve(lambda t: (radius*math.cos(t),radius*math.sin(t),translacio*t/(2*math.pi)),tmin=-2*rounds*math.pi,tmax=2*rounds*math.pi,steps=128*rounds,thickness=0.005,name="Hèlix",color="Yellow",o=center,u1=w1,u2=w2)
+		if angle < 360:
+			self.curve(lambda t: (radius*math.cos(t),radius*math.sin(t),180*translacio*u.length/(angle*math.pi)*t),tmin=0,tmax=2*rounds*math.pi,steps=128,thickness=0.005,name="Hèlix",color="Yellow",o=center,u1=w1,u2=w2)
+		else:
+			self.curve(lambda t: (radius*math.cos(t),radius*math.sin(t),translacio*t/(2*math.pi)),tmin=-2*rounds*math.pi,tmax=2*rounds*math.pi,steps=128*rounds,thickness=0.005,name="Hèlix",color="Yellow",o=center,u1=w1,u2=w2)
 		self.reset()
 	#
 	# Gir en el pla d'un poligon
