@@ -6898,7 +6898,7 @@ class LinearAlgebra():
 	#
 	# Rotation or helical motion of a point
 	#
-	def moviment_helicoidal_punt(self,punt=Vector([0,0,0]),origen=Vector([-3,-3,-4]),eix='Z',rounds=5,angle=360,stop=0,translacio=2,vectors=True,reverse=False):
+	def moviment_helicoidal_punt(self,punt=Vector([0,0,0]),origen=Vector([-3,-3,-4]),eix='Z',rounds=5,angle=360,stop=0,translacio=2,vectors=True,length=15,reverse=False):
 		"""
 		Draws an animation of the helical motion of an orthohedron around an affine line
 		Parameters:
@@ -6941,14 +6941,14 @@ class LinearAlgebra():
 			obj2 = self.draw_vector(origin=origen,vector=punt-origen,name="VRed",color="Red")
 		if obj2 is None:
 			if reverse:
-				self.rotate_object(obj,axis=-u,origin=origen,translation=translacio,angle=angle,stop=stop,rounds=rounds,draw=True)
+				self.rotate_object(obj,axis=-u,origin=origen,translation=translacio,angle=angle,stop=stop,length=length,rounds=rounds,draw=True)
 			else:
-				self.rotate_object(obj,axis=u,origin=origen,translation=translacio,angle=angle,stop=stop,rounds=rounds,draw=True)
+				self.rotate_object(obj,axis=u,origin=origen,translation=translacio,angle=angle,stop=stop,length=length,rounds=rounds,draw=True)
 		else:
 			if reverse:
-				self.rotate_objects([obj,obj2],axis=-u,origin=origen,translation=translacio,angle=angle,stop=stop,rounds=rounds,draw=True)
+				self.rotate_objects([obj,obj2],axis=-u,origin=origen,translation=translacio,angle=angle,stop=stop,length=length,rounds=rounds,draw=True)
 			else:
-				self.rotate_objects([obj,obj2],axis=u,origin=origen,translation=translacio,angle=angle,stop=stop,rounds=rounds,draw=True)
+				self.rotate_objects([obj,obj2],axis=u,origin=origen,translation=translacio,angle=angle,stop=stop,length=length,rounds=rounds,draw=True)
 		vec1 = (punt-origen).project(u)
 		center = origen + vec1
 		w1 = (punt-center).normalized()
