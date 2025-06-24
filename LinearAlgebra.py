@@ -1505,7 +1505,7 @@ class LinearAlgebra():
 			t = bpy.data.objects.get("Arrow_stem")
 			obj3 = t.copy()
 			if not arrow:
-				obj3.name = "Line"
+				obj3.name = name
 			else:
 				obj3.name = "Generated"
 			obj3.data = obj3.data.copy()
@@ -3348,10 +3348,12 @@ class LinearAlgebra():
 			u1 = Vector(u1)
 		if not isinstance(u2,Vector):
 			u2 = Vector(u2)
+		if not isinstance(origin,Vector):
+			origin = Vector(origin)
 		u1.normalize()
 		u2.normalize()
 		points = [(0,0),(sizex,0),(sizex,sizey),(0,sizey)]
-		self.draw_polygon(origin=origin-sizex/2*u1- sizex/2*u2,u1=u1,u2=u2,points=points,scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)
+		self.draw_polygon(origin=origin-sizex/2*u1-sizex/2*u2,u1=u1,u2=u2,points=points,scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)
 	#
 	# Draw a list of points
 	#
