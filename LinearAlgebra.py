@@ -5,7 +5,7 @@
 #
 #             This file contains code from the files add_mesh_3d_function_surface.
 #             and object_utils.py distributed with Blender as add_ons
-# 
+#
 # Disclaimer: This code is presented "as is" and it has been written to learn
 #             to use the python scripting language and the Blender sofware
 #             use them in the studies of Linear Algebra and Geometry
@@ -92,7 +92,7 @@ def object_data_add(context, obdata, operator=None, name=None):
     layer = context.view_layer
     layer_collection = context.layer_collection or layer.active_layer_collection
     scene_collection = layer_collection.collection
-	
+
     for ob in layer.objects:
         if ob is not None:
             ob.select_set(False)
@@ -788,7 +788,7 @@ class EuclideanReference():
 		"""
 		Initializes the elements of the reference from the origin and two independent vectors
 		Parameters:
-		   o: origin of 
+		   o: origin of
 		   u1, u2: vectors
 		"""
 		if isinstance(o,Vector):
@@ -813,10 +813,10 @@ class EuclideanReference():
 	#
 	def coordinates(self,u=Vector([0,0,0])):
 		"""
-		Returns the coordinates of a point (expressed in the canonical reference) in the actual reference 
+		Returns the coordinates of a point (expressed in the canonical reference) in the actual reference
 		Parameters:
-		   u: coordinates of a point in the canonical reference 
-		"""	
+		   u: coordinates of a point in the canonical reference
+		"""
 		if not isinstance(u,Vector):
 			u = Vector(u)
 		return self.matrix.transposed() @ (u - self.origin)
@@ -1311,7 +1311,7 @@ class LinearAlgebra():
 		base = self.base
 		if not zaxis:
 			base = self.base[0:2]
-		
+
 		for vec in base:
 			#
 			# Draw the stem
@@ -1416,7 +1416,7 @@ class LinearAlgebra():
 		Parameters:
 
 		   origin: point of the line
-		
+
 		   vector: components of the vector
 
 		   canonica: if True, the components are in the canonical basis, else they are in the basis self.base. Finally,
@@ -1463,8 +1463,8 @@ class LinearAlgebra():
 
 		if head_height is None:
 			head_height = 0.15*(v - o).length
-		if head_height > 0.15:
-			head_height = 0.15
+		if head_height > 0.25:
+			head_height = 0.25
 
 		if arrow:
 			t = bpy.data.objects.get("Arrow_stem")
@@ -1472,7 +1472,8 @@ class LinearAlgebra():
 			obj.name = name
 			obj.data = obj.data.copy()
 			obj.location = o
-			obj.scale = (scale,scale,(v - o).length - 2 * head_height)
+			lon =  (v - o).length
+			obj.scale = (scale,scale,lon - 2 * head_height)
 			obj.rotation_mode = 'QUATERNION'
 			obj.rotation_quaternion = (v - o).to_track_quat('Z','Y')
 			if color is not None:
@@ -1487,7 +1488,7 @@ class LinearAlgebra():
 			obj2.data = obj2.data.copy()
 			obj2.name = "Arrow"
 			obj2.location =  v - 2 * head_height * v / v.length
-			obj2.scale = (2*scale,2*scale,head_height)
+			obj2.scale = (2*scale,2*scale,head_height * lon)
 			obj2.rotation_mode = 'QUATERNION'
 			obj2.rotation_quaternion = (v - o).to_track_quat('Z','Y')
 			if color is not None:
@@ -2488,7 +2489,7 @@ class LinearAlgebra():
 	#
 	#
 	def draw_plane_surface(self,origin=None,normal=None,base=None,sizex=10,sizey=10,vectors=False,scalelines=0.05,scalevector=0.03,
-						color="AzureBlueDark",linecolor="BlueDarkDull",vectorcolor="Black",name="Plane",opacity=1.0,thickness=0.0):
+						color="AzureBlueDark",linecolor="BlueDarkDull",vectorcolor="Black",name="Plane",opacity=1.0,thickness=0.01):
 		"""
 		Draws a plane with normal vector or base vectors. It passes through the point origin.
 		Only normal or base can be not None
@@ -3159,7 +3160,12 @@ class LinearAlgebra():
 		if thickness > 0.0:
 			modifier = obj.modifiers.new(name="Solidify", type='SOLIDIFY')
 			modifier.thickness = thickness
-			modifier.offset = 0.0
+			modifier.offset = 1.0
+		modifier = obj.modifiers.new(name="SubSurf", type='SUBSURF')
+		modifier.levels = 4
+		modifier.subdivision_type = 'SIMPLE'
+		c = Colors.color(color)
+		self.add_material(obj,c.name,c.r,c.g,c.b,opacity)
 
 		ps = [op + points[i][0] * u1 + points[i][1] * u2 for i in range(len(points))]
 		lines = None
@@ -3177,8 +3183,6 @@ class LinearAlgebra():
 			vecs = self.draw_vectors(ps,color=vectors,scale=scalevectors)
 			self.set_origin(old)
 
-		c = Colors.color(color)
-		self.add_material(obj,c.name,c.r,c.g,c.b,opacity)
 
 		if lines is not None:
 			obj = self.join([obj,lines])
@@ -3191,7 +3195,6 @@ class LinearAlgebra():
 			obj.location.rotate(self.rotation.quaternion)
 		bpy.ops.object.shade_smooth()
 		bpy.context.view_layer.objects.active = None
-
 		return obj
 	#
 	# Draw a regular polygon
@@ -3226,7 +3229,7 @@ class LinearAlgebra():
 	#
 	# Draw a triangle
 	#
-	def draw_triangle(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color="AzureBlueMedium",linecolor="OrangeObscureDull",name="Triangle",opacity=1.0,thickness=0.0):
+	def draw_triangle(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color="AzureBlueMedium",linecolor="OrangeObscureDull",name="Triangle",opacity=1.0,thickness=0.01):
 		"""
 		Draws a triangle. It's a polygon with three vertices
 		Parameters:
@@ -3254,7 +3257,7 @@ class LinearAlgebra():
 	#
 	# Draw a triangle from vertices
 	#
-	def triangle(self,vertices=[[0,0,0],[1,0,0],[0,1,0]],scalelines=0.075,color="AzureBlueMedium",linecolor="Blue",name="Triangle",baricentre=False,factors=(2,2,-2),ortocentre=False,opacity=1.0,thickness=0.0):
+	def triangle(self,vertices=[[0,0,0],[1,0,0],[0,1,0]],scalelines=0.075,color="AzureBlueMedium",linecolor="Blue",name="Triangle",baricentre=False,factors=(2,2,-2),ortocentre=False,circumcentre=False,opacity=1.0,radius=0.03):
 		"""
 		Draws a triangle from the vertices
 		Parameters:
@@ -3280,26 +3283,45 @@ class LinearAlgebra():
 		if ortocentre:
 			u1 = v[1]-v[0]
 			u2 = v[2]-v[0]
-			u3 = v[2] - v[1] 
-			p0 = v[1] - u1.project(u3) 
-			self.draw_line(start=v[0],end=v[0]+factors[0]*(p0-v[0]),scale=0.05,name="Altura 1",color="White")
-			p1 = v[2] - u3.project(u2) 
-			self.draw_line(start=v[1],end=v[1]+factors[1]*(p1-v[1]),scale=0.05,name="Altura 2",color="White")
-			p2 = v[0] + u2.project(u1) 
-			self.draw_line(start=v[2],end=v[2]+factors[2]*(p2-v[2]),scale=0.05,name="Altura 3",color="White")
-			
+			u3 = v[2] - v[1]
+			p0 = v[1] - u1.project(u3)
+			self.draw_line(start=v[0],end=v[0]+factors[0]*(p0-v[0]),scale=scalelines,name="Altura 1",color="White")
+			p1 = v[2] - u3.project(u2)
+			self.draw_line(start=v[1],end=v[1]+factors[1]*(p1-v[1]),scale=scalelines,name="Altura 2",color="White")
+			p2 = v[0] + u2.project(u1)
+			self.draw_line(start=v[2],end=v[2]+factors[2]*(p2-v[2]),scale=scalelines,name="Altura 3",color="White")
+
+		if circumcentre:
+			u1 = v[1] - v[0]
+			u2 = v[2] - v[0]
+			u3 = v[2] - v[1]
+			w = u1.cross(u2)
+			w.normalize()
+			w01 = w.cross(u1)
+			w02 = w.cross(u2)
+			w12 = w.cross(u3)
+			m12 = (v[2] + v[1])/2
+			m01 = (v[0] + v[1])/2
+			m02 = (v[2] + v[0])/2
+			self.draw_line(start=m01,end=m01+factors[0]*w01,scale=scalelines,name="Mediatriu 1",color="White")
+			self.draw_line(start=m02,end=m02+factors[1]*w02,scale=scalelines,name="Mediatriu 2",color="White")
+			self.draw_line(start=m12,end=m12+factors[2]*w12,scale=scalelines,name="Mediatriu 3",color="White")
+			p1 = self.draw_point(radius=radius,location=m01,name="Punt mitjà 1")
+			p2 = self.draw_point(radius=radius,location=m02,name="Punt mitjà 2")
+			p3 = self.draw_point(radius=radius,location=m12,name="Punt mitjà 3")
+
 		if baricentre:
 			m01 = (v[0]+v[1])/2
 			m02 = (v[0]+v[2])/2
 			m12 = (v[1]+v[2])/2
 			m = (v[0]+v[1]+v[2])/3
-			self.draw_line(start=v[0],end=m12,scale=0.05,name="Mitjana 1",color="White")
-			self.draw_line(start=v[1],end=m02,scale=0.05,name="Mitjana 2",color="White")
-			self.draw_line(start=v[2],end=m01,scale=0.05,name="Mitjana 2",color="White")
-		self.draw_triangle(origin=v[0],u1=v[1]-v[0],u2=v[2]-v[0],scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)
+			self.draw_line(start=v[0],end=m12,scale=scalelines,name="Mitjana 1",color="White")
+			self.draw_line(start=v[1],end=m02,scale=scalelines,name="Mitjana 2",color="White")
+			self.draw_line(start=v[2],end=m01,scale=scalelines,name="Mitjana 2",color="White")
+		self.draw_triangle(origin=v[0],u1=v[1]-v[0],u2=v[2]-v[0],scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=0.01)
 	#
-	# Draw a rectangle 
-	# 
+	# Draw a rectangle
+	#
 	def rectangle(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],scalelines=0.1,color="AzureBlueMedium",linecolor="AzureBlueDark",name="Rectangle",sizex=10,sizey=10,opacity=1.0,thickness=0.0):
 		"""
 		Draws a rectangle
@@ -3316,7 +3338,7 @@ class LinearAlgebra():
 
 		   name: name of the rectangle
 
-		   sizex, sizey: sizes of the rectangle
+		   sizex,  sizey: sizes of the rectangle
 
 		   opacity: opacity of the rectangle
 
@@ -3325,11 +3347,11 @@ class LinearAlgebra():
 		if not isinstance(u1,Vector):
 			u1 = Vector(u1)
 		if not isinstance(u2,Vector):
-			u2 = Vector(u2)	
+			u2 = Vector(u2)
 		u1.normalize()
 		u2.normalize()
-		points = [(0,0),(sizex,0),(sizex,sizey),(0,sizey)]	
-		self.draw_polygon(origin=origin,u1=u1,u2=u2,points=points,scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)
+		points = [(0,0),(sizex,0),(sizex,sizey),(0,sizey)]
+		self.draw_polygon(origin=origin-sizex/2*u1- sizex/2*u2,u1=u1,u2=u2,points=points,scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)
 	#
 	# Draw a list of points
 	#
@@ -4738,7 +4760,7 @@ class LinearAlgebra():
 		angle = 360/stepsr
 		if fun is None:
 			return None
-		
+
 		def myfun(t):
 			return Vector(fun(t)) - origin
 
@@ -4781,7 +4803,7 @@ class LinearAlgebra():
 
 		if canonica > 0:
 			self.set_origin(-origin)
-			self.draw_base_axis(axis=canonica,positive=False,scale=0.05,name="Referència canònica") 
+			self.draw_base_axis(axis=canonica,positive=False,scale=0.05,name="Referència canònica")
 			self.set_origin()
 
 
@@ -4797,7 +4819,7 @@ class LinearAlgebra():
 			l2 = self.draw_line(start=z0,end=zp,scale=0.03,name="Línia 2",color="Red")
 			l1 = self.join([l1,m2])
 			self.draw_circle(center=z0,u1=d1,u2=d2,radius=(zp-z0).length,steps=128,thickness=0.005,name="Circle",color="Cyan")
-	
+
 		m = obj.modifiers.new(name="SubSurf", type='SUBSURF')
 		m.levels = 4
 		m.subdivision_type = 'SIMPLE'
@@ -4856,7 +4878,7 @@ class LinearAlgebra():
 
 		   angle: angle of rotation
 
-		   frames: number of frames between 
+		   frames: number of frames between
 
 		   origin: origin of rotation
 
@@ -5555,7 +5577,7 @@ class LinearAlgebra():
 
 			name: name of the base
 
-			preserve: 
+			preserve:
 		"""
 		if not isinstance(origin,Vector):
 			origin = Vector(origin)
@@ -5656,7 +5678,7 @@ class LinearAlgebra():
 	#
 	# Pla vectorial
 	#
-	def pla_vectorial(self,v1=Vector([3,2,1]),v2=Vector([1,-2,0.5]),canonica=False,length=15,color="Cyan",sizex=25,sizey=20,opacity=0.8):
+	def pla_vectorial(self,v1=Vector([3,2,1]),v2=Vector([1,-2,0.5]),canonica=False,length=15,color="Cyan",sizex=25,sizey=20,opacity=0.8,thickness=0.01):
 		"""
 		Draws the plane generated by two vectors
 		Parameters:
@@ -5671,6 +5693,8 @@ class LinearAlgebra():
 			sizex, sizey: size of the plane
 
 			opacicity: opacity of the plane
+
+			thickness: thickness of the plane
 		"""
 		if canonica:
 			if length > 15:
@@ -5678,7 +5702,7 @@ class LinearAlgebra():
 			else:
 				self.base_canonica(length=length)
 		self.draw_vectors([v1,v2],color="Blue")
-		self.draw_plane_surface(base=[v1,v2],color=color,sizex=sizex,sizey=sizey,opacity=opacity)
+		self.draw_plane_surface(base=[v1,v2],color=color,sizex=sizex,sizey=sizey,opacity=opacity,thickness=thickness)
 	#
 	# Pla afí
 	#
@@ -5835,7 +5859,7 @@ class LinearAlgebra():
 	#
 	# Projecció ortogonal i simètric sobre un pla vectorial
 	#
-	def projeccio_ortogonal_simetric_pla_vectorial(self,vector=Vector([7,-1,12]),v1=Vector([3,-1,1]),v2=Vector([1,0.5,0.5]),sizex=None,sizey=None,canonica=True):
+	def projeccio_ortogonal_simetric_pla_vectorial(self,vector=Vector([7,-1,12]),v1=Vector([3,-1,1]),v2=Vector([1,0.5,0.5]),sizex=None,sizey=None,color="AzureBlueDark",canonica=True,orthogonal=False,orthonormal=False,thickness=0.01):
 		"""
 		Draws the otoghonal projection and the symmetric of a vector with respecte a plane
 		Parameters:
@@ -5846,6 +5870,8 @@ class LinearAlgebra():
 			sizex, sizey: size of the plane
 
 			canonica: if True, draws the x, y and z axis
+
+			thickness:
 		"""
 		if not isinstance(vector,Vector):
 			vector = Vector(vector)
@@ -5856,26 +5882,49 @@ class LinearAlgebra():
 		self.draw_vector(vector=vector)
 		w = v1.cross(v2)
 		vp = vector - vector.project(w)
-		self.draw_vector(vector=vp,color="Red")
+		self.draw_vector(vector=vp,color="Red",name="Projecció ortogonal")
 		if sizex is None:
 			sizex = 4*vp.length
 		if sizey is None:
-			sizey = 4*vp.length	
-		self.pla_vectorial(v1,v2,sizex=sizex,sizey=sizey,canonica=canonica,color="AzureLightHard")
+			sizey = 4*vp.length
+		if orthogonal:
+			u1 = v1
+			u2 = v2
+			u2 = u1.dot(u1)*u2 - u2.dot(u1)*u1
+			self.draw_vectors(vectors=(u1,u2),name="Base ortogonal",color="Green")
+		if orthonormal:
+			u1 = v1
+			u2 = v2
+			u2 = u1.dot(u1)*u2 - u2.dot(u1)*u1
+			u1.normalize()
+			u2.normalize()
+			self.draw_vectors(vectors=(u1,u2),name="Base ortonormal",color="Orange")
+			self.set_base([u1,u2,w])
+			vb = self.components_in_base(vector)
+			self.set_base()
+			p1 = vb.x * u1
+			p2 = vb.y * u2
+			l1 = self.draw_line(start=[0,0,0],end=p1,scale=0.04,color="Orange",name="Lines 1")
+			l2 = self.draw_line(start=[0,0,0],end=p2,scale=0.04,color="Orange")
+			l3 = self.draw_line(start=vp,end=p1,scale=0.04,color="Orange")
+			l4 = self.draw_line(start=vp,end=p2,scale=0.04,color="Orange")
+			l11 = self.join([l1,l2,l3,l4])
+		self.pla_vectorial(v1,v2,sizex=sizex,sizey=sizey,canonica=canonica,color=color,thickness=thickness)
 		self.set_origin(vp)
-		self.draw_vector(vector=vector.project(w),scale=0.025,color="White")
+		self.draw_vector(vector=vector.project(w),scale=0.025,color="White",name="Vector perpendicular")
 		self.set_origin()
 		self.set_base([v1,v2,w])
 		vb = self.components_in_base(vector)
 		self.set_base()
 		p1 = vb.x * v1
 		p2 = vb.y * v2
-		self.draw_line(start=[0,0,0],end=p1,scale=0.04,color="Blue")
-		self.draw_line(start=[0,0,0],end=p2,scale=0.04,color="Blue")
-		self.draw_line(start=vp,end=p1,scale=0.04,color="Blue")
-		self.draw_line(start=vp,end=p2,scale=0.04,color="Blue")
-		self.draw_vector(vector=2 * vp - vector,color="Green")
-		self.draw_line(start=2 * vp - vector,end=vp,scale=0.04,color="White")
+		l1 = self.draw_line(start=[0,0,0],end=p1,scale=0.04,color="Blue",name="Lines 2")
+		l2 = self.draw_line(start=[0,0,0],end=p2,scale=0.04,color="Blue")
+		l3 = self.draw_line(start=vp,end=p1,scale=0.04,color="Blue")
+		l4 = self.draw_line(start=vp,end=p2,scale=0.04,color="Blue")
+		l1 = self.join([l1,l2,l3,l4])
+		self.draw_vector(vector=2 * vp - vector,color="Green",name="Simètric")
+		self.draw_line(start=2 * vp - vector,end=vp,scale=0.04,color="White",name="Vector perpendicular")
 	#
 	# Projecció ortogonal i simètric d'un punt sobre un pla afí
 	#
@@ -5918,7 +5967,7 @@ class LinearAlgebra():
 	#
 	# Projecció ortogonal i simètric d'un punt sobre una recta afí
 	#
-	def projeccio_ortogonal_simetric_recta_afi(self,punt=Vector([6,-5,8]),p0=Vector([3,-2,-3]),v1=Vector([3,-1,1]),scale=0.1,radi=0.15,sizex=10,sizey=10,canonica=True):
+	def projeccio_ortogonal_simetric_recta_afi(self,punt=Vector([6,-5,8]),p0=Vector([3,-2,-3]),v1=Vector([3,-1,1]),scale=0.1,radi=0.15,sizex=10,sizey=10,canonica=True,opacity=1.0):
 		"""
 		Draws the orthogonal projection and the symmetric of a point with respect an affine line
 		Parameters:
@@ -5950,7 +5999,7 @@ class LinearAlgebra():
 		u = punt - p0
 		p1 = p0 + u.project(v1)
 		self.draw_point(location=p1,color="Red",radius=radi,name="Projecció ortogonal")
-		self.draw_plane_surface(origin=p1,normal=v1,name="Pla perpendicular a la recta",sizex=sizex,sizey=sizey,color="AzureBlueMedium")
+		self.draw_plane_surface(origin=p1,normal=v1,name="Pla perpendicular a la recta",sizex=sizex,sizey=sizey,color="AzureBlueMedium",opacity=opacity)
 		self.draw_point(location=2*p1-punt,color="Green",radius=radi,name="Simètric")
 		self.draw_line(start=punt,end=2*p1-punt,scale=0.04,color="White")
 	#
@@ -5982,6 +6031,61 @@ class LinearAlgebra():
 		self.draw_vector(vector=2 * vp - vector,color="Green")
 		self.draw_line(start=2 * vp - vector,end=vp,scale=0.04,color="White")
 	#
+	# Perpendicular comuna a dues rectes
+	#
+	def perpendicular_comuna_a_dues_rectes(self,p0=Vector([1,1,1]),u=Vector([1,0,0]),q0=Vector([-1,2,-2]),v=Vector([0,0,1]),sizex=60,sizey=80,length=5,t1=0,t2=0,head_height=0.1):
+		"""
+		Draws the straigth line perpendicular to a given two non parallel lines
+		Parameters:
+		   p0: point of the first line
+
+		   u: director vector of the first line
+
+		   q0: point of the second line
+
+		   v: director vector of the second line
+
+		   sizex, sizey: sizes of the rectangle
+
+		   length: length og the vectors
+
+		   t1, t2: displacement of the points p0 and q0
+		"""
+		if not isinstance(p0,Vector):
+			p0 = Vector(p0)
+		if not isinstance(q0,Vector):
+			q0 = Vector(q0)
+		if not isinstance(u,Vector):
+			u = Vector(u)
+		if not isinstance(v,Vector):
+			v = Vector(v)
+
+		w = u.cross(v)
+		if w.length == 0:
+			return None
+		pq = q0 - p0
+		mat = Matrix([u,v,w])
+		mat.transpose()
+		mat.invert()
+		pq1 = mat @ pq
+
+		m0 = p0 + pq1.x * u
+		m1 = m0 + pq1.z * w
+		m = (m0 + m1)/2
+		u.normalize()
+		v.normalize()
+		w.normalize()
+		self.draw_vector(origin=p0+t1*u,vector=length*u,axis=30,scale=0.15,head_height=head_height,color="Blue",name="Recta  1",positive=False)
+		self.draw_vector(origin=q0+t2*v,vector=length*v,axis=30,scale=0.15,head_height=head_height,color="Green",name="Recta  2",positive=False)
+		self.draw_vector(origin=m,vector=length*w,axis=sizex/2+10,scale=0.15,head_height=head_height,color="Red",name="Recta perpendicular comuna",positive=False)
+		self.rectangle(origin=m,u1=w,u2=u,sizex=sizex,sizey=sizey,name="Pla P",opacity=1)
+		self.rectangle(origin=m,u1=w,u2=v,sizex=sizex,sizey=sizey,color="CyanAzureDark",name="Pla Q",opacity=1)
+		self.draw_point(location=p0+t1*u,radius=0.5,name="Punt p0",color="Blue")
+		self.draw_point(location=q0+t2*v,radius=0.5,name="Punt q0",color="Green")
+		self.draw_point(location=m0,radius=0.5,name="Punt interseccio 1")
+		self.draw_point(location=m1,radius=0.5,name="Punt interseccio 2")
+		self.draw_point(location=m,radius=0.5,name="Punt recta perpendicular",color="Red")
+	#
 	# Referència canònica
 	#
 	def referencia_canonica(self,origin=Vector([0,0,0]),length=15,scale=0.04,zaxis=True,name="Referència canònica"):
@@ -6005,7 +6109,7 @@ class LinearAlgebra():
 	#
 	# Punt en referència canònica
 	#
-	def punt_referencia_canonica(self,punt=Vector([-4,7,6]),radius=0.1,length=12,name="Punt p",coordenades=True,vector=True):
+	def punt_referencia_canonica(self,punt=Vector([-4,7,6]),radius=0.1,length=12,scale=0.06,name="Punt p",color="Black",coordenades=True,vector=True):
 		"""
 		Draws a point expressed in the canonical reference
 		Parameters:
@@ -6019,14 +6123,14 @@ class LinearAlgebra():
 
 		   vector: if True, it draws the position vector
 		"""
-		self.base_canonica(length=length)
+		self.base_canonica(length=length,scale=scale,name="Referència canònica")
 		if not isinstance(punt,Vector):
 			punt = Vector(punt)
 		self.draw_point(location=punt,color="Black",radius=radius,name=name)
 		if coordenades:
 			self.draw_components(punt,name="Coordenades en referència canònica")
 		if vector:
-			self.draw_vector(vector=punt)
+			self.draw_vector(vector=punt,name="Vector de posició refereǹcia canònica",color=color)
 	#
 	# Referència no canònica
 	#
@@ -6063,7 +6167,7 @@ class LinearAlgebra():
 	#
 	# Punt en referencia no canònica
 	#
-	def punt_referencia_no_canonica(self,punt=Vector([5,6,-5]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),length=12,scale=0.04,radius=0.1,name="Punt p",vector=True):
+	def punt_referencia_no_canonica(self,punt=Vector([5,6,-5]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),color="Black",length=12,scale=0.04,radius=0.1,name="Punt p",vector=True):
 		"""
 		Draws a point expressed in the reference {o,u1,u2,u3} with origin in the point origin and sets the default
 		origin and default base to them
@@ -6088,11 +6192,11 @@ class LinearAlgebra():
 		self.draw_point(location=punt,color="Black",radius=radius,name=name)
 		self.draw_components(punt,scale=0.015,name="Coordenades en referència R'")
 		if vector:
-			self.draw_vector(vector=punt)
+			self.draw_vector(vector=punt,name="Vector de posició referència R'")
 	#
 	# Canvi de coordenades
 	#
-	def canvi_coordenades(self,punt=Vector([8,-6,7]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),canonica=False,length=12,radius=0.1):
+	def canvi_coordenades(self,punt=Vector([8,-6,7]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),canonica=False,scale=0.06,length=12,radius=0.1):
 		"""
 		Draw the coordinates of a point in the canonical reference and in the reference {o;u1,u2,u3}. Sets the default
 		origin and default base to them
@@ -6108,12 +6212,13 @@ class LinearAlgebra():
 			length: length of the axis
 		"""
 		if canonica:
-			self.punt_referencia_canonica(punt=punt,length=length,radius=radius)
+			self.punt_referencia_canonica(punt=punt,length=length,scale=scale,radius=radius)
 		else:
-			self.set_colors(["Magenta","Yellow","Cyan"])
-			self.punt_referencia_no_canonica(punt=punt,origin=origin,u1=u1,u2=u2,u3=u3,length=length,radius=radius)
+			self.set_colors(["Magenta","Yellow","AzureBlueDark"])
+			self.punt_referencia_no_canonica(punt=punt,origin=origin,u1=u1,u2=u2,u3=u3,length=length,scale=scale,radius=radius)
 			p = self.coordinates_en_canonica(punt)
 		self.reset()
+		self.draw_vector(vector=p,name="Vector de posició en referència canònica",color="White")
 		self.draw_components(p,color="Magenta",name="Coordenades en referència canònica")
 	#
 	# El·lipse
@@ -6529,7 +6634,7 @@ class LinearAlgebra():
 
 		color: color of the cylinder
 
-		circlecolor: color of the two circles of a bounded cylinder 
+		circlecolor: color of the two circles of a bounded cylinder
 		"""
 		if not isinstance(centre,Vector):
 			centre = Vector(centre)
@@ -6545,12 +6650,12 @@ class LinearAlgebra():
 			u = eix
 		else:
 			u = Vector(eix)
-		
+
 		u1 = u.orthogonal().normalized()
 		u2 = u.normalized().cross(u1)
 		center1 = centre + height/2 * u.normalized()
 		center2 = centre - height/2 * u.normalized()
-		
+
 		c1, d1 = self.draw_circle(center=center1,radius=radi,u1=u1,u2=u2,axis=False,zaxis=False,steps=128,thickness=0.02,name="Circumferències",fillcolor=color,color=circlecolor)
 		c2, d2 = self.draw_circle(center=center2,radius=radi,u1=u1,u2=u2,axis=False,zaxis=False,steps=128,thickness=0.02,name="Circumferència 2",fillcolor=color,color=circlecolor)
 		_, _, cil = self.elliptic_cylinder(o=centre,a2=radi**2,b2=radi**2,u1=u1,u2=u2,principal=False,canonica=False,zmax=height/2,color=color,thickness=0.01,name="Cilindre")
@@ -6691,7 +6796,7 @@ class LinearAlgebra():
 			self.base_adaptada(axis=eix,length=l,scale=0.1)
 		self.base_canonica(length=l)
 		self.rotate_vector(vector,eix,length=l,angle=angle,stop=stop)
-    # 
+    #
 	# Rotació d'un punt al voltant d'un eix
 	#
 	def rotacio_punt(self,punt=Vector([6,8,5]),origen=Vector([4,3,0]),angle=360,eix=Vector([1,1,1]),stop=0,vectors=True):
@@ -6702,7 +6807,7 @@ class LinearAlgebra():
 
 			origen: point of the affine line
 
-			eix: axis of rotation, given by a vector or by X, Y or Z 
+			eix: axis of rotation, given by a vector or by X, Y or Z
 		"""
 		if not isinstance(punt,Vector):
 			punt = Vector(punt)
@@ -6874,7 +6979,7 @@ class LinearAlgebra():
 			u = eix
 		else:
 			u = Vector(eix)
-		
+
 		w1 = u.normalized()
 		w2 = u.orthogonal().normalized()
 		w3 = w1.cross(w2)
@@ -7168,7 +7273,7 @@ class LinearAlgebra():
 	#
 	def triangle_esferic_aleatori(self,r=10):
 		"""
-		Draws a random spheric triangle in a sphere centered at origin with radius r 
+		Draws a random spheric triangle in a sphere centered at origin with radius r
 		Parameters:
 		   r: radius of the sphere
 		"""
