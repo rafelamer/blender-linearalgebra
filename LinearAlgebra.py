@@ -1461,8 +1461,9 @@ class LinearAlgebra():
 			mat.transpose()
 			v = mat @ vec
 
+		lon =  (v - o).length
 		if head_height is None:
-			head_height = 0.15*(v - o).length
+			head_height = 0.03*lon
 		if head_height > 0.25:
 			head_height = 0.25
 
@@ -1472,7 +1473,6 @@ class LinearAlgebra():
 			obj.name = name
 			obj.data = obj.data.copy()
 			obj.location = o
-			lon =  (v - o).length
 			obj.scale = (scale,scale,lon - 2 * head_height)
 			obj.rotation_mode = 'QUATERNION'
 			obj.rotation_quaternion = (v - o).to_track_quat('Z','Y')
@@ -1488,7 +1488,7 @@ class LinearAlgebra():
 			obj2.data = obj2.data.copy()
 			obj2.name = "Arrow"
 			obj2.location =  v - 2 * head_height * v / v.length
-			obj2.scale = (2*scale,2*scale,head_height * lon)
+			obj2.scale = (1.5*scale,1.5*scale,head_height)
 			obj2.rotation_mode = 'QUATERNION'
 			obj2.rotation_quaternion = (v - o).to_track_quat('Z','Y')
 			if color is not None:
@@ -6213,12 +6213,18 @@ class LinearAlgebra():
 
 			length: length of the axis
 		"""
+		self.set_origin(origin)
+		self.set_base([u1,u2,u3])
 		if canonica:
-			self.punt_referencia_canonica(punt=punt,length=length,scale=scale,radius=radius)
+			p = punt
+			p1 = self.coordinates_en_referencia(punt)
 		else:
-			self.set_colors(["Magenta","Yellow","AzureBlueDark"])
-			self.punt_referencia_no_canonica(punt=punt,origin=origin,u1=u1,u2=u2,u3=u3,length=length,scale=scale,radius=radius)
 			p = self.coordinates_en_canonica(punt)
+			p1 = punt
+		self.reset()
+		## self.punt_referencia_canonica(punt=p,length=length,scale=scale,radius=radius)
+		self.set_colors(["Magenta","Yellow","AzureBlueDark"])
+		self.punt_referencia_no_canonica(punt=p1,origin=origin,u1=u1,u2=u2,u3=u3,length=length,scale=scale,radius=radius)
 		self.reset()
 		self.draw_vector(vector=p,name="Vector de posició en referència canònica",color="White")
 		self.draw_components(p,color="Magenta",name="Coordenades en referència canònica")
@@ -6361,7 +6367,7 @@ class LinearAlgebra():
 	#
 	# Hiperboloide d'una fulla de revolució
 	#
-	def hiperboloide_una_fulla_revolucio(self,a=3,b=2,pmax=8,direccio='Z',punt=None):
+	def hiperboloide_una_fulla_revolucio(self,a=3,b=2,pmax=8,direccio='Z',plane='XZ',punt=None):
 		"""
 		Draws an animation showing an one sheet hyperboloid of revolution
 			a, b: semiaxis of the initial hyperbole
@@ -6372,20 +6378,28 @@ class LinearAlgebra():
 			          'Y', the initial hyperbole is in the plane YX and rotates around the Y axis
 				      'Z', the initial hyperbole is in the plane ZX and rotates around the Z axis
 
+			plane: plane containing the initial hyperbole. It can be 'XY', 'XZ' or 'YZ'
+
 			punt: if it's a value between 0 and pi, the animation shows a rotating point
 		"""
-		if direccio == 'X' or direccio == 'x':
-			F = lambda t: (t,0,a*math.sqrt(1+t**2/b**2))
-		elif direccio == 'Y' or direccio == 'y':
+		plane = plane.upper()
+		direccio = direccio.upper()
+		if plane not in ('XY','XZ','YZ'):
+			return None
+		if direccio not in ('X','Y','Z'):
+			return None
+		if plane == 'XY':
 			F = lambda t: (a*math.sqrt(1+t**2/b**2),t,0)
-		else:
+		elif plane == 'XZ':
 			F = lambda t: (a*math.sqrt(1+t**2/b**2),0,t)
+		else:
+			F = lambda t: (0,a*math.sqrt(1+t**2/b**2),t)
 		self.base_canonica()
 		self.animate_revolution_surface(F,tmin=-pmax,tmax=pmax,steps=128,axis=direccio,point=punt)
 	#
 	# Hiperboloide de dues fulles de revolució
 	#
-	def hiperboloide_dues_fulles_revolucio(self,a=3,b=2,pmax=8,direccio='Z',punt=None):
+	def hiperboloide_dues_fulles_revolucio(self,a=3,b=2,pmax=8,direccio='Z',plane='XZ',punt=None):
 		"""
 		Draws an animation showing a two sheet hyperboloid of revolution
 			a, b: semiaxis of the initial hyperbole
@@ -6395,18 +6409,37 @@ class LinearAlgebra():
 			direccio: 'X', the initial hyperbole is in the plane YX and rotates around the X axis
 			          'Y', the initial hyperbole is in the plane ZY and rotates around the Y axis
 				      'Z', the initial hyperbole is in the plane XZ and rotates around the Z axis
+			
+			plane: plane containing the initial hyperbole. It can be 'XY', 'XZ' or 'YZ'
 
 			punt: if it's a value between 0 and pi, the animation shows a rotating point
 		"""
-		if direccio == 'X' or direccio == 'x':
-			s = 'Z'
+		plane = plane.upper()
+		direccio = direccio.upper()
+		if plane not in ('XY','XZ','YZ'):
+			return None
+		if direccio not in ('X','Y','Z'):
+			return None
+		if plane == 'XY':
 			F = lambda t: (a*math.sqrt(1+t**2/b**2),t,0)
-		elif direccio == 'Y' or direccio == 'y':
-			F = lambda t: (0,a*math.sqrt(1+t**2/b**2),t)
-			s = 'Z'
+		elif plane == 'XZ':
+			F = lambda t: (a*math.sqrt(1+t**2/b**2),0,t)
 		else:
-			F = lambda t: (t,0,a*math.sqrt(1+t**2/b**2))
+			F = lambda t: (0,a*math.sqrt(1+t**2/b**2),t)
+
+		if direccio == 'X':
+			if plane == 'YZ':
+				return None
+			s = 'Z'
+		elif direccio == 'Y':
+			if plane == 'XZ':
+				return None
+			s = 'Y'
+		else:
+			if plane == 'XY':
+				return None
 			s = 'X'
+
 		self.base_canonica()
 		self.animate_revolution_surface(F,tmin=0,tmax=pmax,steps=128,axis=direccio,symmetry=s,point=punt)
 	#
