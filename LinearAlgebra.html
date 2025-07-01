@@ -235,7 +235,7 @@ el.replaceWith(d);
     layer = context.view_layer
     layer_collection = context.layer_collection or layer.active_layer_collection
     scene_collection = layer_collection.collection
-        
+
     for ob in layer.objects:
         if ob is not None:
             ob.select_set(False)
@@ -625,7 +625,7 @@ el.replaceWith(d);
                 &#34;&#34;&#34;
                 Initializes the elements of the reference from the origin and two independent vectors
                 Parameters:
-                   o: origin of 
+                   o: origin of
                    u1, u2: vectors
                 &#34;&#34;&#34;
                 if isinstance(o,Vector):
@@ -650,10 +650,10 @@ el.replaceWith(d);
         #
         def coordinates(self,u=Vector([0,0,0])):
                 &#34;&#34;&#34;
-                Returns the coordinates of a point (expressed in the canonical reference) in the actual reference 
+                Returns the coordinates of a point (expressed in the canonical reference) in the actual reference
                 Parameters:
-                   u: coordinates of a point in the canonical reference 
-                &#34;&#34;&#34;     
+                   u: coordinates of a point in the canonical reference
+                &#34;&#34;&#34;
                 if not isinstance(u,Vector):
                         u = Vector(u)
                 return self.matrix.transposed() @ (u - self.origin)
@@ -701,15 +701,15 @@ u1, u2: vectors</p></div>
 </summary>
 <pre><code class="python">def coordinates(self,u=Vector([0,0,0])):
         &#34;&#34;&#34;
-        Returns the coordinates of a point (expressed in the canonical reference) in the actual reference 
+        Returns the coordinates of a point (expressed in the canonical reference) in the actual reference
         Parameters:
-           u: coordinates of a point in the canonical reference 
-        &#34;&#34;&#34;     
+           u: coordinates of a point in the canonical reference
+        &#34;&#34;&#34;
         if not isinstance(u,Vector):
                 u = Vector(u)
         return self.matrix.transposed() @ (u - self.origin)</code></pre>
 </details>
-<div class="desc"><p>Returns the coordinates of a point (expressed in the canonical reference) in the actual reference </p>
+<div class="desc"><p>Returns the coordinates of a point (expressed in the canonical reference) in the actual reference</p>
 <h2 id="parameters">Parameters</h2>
 <p>u: coordinates of a point in the canonical reference</p></div>
 </dd>
@@ -1078,6 +1078,29 @@ u1, u2: vectors</p></div>
         #
         #
         #
+        def components_en_canonica(self,vector=None):
+                &#34;&#34;&#34;
+                Returns the components of the vector &#39;point&#39; in the base determined by
+                self.rotation and the basis self.base
+                Parameters:
+                   vector: components of the vector in the base self.rotation + self.base
+                &#34;&#34;&#34;
+                if vector is None:
+                        return Vector([0,0,0])
+                if isinstance(vector,Vector):
+                        u = vector
+                else:
+                        u = Vector(vector)
+                if self.rotation is not None:
+                        mat = self.rotation.quaternion.to_matrix()
+                        u = mat @ u
+                mat = Matrix(self.base)
+                mat.transpose()
+                u = mat @ u
+                return u
+        #
+        #
+        #
         def coordinates_en_referencia(self,point=None):
                 &#34;&#34;&#34;
                 Returns the coordinates of the point &#39;point&#39; in the reference determined by
@@ -1202,7 +1225,7 @@ u1, u2: vectors</p></div>
                 base = self.base
                 if not zaxis:
                         base = self.base[0:2]
-                
+
                 for vec in base:
                         #
                         # Draw the stem
@@ -1307,7 +1330,7 @@ u1, u2: vectors</p></div>
                 Parameters:
 
                    origin: point of the line
-                
+
                    vector: components of the vector
 
                    canonica: if True, the components are in the canonical basis, else they are in the basis self.base. Finally,
@@ -1352,10 +1375,11 @@ u1, u2: vectors</p></div>
                         mat.transpose()
                         v = mat @ vec
 
+                lon =  (v - o).length
                 if head_height is None:
-                        head_height = 0.15*(v - o).length
-                if head_height &gt; 0.15:
-                        head_height = 0.15
+                        head_height = 0.03*lon
+                if head_height &gt; 0.25:
+                        head_height = 0.25
 
                 if arrow:
                         t = bpy.data.objects.get(&#34;Arrow_stem&#34;)
@@ -1363,7 +1387,7 @@ u1, u2: vectors</p></div>
                         obj.name = name
                         obj.data = obj.data.copy()
                         obj.location = o
-                        obj.scale = (scale,scale,(v - o).length - 2 * head_height)
+                        obj.scale = (scale,scale,lon - 2 * head_height)
                         obj.rotation_mode = &#39;QUATERNION&#39;
                         obj.rotation_quaternion = (v - o).to_track_quat(&#39;Z&#39;,&#39;Y&#39;)
                         if color is not None:
@@ -1378,7 +1402,7 @@ u1, u2: vectors</p></div>
                         obj2.data = obj2.data.copy()
                         obj2.name = &#34;Arrow&#34;
                         obj2.location =  v - 2 * head_height * v / v.length
-                        obj2.scale = (2*scale,2*scale,head_height)
+                        obj2.scale = (1.5*scale,1.5*scale,head_height)
                         obj2.rotation_mode = &#39;QUATERNION&#39;
                         obj2.rotation_quaternion = (v - o).to_track_quat(&#39;Z&#39;,&#39;Y&#39;)
                         if color is not None:
@@ -1395,7 +1419,7 @@ u1, u2: vectors</p></div>
                         t = bpy.data.objects.get(&#34;Arrow_stem&#34;)
                         obj3 = t.copy()
                         if not arrow:
-                                obj3.name = &#34;Line&#34;
+                                obj3.name = name
                         else:
                                 obj3.name = &#34;Generated&#34;
                         obj3.data = obj3.data.copy()
@@ -2379,7 +2403,7 @@ u1, u2: vectors</p></div>
         #
         #
         def draw_plane_surface(self,origin=None,normal=None,base=None,sizex=10,sizey=10,vectors=False,scalelines=0.05,scalevector=0.03,
-                                                color=&#34;AzureBlueDark&#34;,linecolor=&#34;BlueDarkDull&#34;,vectorcolor=&#34;Black&#34;,name=&#34;Plane&#34;,opacity=1.0,thickness=0.0):
+                                                color=&#34;AzureBlueDark&#34;,linecolor=&#34;BlueDarkDull&#34;,vectorcolor=&#34;Black&#34;,name=&#34;Plane&#34;,opacity=1.0,thickness=0.01):
                 &#34;&#34;&#34;
                 Draws a plane with normal vector or base vectors. It passes through the point origin.
                 Only normal or base can be not None
@@ -2482,9 +2506,9 @@ u1, u2: vectors</p></div>
                 op = Vector(self.origin)
                 if origin is not None:
                         if isinstance(origin,Vector):
-                                op = op + origin
+                                op = op + mat @ origin
                         else:
-                                op = op + Vector(origin)
+                                op = op + mat @ Vector(origin)
                 obj.location = o
                 obj.rotation_mode = &#39;QUATERNION&#39;
                 if self.rotation is not None:
@@ -3050,7 +3074,12 @@ u1, u2: vectors</p></div>
                 if thickness &gt; 0.0:
                         modifier = obj.modifiers.new(name=&#34;Solidify&#34;, type=&#39;SOLIDIFY&#39;)
                         modifier.thickness = thickness
-                        modifier.offset = 0.0
+                        modifier.offset = 1.0
+                modifier = obj.modifiers.new(name=&#34;SubSurf&#34;, type=&#39;SUBSURF&#39;)
+                modifier.levels = 4
+                modifier.subdivision_type = &#39;SIMPLE&#39;
+                c = Colors.color(color)
+                self.add_material(obj,c.name,c.r,c.g,c.b,opacity)
 
                 ps = [op + points[i][0] * u1 + points[i][1] * u2 for i in range(len(points))]
                 lines = None
@@ -3068,8 +3097,6 @@ u1, u2: vectors</p></div>
                         vecs = self.draw_vectors(ps,color=vectors,scale=scalevectors)
                         self.set_origin(old)
 
-                c = Colors.color(color)
-                self.add_material(obj,c.name,c.r,c.g,c.b,opacity)
 
                 if lines is not None:
                         obj = self.join([obj,lines])
@@ -3082,7 +3109,6 @@ u1, u2: vectors</p></div>
                         obj.location.rotate(self.rotation.quaternion)
                 bpy.ops.object.shade_smooth()
                 bpy.context.view_layer.objects.active = None
-
                 return obj
         #
         # Draw a regular polygon
@@ -3117,7 +3143,7 @@ u1, u2: vectors</p></div>
         #
         # Draw a triangle
         #
-        def draw_triangle(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color=&#34;AzureBlueMedium&#34;,linecolor=&#34;OrangeObscureDull&#34;,name=&#34;Triangle&#34;,opacity=1.0,thickness=0.0):
+        def draw_triangle(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color=&#34;AzureBlueMedium&#34;,linecolor=&#34;OrangeObscureDull&#34;,name=&#34;Triangle&#34;,opacity=1.0,thickness=0.01):
                 &#34;&#34;&#34;
                 Draws a triangle. It&#39;s a polygon with three vertices
                 Parameters:
@@ -3145,7 +3171,7 @@ u1, u2: vectors</p></div>
         #
         # Draw a triangle from vertices
         #
-        def triangle(self,vertices=[[0,0,0],[1,0,0],[0,1,0]],scalelines=0.075,color=&#34;AzureBlueMedium&#34;,linecolor=&#34;Blue&#34;,name=&#34;Triangle&#34;,baricentre=False,factors=(2,2,-2),ortocentre=False,opacity=1.0,thickness=0.0):
+        def triangle(self,vertices=[[0,0,0],[1,0,0],[0,1,0]],scalelines=0.075,color=&#34;AzureBlueMedium&#34;,linecolor=&#34;Blue&#34;,name=&#34;Triangle&#34;,baricentre=False,factors=(2,2,-2),ortocentre=False,circumcentre=False,opacity=1.0,radius=0.03):
                 &#34;&#34;&#34;
                 Draws a triangle from the vertices
                 Parameters:
@@ -3171,26 +3197,45 @@ u1, u2: vectors</p></div>
                 if ortocentre:
                         u1 = v[1]-v[0]
                         u2 = v[2]-v[0]
-                        u3 = v[2] - v[1] 
-                        p0 = v[1] - u1.project(u3) 
-                        self.draw_line(start=v[0],end=v[0]+factors[0]*(p0-v[0]),scale=0.05,name=&#34;Altura 1&#34;,color=&#34;White&#34;)
-                        p1 = v[2] - u3.project(u2) 
-                        self.draw_line(start=v[1],end=v[1]+factors[1]*(p1-v[1]),scale=0.05,name=&#34;Altura 2&#34;,color=&#34;White&#34;)
-                        p2 = v[0] + u2.project(u1) 
-                        self.draw_line(start=v[2],end=v[2]+factors[2]*(p2-v[2]),scale=0.05,name=&#34;Altura 3&#34;,color=&#34;White&#34;)
-                        
+                        u3 = v[2] - v[1]
+                        p0 = v[1] - u1.project(u3)
+                        self.draw_line(start=v[0],end=v[0]+factors[0]*(p0-v[0]),scale=scalelines,name=&#34;Altura 1&#34;,color=&#34;White&#34;)
+                        p1 = v[2] - u3.project(u2)
+                        self.draw_line(start=v[1],end=v[1]+factors[1]*(p1-v[1]),scale=scalelines,name=&#34;Altura 2&#34;,color=&#34;White&#34;)
+                        p2 = v[0] + u2.project(u1)
+                        self.draw_line(start=v[2],end=v[2]+factors[2]*(p2-v[2]),scale=scalelines,name=&#34;Altura 3&#34;,color=&#34;White&#34;)
+
+                if circumcentre:
+                        u1 = v[1] - v[0]
+                        u2 = v[2] - v[0]
+                        u3 = v[2] - v[1]
+                        w = u1.cross(u2)
+                        w.normalize()
+                        w01 = w.cross(u1)
+                        w02 = w.cross(u2)
+                        w12 = w.cross(u3)
+                        m12 = (v[2] + v[1])/2
+                        m01 = (v[0] + v[1])/2
+                        m02 = (v[2] + v[0])/2
+                        self.draw_line(start=m01,end=m01+factors[0]*w01,scale=scalelines,name=&#34;Mediatriu 1&#34;,color=&#34;White&#34;)
+                        self.draw_line(start=m02,end=m02+factors[1]*w02,scale=scalelines,name=&#34;Mediatriu 2&#34;,color=&#34;White&#34;)
+                        self.draw_line(start=m12,end=m12+factors[2]*w12,scale=scalelines,name=&#34;Mediatriu 3&#34;,color=&#34;White&#34;)
+                        p1 = self.draw_point(radius=radius,location=m01,name=&#34;Punt mitjà 1&#34;)
+                        p2 = self.draw_point(radius=radius,location=m02,name=&#34;Punt mitjà 2&#34;)
+                        p3 = self.draw_point(radius=radius,location=m12,name=&#34;Punt mitjà 3&#34;)
+
                 if baricentre:
                         m01 = (v[0]+v[1])/2
                         m02 = (v[0]+v[2])/2
                         m12 = (v[1]+v[2])/2
                         m = (v[0]+v[1]+v[2])/3
-                        self.draw_line(start=v[0],end=m12,scale=0.05,name=&#34;Mitjana 1&#34;,color=&#34;White&#34;)
-                        self.draw_line(start=v[1],end=m02,scale=0.05,name=&#34;Mitjana 2&#34;,color=&#34;White&#34;)
-                        self.draw_line(start=v[2],end=m01,scale=0.05,name=&#34;Mitjana 2&#34;,color=&#34;White&#34;)
-                self.draw_triangle(origin=v[0],u1=v[1]-v[0],u2=v[2]-v[0],scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)
+                        self.draw_line(start=v[0],end=m12,scale=scalelines,name=&#34;Mitjana 1&#34;,color=&#34;White&#34;)
+                        self.draw_line(start=v[1],end=m02,scale=scalelines,name=&#34;Mitjana 2&#34;,color=&#34;White&#34;)
+                        self.draw_line(start=v[2],end=m01,scale=scalelines,name=&#34;Mitjana 2&#34;,color=&#34;White&#34;)
+                self.draw_triangle(origin=v[0],u1=v[1]-v[0],u2=v[2]-v[0],scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=0.01)
         #
-        # Draw a rectangle 
-        # 
+        # Draw a rectangle
+        #
         def rectangle(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],scalelines=0.1,color=&#34;AzureBlueMedium&#34;,linecolor=&#34;AzureBlueDark&#34;,name=&#34;Rectangle&#34;,sizex=10,sizey=10,opacity=1.0,thickness=0.0):
                 &#34;&#34;&#34;
                 Draws a rectangle
@@ -3207,7 +3252,7 @@ u1, u2: vectors</p></div>
 
                    name: name of the rectangle
 
-                   sizex, sizey: sizes of the rectangle
+                   sizex,  sizey: sizes of the rectangle
 
                    opacity: opacity of the rectangle
 
@@ -3216,11 +3261,13 @@ u1, u2: vectors</p></div>
                 if not isinstance(u1,Vector):
                         u1 = Vector(u1)
                 if not isinstance(u2,Vector):
-                        u2 = Vector(u2) 
+                        u2 = Vector(u2)
+                if not isinstance(origin,Vector):
+                        origin = Vector(origin)
                 u1.normalize()
                 u2.normalize()
-                points = [(0,0),(sizex,0),(sizex,sizey),(0,sizey)]      
-                self.draw_polygon(origin=origin,u1=u1,u2=u2,points=points,scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)
+                points = [(0,0),(sizex,0),(sizex,sizey),(0,sizey)]
+                self.draw_polygon(origin=origin-sizex/2*u1-sizex/2*u2,u1=u1,u2=u2,points=points,scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)
         #
         # Draw a list of points
         #
@@ -3922,6 +3969,7 @@ u1, u2: vectors</p></div>
                 &#34;&#34;&#34;
                 axis1 = None
                 axis2 = None
+                coef = 1.0
                 q = self.vectors_to_quaternion(u1,u2)
                 u = Quaternion([1,0,0,0])
                 orig = [0,0,0]
@@ -4532,7 +4580,7 @@ u1, u2: vectors</p></div>
                                         if not isinstance(v,Vector):
                                                 v = Vector(v)
                                         self.set_origin(o)
-                                        vec = self.draw_vector(v,color=color,name=f&#34;Vector{count}&#34;,scale=scale,head_height=head_height)
+                                        vec = self.draw_vector(vector=v,color=color,name=f&#34;Vector{count}&#34;,scale=scale,head_height=head_height)
                                         if vec is not None:
                                                 vectors.append(vec)
                                         z += zstep
@@ -4595,7 +4643,7 @@ u1, u2: vectors</p></div>
         #
         #
         #
-        def animate_revolution_surface(self,fun=None,tmin=0.0,tmax=1.0,steps=256,curvethicknes=0.025,thickness=0.025,frames=3,angle=3,radians=False,axis=&#39;Z&#39;,symmetry=None,name=&#34;Revolution surface&#34;,color=&#34;AzureBlueDark&#34;,point=None):
+        def animate_revolution_surface(self,fun=None,tmin=0.0,tmax=1.0,steps=256,curvethicknes=0.025,thickness=0.025,frames=3,angle=3,radians=False,axis=&#39;Z&#39;,origin=Vector([0,0,0]),line=0,canonica=0,symmetry=None,name=&#34;Revolution surface&#34;,color=&#34;AzureBlueDark&#34;,point=None):
                 &#34;&#34;&#34;
                 Draws and animates a revolution surface from a curve
                 Parameters:
@@ -4613,6 +4661,8 @@ u1, u2: vectors</p></div>
 
                    axis: axis of revolution. It must be &#39;X&#39;, &#39;Y&#39; or &#39;Z&#39;
 
+                   origin: point of the axis of revolution
+
                    symmetry: symmetry used to draw the curve
 
                    name: name of the surface
@@ -4621,7 +4671,6 @@ u1, u2: vectors</p></div>
 
                    point: if not None draw three points and a cercle. Must be a float between tmax and tmin
                 &#34;&#34;&#34;
-
                 if radians:
                         angle *= 180/math.pi
                 stepsr = int(360/angle) + 1
@@ -4629,16 +4678,25 @@ u1, u2: vectors</p></div>
                 if fun is None:
                         return None
 
+                def myfun(t):
+                        return Vector(fun(t)) - origin
+
+                if not isinstance(origin,Vector):
+                        origin = Vector(origin)
+
                 if axis == &#39;X&#39;:
                         r = Rotation(angle,Vector([1,0,0]))
+                        d0 = Vector([1,0,0])
                         d1 = Vector([0,1,0])
                         d2 = Vector([0,0,1])
                 elif axis == &#39;Y&#39;:
                         r = Rotation(angle,Vector([0,1,0]))
+                        d0 = Vector([0,1,0])
                         d1 = Vector([0,0,1])
                         d2 = Vector([1,0,0])
                 elif axis == &#39;Z&#39;:
                         r = Rotation(angle,Vector([0,0,1]))
+                        d0 = Vector([0,0,1])
                         d1 = Vector([1,0,0])
                         d2 = Vector([0,1,0])
                 else:
@@ -4653,19 +4711,30 @@ u1, u2: vectors</p></div>
                                 return None
                         if tp &lt; tmin or tp &gt; tmax:
                                 tp = random.uniform(tmin,tmax)
-                        zp = Vector(fun(tp))
+                        zp = Vector(myfun(tp))
                         e = d1.cross(d2)
                         z0 = zp.project(e)
 
-                p2 = self.curve(fun,tmin=tmin,tmax=tmax,steps=steps,thickness=curvethicknes,color=&#34;Red&#34;,symmetry=symmetry,name=&#34;Rotating curve&#34;)
-                p1 = self.curve(fun,tmin=tmin,tmax=tmax,steps=steps,thickness=1.05*curvethicknes,color=&#34;Blue&#34;,symmetry=symmetry,name=&#34;Curve&#34;)
-                obj = self.simple_curve(fun,tmin=tmin,tmax=tmax,steps=steps,name=&#34;Surface of revolution&#34;,symmetry=symmetry)
+                if line &gt; 0:
+                        self.draw_line(start=-line*d0,end=line*d0,scale=0.1,name=&#34;Eix de rotació&#34;)
+
+                if canonica &gt; 0:
+                        self.set_origin(-origin)
+                        self.draw_base_axis(axis=canonica,positive=False,scale=0.05,name=&#34;Referència canònica&#34;)
+                        self.set_origin()
+
+
+                p2 = self.curve(myfun,tmin=tmin,tmax=tmax,steps=steps,thickness=curvethicknes,color=&#34;Red&#34;,symmetry=symmetry,name=&#34;Rotating curve&#34;)
+                p1 = self.curve(myfun,tmin=tmin,tmax=tmax,steps=steps,thickness=1.05*curvethicknes,color=&#34;Blue&#34;,symmetry=symmetry,name=&#34;Curve&#34;)
+                obj = self.simple_curve(myfun,tmin=tmin,tmax=tmax,steps=steps,name=name,symmetry=symmetry)
+
                 if point is not None:
                         m1 = self.draw_point(radius=0.1,location=zp,name=&#34;Punt p0&#34;,color=&#34;Red&#34;)
-                        m2 = self.draw_point(radius=0.1,location=zp,name=&#34;Punt p1&#34;,color=&#34;Black&#34;)
+                        m2 = self.draw_point(radius=0.2,location=zp,name=&#34;Punt p1&#34;,color=&#34;Black&#34;)
                         m3 = self.draw_point(radius=0.1,location=z0,name=&#34;Punt p2&#34;,color=&#34;Blue&#34;)
                         l1 = self.draw_line(start=z0,end=zp,scale=0.04,name=&#34;Línia 1&#34;,color=&#34;Black&#34;)
                         l2 = self.draw_line(start=z0,end=zp,scale=0.03,name=&#34;Línia 2&#34;,color=&#34;Red&#34;)
+                        l1 = self.join([l1,m2])
                         self.draw_circle(center=z0,u1=d1,u2=d2,radius=(zp-z0).length,steps=128,thickness=0.005,name=&#34;Circle&#34;,color=&#34;Cyan&#34;)
 
                 m = obj.modifiers.new(name=&#34;SubSurf&#34;, type=&#39;SUBSURF&#39;)
@@ -4688,8 +4757,9 @@ u1, u2: vectors</p></div>
                 p2.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
                 if point is not None:
                         l1.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
-                        m2.keyframe_insert(data_path=&#34;location&#34;,index=-1)
+                        # m2.keyframe_insert(data_path=&#34;location&#34;,index=-1)
                 fn = frames + self.frame
+                w = Vector([-1,0,3])
                 for i in range(0,stepsr):
                         bpy.context.scene.frame_set(fn)
                         p2.rotation_quaternion.rotate(r.quaternion)
@@ -4700,18 +4770,22 @@ u1, u2: vectors</p></div>
                         if point is not None:
                                 l1.rotation_quaternion.rotate(r.quaternion)
                                 l1.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
-                                m2.location.rotate(r.quaternion)
-                                m2.keyframe_insert(data_path=&#34;location&#34;,index=-1)
+                                #m2.location.rotate(r.quaternion)
+                                # m2.location = m2.location + w
+                                #m2.keyframe_insert(data_path=&#34;location&#34;,index=-1)
                         fn += frames
                 self.frame = fn - frames
                 bpy.context.scene.frame_end = self.frame
-                bpy.context.scene.frame_set(0)
                 bpy.context.view_layer.update()
-                
+                self.reset()
+                bpy.context.scene.frame_set(0)
+                bpy.ops.object.select_all(action=&#39;SELECT&#39;)
+                bpy.ops.transform.translate(value=origin)
+                bpy.ops.object.select_all(action=&#39;DESELECT&#39;)
         #
         # Helical motion or rotation of objects
         #
-        def rotate_objects(self,objs=[],axis=&#39;Z&#39;,angle=None,frames=1,origin=Vector([0,0,0]),translation=0,rounds=1,length=25,draw=False):
+        def rotate_objects(self,objs=[],axis=&#39;Z&#39;,angle=None,frames=1,origin=Vector([0,0,0]),translation=0,rounds=1,length=25,stop=0,draw=False):
                 &#34;&#34;&#34;
                 Rotates an object around the axis
                 Parameters:
@@ -4719,6 +4793,13 @@ u1, u2: vectors</p></div>
 
                    axis: it must be &#39;X&#39;, &#39;Y&#39;, &#39;Z&#39; or a Vector
 
+                   angle: angle of rotation
+
+                   frames: number of frames between
+
+                   origin: origin of rotation
+
+                   translation: translation betwwen intial and final positions
                 &#34;&#34;&#34;
                 if objs is None or (not isinstance(objs,list) and not isinstance(objs,tuple)):
                         return None
@@ -4743,15 +4824,11 @@ u1, u2: vectors</p></div>
                         rounds = 1
 
                 if draw:
-                        self.set_origin(origin)
-                        self.draw_vector(u,axis=length,positive=False,color=&#34;White&#34;)
-                        self.set_origin()
-
+                        self.draw_vector(origin=origin,vector=u,axis=length,positive=False,color=&#34;White&#34;)
                 r = Rotation(1/int(frames),u)
                 axis, alfa = r.to_axis_angle()
                 axis.normalize()
-                r = Rotation(1/int(frames),u)
-                t =  translation / (alfa * int(frames) * 360) * axis
+                t =  translation / (alfa * int(frames) * angle) * u
                 bpy.context.scene.frame_set(self.frame)
                 for obj in objs:
                         obj.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
@@ -4768,13 +4845,13 @@ u1, u2: vectors</p></div>
                                 obj.keyframe_insert(data_path=&#34;location&#34;,index=-1)
                         fn += 1
                 self.frame = fn - frames
-                bpy.context.scene.frame_end = self.frame
+                bpy.context.scene.frame_end = self.frame + stop
                 bpy.context.scene.frame_set(0)
                 bpy.context.view_layer.update()
         #
         # Rotation of a vector
         #
-        def rotate_vector(self,vector=None,axis=&#39;Z&#39;,length=25):
+        def rotate_vector(self,vector=None,axis=&#39;Z&#39;,length=25,angle=360,stop=0):
                 &#34;&#34;&#34;
                 Rotates a vector around the axis
                 Parameters:
@@ -4795,9 +4872,8 @@ u1, u2: vectors</p></div>
                         u = axis
                 else:
                         u = Vector(axis)
-
-                self.draw_vector(vector,color=&#34;Black&#34;)
-                obj = self.draw_vector(vector,color=&#34;Red&#34;)
+                self.draw_vector(vector=vector,color=&#34;Black&#34;,scale=0.1,name=&#34;Vector inicial&#34;)
+                obj = self.draw_vector(vector=vector,color=&#34;Red&#34;,scale=0.1,name=&#34;Vector que gira&#34;)
                 w1 = u.orthogonal().normalized()
                 vec1 = vector.project(u)
                 w3 = vec1.normalized()
@@ -4805,12 +4881,12 @@ u1, u2: vectors</p></div>
                 a = vec1.length
                 b = (vector-vec1).length
                 p2 = b**2/a**2
-                self.rotate_object(obj,u,length=length)
-                self.cone(u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color=&#34;GrayLight&#34;,opacity=0.1,thickness=0.01)
+                self.rotate_object(obj,u,angle=angle,stop=stop,length=length)
+                self.cone(u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color=&#34;GrayLight&#34;,opacity=0.7,thickness=0.04)
         #
         # Rotation of a point
         #
-        def rotate_point(self,punt=None,origen=Vector([0,0,0]),axis=&#39;Z&#39;,length=25,vectors=True):
+        def rotate_point(self,punt=None,origen=Vector([0,0,0]),axis=&#39;Z&#39;,angle=360,length=20,stop=0,vectors=True):
                 &#34;&#34;&#34;
                 Rotates a point around an affine line
                 Parameters:
@@ -4839,12 +4915,12 @@ u1, u2: vectors</p></div>
                 if not isinstance(origen,Vector):
                         origen = Vector(origen)
 
-                self.draw_point(radius=0.3,location=punt,name=&#34;Blue&#34;,color=&#34;Blue&#34;)
-                obj = self.draw_point(radius=0.3,location=punt,name=&#34;Red&#34;,color=&#34;Red&#34;)
+                self.draw_point(radius=0.2,location=punt,name=&#34;Blue&#34;,color=&#34;Blue&#34;)
+                obj = self.draw_point(radius=0.2,location=punt,name=&#34;Red&#34;,color=&#34;Red&#34;)
                 if vectors:
                         self.set_origin(origen)
-                        self.draw_vector(punt-origen,name=&#34;VBlack&#34;,color=&#34;Black&#34;)
-                        obj2 = self.draw_vector(punt-origen,name=&#34;VRed&#34;,color=&#34;Red&#34;)
+                        self.draw_vector(vector=punt-origen,name=&#34;VBlack&#34;,color=&#34;Black&#34;)
+                        obj2 = self.draw_vector(vector=punt-origen,name=&#34;VRed&#34;,color=&#34;Red&#34;)
                 w1 = u.orthogonal().normalized()
                 vec1 = (punt-origen).project(u)
                 center = origen + vec1
@@ -4854,10 +4930,11 @@ u1, u2: vectors</p></div>
                 a = vec1.length
                 b = (punt-origen-vec1).length
                 p2 = b**2/a**2
+                self.reset()
                 if vectors:
-                        self.rotate_objects([obj,obj2],u,angle=360,origin=origen,length=length,draw=True)
+                        self.rotate_objects([obj,obj2],u,angle=angle,origin=origen,length=length,stop=stop,draw=True)
                 else:
-                        self.rotate_object(obj,u,origin=origen,length=length)
+                        self.rotate_object(obj,u,origin=origen,angle=angle,stop=stop,length=length)
                 self.draw_circle(center=center,u1=w1,u2=w2,radius=radius,name=&#34;Circumferència&#34;,steps=128,color=&#34;Yellow&#34;)
                 self.cone(o=origen,u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color=&#34;GrayLight&#34;,opacity=0.25,thickness=0.01)
                 self.reset()
@@ -4890,7 +4967,7 @@ u1, u2: vectors</p></div>
                         return
 
                 self.draw_base_axis(axis = amax,scale=scaleaxis,positive=False,name=&#34;Base canònica&#34;)
-                self.draw_vector(u,scale=0.1,axis=amax,positive=False,color=&#34;White&#34;,name=&#34;Eix rotació&#34;)
+                self.draw_vector(vector=u,scale=0.1,axis=amax,positive=False,color=&#34;White&#34;,name=&#34;Eix rotació&#34;)
 
                 num = int(angle)
                 alfa = angle / num
@@ -4918,7 +4995,7 @@ u1, u2: vectors</p></div>
         #
         # Rotation by Euler&#39;s angles
         #
-        def rotate_euler(self,obj=None,psi=0.0,theta=0.0,phi=0.0,frames=3,axis=&#39;ZXZ&#39;,amax=15,scaleaxis=0.075,reverse=False,local=False,radians=False,canonica=True,positive=False):
+        def rotate_euler(self,obj=None,psi=0.0,theta=0.0,phi=0.0,frames=3,axis=&#39;ZXZ&#39;,amax=15,scaleaxis=0.075,reverse=False,local=False,stop=0,radians=False,canonica=True,positive=False):
                 &#34;&#34;&#34;
                 Rotates an object by the Euler angles psi, theta and phi
                 Parameters:
@@ -4928,7 +5005,7 @@ u1, u2: vectors</p></div>
 
                    axis: it must be &#39;XYZ&#39;, &#39;XZY&#39;, &#39;YXZ&#39;, &#39;YZX&#39;, &#39;ZXY&#39;, &#39;ZYX&#39;, &#39;XYX&#39;, &#39;XZX&#39;, &#39;YXY&#39;, &#39;YZY&#39;, &#39;ZXZ&#39; or &#39;ZYZ&#39;
 
-                   amax: axis valur for draw_base_axis
+                   amax: axis value for draw_base_axis
 
                    scaleaxis: scale value for draw_base_axis
 
@@ -4936,7 +5013,7 @@ u1, u2: vectors</p></div>
 
                    radians: if True, psi, theta and phi must be in radians
 
-                   positive: if False and psi, theta or phi are greather than 180 degrees, they rae converted
+                   positive: if False and psi, theta or phi are greather than 180 degrees, they are converted
                              to negative angles
                 &#34;&#34;&#34;
                 def vector_from_axis(axis):
@@ -5052,13 +5129,13 @@ u1, u2: vectors</p></div>
                         fn += frames
 
                 self.frame = fn - frames
-                bpy.context.scene.frame_end = self.frame
+                bpy.context.scene.frame_end = self.frame + stop
                 bpy.context.scene.frame_set(0)
                 bpy.context.view_layer.update()
         #
         # Rotate objects or helical motion
         #
-        def rotate_object(self,obj=None,axis=&#39;Z&#39;,frames=1,origin=Vector([0,0,0]),localaxis=None,localangle=None,translation=0.0,rounds=1,length=25,draw=True):
+        def rotate_object(self,obj=None,axis=&#39;Z&#39;,frames=1,origin=Vector([0,0,0]),angle=360,localaxis=None,localangle=None,translation=0.0,rounds=1,stop=0,length=25,draw=True):
                 &#34;&#34;&#34;
                 Rotates an object around the axis
                 Parameters:
@@ -5089,12 +5166,15 @@ u1, u2: vectors</p></div>
                 else:
                         u = Vector(axis)
 
+                if angle != 360:
+                        rounds = 1
+
                 line = None
                 if localaxis is not None and localangle is not None:
                         old = self.origin
                         self.set_origin(obj.location)
                         l = obj.dimensions.length / 2
-                        line = self.draw_vector(localaxis,axis=l,scale=0.1,arrow=False,positive=False,color=&#34;Orange&#34;,name=&#34;Eix rotació local&#34;)
+                        line = self.draw_vector(vector=localaxis,axis=l,scale=0.1,arrow=False,positive=False,color=&#34;Orange&#34;,name=&#34;Eix rotació local&#34;)
                         line.select_set(True)
                         bpy.ops.object.origin_set(type=&#39;ORIGIN_CENTER_OF_MASS&#39;, center=&#39;MEDIAN&#39;)
                         line.select_set(False)
@@ -5102,17 +5182,17 @@ u1, u2: vectors</p></div>
                         lr = Rotation(localangle,localaxis)
                 if draw:
                         self.set_origin(origin)
-                        self.draw_vector(u,axis=length,positive=False,color=&#34;White&#34;)
+                        self.draw_vector(vector=u,axis=length,positive=False,color=&#34;White&#34;)
                         self.set_origin()
                 r = Rotation(1/int(frames),u)
-                axis, angle = r.to_axis_angle()
+                axis, alpha = r.to_axis_angle()
                 axis.normalize()
-                t =  translation / (angle * int(frames) * 360) * axis
+                t =  translation / (alpha * int(frames) * int(angle)) * axis
                 bpy.context.scene.frame_set(self.frame)
                 obj.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
                 obj.keyframe_insert(data_path=&#34;location&#34;,index=-1)
                 fn = self.frame + 1
-                for i in range(int(frames) * int(rounds) * 360):
+                for i in range(int(frames) * int(rounds) * int(angle)):
                         bpy.context.scene.frame_set(fn)
                         if line is None:
                                 obj.rotation_quaternion.rotate(r.quaternion)
@@ -5128,7 +5208,7 @@ u1, u2: vectors</p></div>
                         obj.keyframe_insert(data_path=&#34;location&#34;,index=-1)
                         fn += 1
                 self.frame = fn - frames
-                bpy.context.scene.frame_end = self.frame
+                bpy.context.scene.frame_end = self.frame + stop
                 bpy.context.scene.frame_set(0)
                 bpy.context.view_layer.update()
         #
@@ -5224,17 +5304,17 @@ u1, u2: vectors</p></div>
                         else:
                                 vp = v0
                         if not units:
-                                v = self.draw_vector(vp,color=&#34;Red&#34;,scale=0.035,head_height=0.3)
+                                v = self.draw_vector(vector=vp,color=&#34;Red&#34;,scale=0.035,head_height=0.3)
                                 v.scale.z *= l / 5.0
                         else:
-                                v = self.draw_vector(vp,color=&#34;Red&#34;,scale=0.035,head_height=0.2)
+                                v = self.draw_vector(vector=vp,color=&#34;Red&#34;,scale=0.035,head_height=0.2)
                         v.keyframe_insert(data_path=&#34;location&#34;,index=-1)
                         v.keyframe_insert(data_path=&#34;scale&#34;,index=-1)
                         v.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
                 if acceleration:
                         l = a0.length
                         ap = 5*a0.normalized()
-                        a = self.draw_vector(ap,color=&#34;Green&#34;,scale=0.035,head_height=0.2)
+                        a = self.draw_vector(vector=ap,color=&#34;Green&#34;,scale=0.035,head_height=0.2)
                         a.scale.z *= l / 5.0
                         a.keyframe_insert(data_path=&#34;location&#34;,index=-1)
                         a.keyframe_insert(data_path=&#34;scale&#34;,index=-1)
@@ -5246,10 +5326,10 @@ u1, u2: vectors</p></div>
                         else:
                                 np = n0
                         if not units:
-                                n = self.draw_vector(np,color=&#34;Red&#34;,scale=0.035,head_height=0.2)
+                                n = self.draw_vector(vector=np,color=&#34;Red&#34;,scale=0.035,head_height=0.2)
                                 n.scale.z *= l / 5.0
                         else:
-                                n = self.draw_vector(np,color=&#34;Red&#34;,scale=0.035,head_height=0.1)
+                                n = self.draw_vector(vector=np,color=&#34;Red&#34;,scale=0.035,head_height=0.1)
                         n.keyframe_insert(data_path=&#34;location&#34;,index=-1)
                         n.keyframe_insert(data_path=&#34;scale&#34;,index=-1)
                         n.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
@@ -5394,7 +5474,7 @@ u1, u2: vectors</p></div>
                 self.base_canonica(length=length)
                 if not isinstance(vector,Vector):
                         vector = Vector(vector)
-                self.draw_vector(vector,name=name)
+                self.draw_vector(vector=vector,name=name)
                 if components:
                         self.draw_components(vector,name=&#34;Components en base canònica&#34;)
         #
@@ -5415,7 +5495,7 @@ u1, u2: vectors</p></div>
 
                         name: name of the base
 
-                        preserve: 
+                        preserve:
                 &#34;&#34;&#34;
                 if not isinstance(origin,Vector):
                         origin = Vector(origin)
@@ -5459,7 +5539,9 @@ u1, u2: vectors</p></div>
                 u2 = u1.orthogonal().normalized()
                 u3 = u1.cross(u2)
                 self.set_base([u1,u2,u3])
+                self.set_colors([&#34;Magenta&#34;,&#34;Yellow&#34;,&#34;Cyan&#34;])
                 self.draw_base_axis(axis=length,positive=False,scale=scale,name=name)
+                self.set_colors()
                 self.reset()
         #
         # Vector en base no canònica
@@ -5486,7 +5568,7 @@ u1, u2: vectors</p></div>
                         vector = Vector(vector)
                 if canonica:
                         vector = self.coordinates_en_referencia(vector)
-                self.draw_vector(vector,scale=0.06,head_height=0.25)
+                self.draw_vector(vector=vector,scale=0.06,head_height=0.25)
                 self.draw_components(vector,scale=0.015,name=&#34;Components en base B&#39;&#34;)
                 if not preserve:
                         self.set_origin()
@@ -5514,7 +5596,7 @@ u1, u2: vectors</p></div>
         #
         # Pla vectorial
         #
-        def pla_vectorial(self,v1=Vector([3,2,1]),v2=Vector([1,-2,0.5]),canonica=False,length=15,color=&#34;Cyan&#34;,sizex=25,sizey=20,opacity=0.8):
+        def pla_vectorial(self,v1=Vector([3,2,1]),v2=Vector([1,-2,0.5]),canonica=False,length=15,color=&#34;Cyan&#34;,sizex=25,sizey=20,opacity=0.8,thickness=0.01):
                 &#34;&#34;&#34;
                 Draws the plane generated by two vectors
                 Parameters:
@@ -5529,6 +5611,8 @@ u1, u2: vectors</p></div>
                         sizex, sizey: size of the plane
 
                         opacicity: opacity of the plane
+
+                        thickness: thickness of the plane
                 &#34;&#34;&#34;
                 if canonica:
                         if length &gt; 15:
@@ -5536,7 +5620,7 @@ u1, u2: vectors</p></div>
                         else:
                                 self.base_canonica(length=length)
                 self.draw_vectors([v1,v2],color=&#34;Blue&#34;)
-                self.draw_plane_surface(base=[v1,v2],color=color,sizex=sizex,sizey=sizey,opacity=opacity)
+                self.draw_plane_surface(base=[v1,v2],color=color,sizex=sizex,sizey=sizey,opacity=opacity,thickness=thickness)
         #
         # Pla afí
         #
@@ -5562,6 +5646,9 @@ u1, u2: vectors</p></div>
 
                         opacicity: opacity of the plane
                 &#34;&#34;&#34;
+                if not isinstance(punt,Vector):
+                        punt = Vector(punt)
+                punt = self.components_en_canonica(punt)
                 if canonica:
                         if length &gt; 15:
                                 self.base_canonica(length=length,scale=0.08)
@@ -5577,7 +5664,7 @@ u1, u2: vectors</p></div>
                         self.set_origin(punt)
                         self.draw_point(color=&#34;Blue&#34;)
                         if normal is not None:
-                                self.draw_vector(normal,color=&#34;Blue&#34;)
+                                self.draw_vector(vector=normal,color=&#34;Blue&#34;)
                         else:
                                 self.draw_vectors(vectors=[v1,v2],canonica=canonica,color=&#34;Blue&#34;)
                         self.set_origin()
@@ -5652,7 +5739,7 @@ u1, u2: vectors</p></div>
                 if elements:
                         self.set_origin(punt)
                         self.draw_point(color=color,radius=2 * scale)
-                        self.draw_vector(v,color=color)
+                        self.draw_vector(vector=v,color=color)
                         self.set_origin()
         #
         # Distància entre dues rectes que s&#39;encreuen
@@ -5693,7 +5780,7 @@ u1, u2: vectors</p></div>
         #
         # Projecció ortogonal i simètric sobre un pla vectorial
         #
-        def projeccio_ortogonal_simetric_pla_vectorial(self,vector=Vector([7,-1,12]),v1=Vector([3,-1,1]),v2=Vector([1,0.5,0.5]),sizex=None,sizey=None,canonica=True):
+        def projeccio_ortogonal_simetric_pla_vectorial(self,vector=Vector([7,-1,12]),v1=Vector([3,-1,1]),v2=Vector([1,0.5,0.5]),sizex=None,sizey=None,color=&#34;AzureBlueDark&#34;,canonica=True,orthogonal=False,orthonormal=False,thickness=0.01):
                 &#34;&#34;&#34;
                 Draws the otoghonal projection and the symmetric of a vector with respecte a plane
                 Parameters:
@@ -5704,6 +5791,8 @@ u1, u2: vectors</p></div>
                         sizex, sizey: size of the plane
 
                         canonica: if True, draws the x, y and z axis
+
+                        thickness:
                 &#34;&#34;&#34;
                 if not isinstance(vector,Vector):
                         vector = Vector(vector)
@@ -5711,29 +5800,52 @@ u1, u2: vectors</p></div>
                         v1 = Vector(v1)
                 if not isinstance(v2,Vector):
                         v2 = Vector(v2)
-                self.draw_vector(vector)
+                self.draw_vector(vector=vector)
                 w = v1.cross(v2)
                 vp = vector - vector.project(w)
-                self.draw_vector(vp,color=&#34;Red&#34;)
+                self.draw_vector(vector=vp,color=&#34;Red&#34;,name=&#34;Projecció ortogonal&#34;)
                 if sizex is None:
                         sizex = 4*vp.length
                 if sizey is None:
-                        sizey = 4*vp.length     
-                self.pla_vectorial(v1,v2,sizex=sizex,sizey=sizey,canonica=canonica,color=&#34;AzureLightHard&#34;)
+                        sizey = 4*vp.length
+                if orthogonal:
+                        u1 = v1
+                        u2 = v2
+                        u2 = u1.dot(u1)*u2 - u2.dot(u1)*u1
+                        self.draw_vectors(vectors=(u1,u2),name=&#34;Base ortogonal&#34;,color=&#34;Green&#34;)
+                if orthonormal:
+                        u1 = v1
+                        u2 = v2
+                        u2 = u1.dot(u1)*u2 - u2.dot(u1)*u1
+                        u1.normalize()
+                        u2.normalize()
+                        self.draw_vectors(vectors=(u1,u2),name=&#34;Base ortonormal&#34;,color=&#34;Orange&#34;)
+                        self.set_base([u1,u2,w])
+                        vb = self.components_in_base(vector)
+                        self.set_base()
+                        p1 = vb.x * u1
+                        p2 = vb.y * u2
+                        l1 = self.draw_line(start=[0,0,0],end=p1,scale=0.04,color=&#34;Orange&#34;,name=&#34;Lines 1&#34;)
+                        l2 = self.draw_line(start=[0,0,0],end=p2,scale=0.04,color=&#34;Orange&#34;)
+                        l3 = self.draw_line(start=vp,end=p1,scale=0.04,color=&#34;Orange&#34;)
+                        l4 = self.draw_line(start=vp,end=p2,scale=0.04,color=&#34;Orange&#34;)
+                        l11 = self.join([l1,l2,l3,l4])
+                self.pla_vectorial(v1,v2,sizex=sizex,sizey=sizey,canonica=canonica,color=color,thickness=thickness)
                 self.set_origin(vp)
-                self.draw_vector(vector.project(w),scale=0.025,color=&#34;White&#34;)
+                self.draw_vector(vector=vector.project(w),scale=0.025,color=&#34;White&#34;,name=&#34;Vector perpendicular&#34;)
                 self.set_origin()
                 self.set_base([v1,v2,w])
                 vb = self.components_in_base(vector)
                 self.set_base()
                 p1 = vb.x * v1
                 p2 = vb.y * v2
-                self.draw_line(start=[0,0,0],end=p1,scale=0.04,color=&#34;Blue&#34;)
-                self.draw_line(start=[0,0,0],end=p2,scale=0.04,color=&#34;Blue&#34;)
-                self.draw_line(start=vp,end=p1,scale=0.04,color=&#34;Blue&#34;)
-                self.draw_line(start=vp,end=p2,scale=0.04,color=&#34;Blue&#34;)
-                self.draw_vector(2 * vp - vector,color=&#34;Green&#34;)
-                self.draw_line(start=2 * vp - vector,end=vp,scale=0.04,color=&#34;White&#34;)
+                l1 = self.draw_line(start=[0,0,0],end=p1,scale=0.04,color=&#34;Blue&#34;,name=&#34;Lines 2&#34;)
+                l2 = self.draw_line(start=[0,0,0],end=p2,scale=0.04,color=&#34;Blue&#34;)
+                l3 = self.draw_line(start=vp,end=p1,scale=0.04,color=&#34;Blue&#34;)
+                l4 = self.draw_line(start=vp,end=p2,scale=0.04,color=&#34;Blue&#34;)
+                l1 = self.join([l1,l2,l3,l4])
+                self.draw_vector(vector=2 * vp - vector,color=&#34;Green&#34;,name=&#34;Simètric&#34;)
+                self.draw_line(start=2 * vp - vector,end=vp,scale=0.04,color=&#34;White&#34;,name=&#34;Vector perpendicular&#34;)
         #
         # Projecció ortogonal i simètric d&#39;un punt sobre un pla afí
         #
@@ -5776,7 +5888,7 @@ u1, u2: vectors</p></div>
         #
         # Projecció ortogonal i simètric d&#39;un punt sobre una recta afí
         #
-        def projeccio_ortogonal_simetric_recta_afi(self,punt=Vector([6,-5,8]),p0=Vector([3,-2,-3]),v1=Vector([3,-1,1]),scale=0.1,radi=0.15,sizex=10,sizey=10,canonica=True):
+        def projeccio_ortogonal_simetric_recta_afi(self,punt=Vector([6,-5,8]),p0=Vector([3,-2,-3]),v1=Vector([3,-1,1]),scale=0.1,radi=0.15,sizex=10,sizey=10,canonica=True,opacity=1.0):
                 &#34;&#34;&#34;
                 Draws the orthogonal projection and the symmetric of a point with respect an affine line
                 Parameters:
@@ -5808,7 +5920,7 @@ u1, u2: vectors</p></div>
                 u = punt - p0
                 p1 = p0 + u.project(v1)
                 self.draw_point(location=p1,color=&#34;Red&#34;,radius=radi,name=&#34;Projecció ortogonal&#34;)
-                self.draw_plane_surface(origin=p1,normal=v1,name=&#34;Pla perpendicular a la recta&#34;,sizex=sizex,sizey=sizey,color=&#34;AzureBlueMedium&#34;)
+                self.draw_plane_surface(origin=p1,normal=v1,name=&#34;Pla perpendicular a la recta&#34;,sizex=sizex,sizey=sizey,color=&#34;AzureBlueMedium&#34;,opacity=opacity)
                 self.draw_point(location=2*p1-punt,color=&#34;Green&#34;,radius=radi,name=&#34;Simètric&#34;)
                 self.draw_line(start=punt,end=2*p1-punt,scale=0.04,color=&#34;White&#34;)
         #
@@ -5832,15 +5944,68 @@ u1, u2: vectors</p></div>
                         v1 = Vector(v1)
                 if canonica:
                         self.base_canonica(length=length)
-                self.draw_vector(v1,axis=length,positive=False,color=&#34;Blue&#34;,scale=0.066)
-                self.draw_vector(vector)
+                self.draw_vector(vector=v1,axis=length,positive=False,color=&#34;Blue&#34;,scale=0.066)
+                self.draw_vector(vector=vector)
                 vp = vector.project(v1)
-                self.draw_vector(vp,color=&#34;Red&#34;)
-                self.set_origin(vp)
-                self.draw_vector(vector - vp,scale=0.025,color=&#34;White&#34;)
-                self.set_origin()
-                self.draw_vector(2 * vp - vector,color=&#34;Green&#34;)
+                self.draw_vector(vector=vp,color=&#34;Red&#34;)
+                self.draw_vector(origin=vp,vector=vector - vp,scale=0.025,color=&#34;White&#34;)
+                self.draw_vector(vector=2 * vp - vector,color=&#34;Green&#34;)
                 self.draw_line(start=2 * vp - vector,end=vp,scale=0.04,color=&#34;White&#34;)
+        #
+        # Perpendicular comuna a dues rectes
+        #
+        def perpendicular_comuna_a_dues_rectes(self,p0=Vector([1,1,1]),u=Vector([1,0,0]),q0=Vector([-1,2,-2]),v=Vector([0,0,1]),sizex=60,sizey=80,length=5,t1=0,t2=0,head_height=0.1):
+                &#34;&#34;&#34;
+                Draws the straigth line perpendicular to a given two non parallel lines
+                Parameters:
+                   p0: point of the first line
+
+                   u: director vector of the first line
+
+                   q0: point of the second line
+
+                   v: director vector of the second line
+
+                   sizex, sizey: sizes of the rectangle
+
+                   length: length og the vectors
+
+                   t1, t2: displacement of the points p0 and q0
+                &#34;&#34;&#34;
+                if not isinstance(p0,Vector):
+                        p0 = Vector(p0)
+                if not isinstance(q0,Vector):
+                        q0 = Vector(q0)
+                if not isinstance(u,Vector):
+                        u = Vector(u)
+                if not isinstance(v,Vector):
+                        v = Vector(v)
+
+                w = u.cross(v)
+                if w.length == 0:
+                        return None
+                pq = q0 - p0
+                mat = Matrix([u,v,w])
+                mat.transpose()
+                mat.invert()
+                pq1 = mat @ pq
+
+                m0 = p0 + pq1.x * u
+                m1 = m0 + pq1.z * w
+                m = (m0 + m1)/2
+                u.normalize()
+                v.normalize()
+                w.normalize()
+                self.draw_vector(origin=p0+t1*u,vector=length*u,axis=30,scale=0.15,head_height=head_height,color=&#34;Blue&#34;,name=&#34;Recta  1&#34;,positive=False)
+                self.draw_vector(origin=q0+t2*v,vector=length*v,axis=30,scale=0.15,head_height=head_height,color=&#34;Green&#34;,name=&#34;Recta  2&#34;,positive=False)
+                self.draw_vector(origin=m,vector=length*w,axis=sizex/2+10,scale=0.15,head_height=head_height,color=&#34;Red&#34;,name=&#34;Recta perpendicular comuna&#34;,positive=False)
+                self.rectangle(origin=m,u1=w,u2=u,sizex=sizex,sizey=sizey,name=&#34;Pla P&#34;,opacity=1)
+                self.rectangle(origin=m,u1=w,u2=v,sizex=sizex,sizey=sizey,color=&#34;CyanAzureDark&#34;,name=&#34;Pla Q&#34;,opacity=1)
+                self.draw_point(location=p0+t1*u,radius=0.5,name=&#34;Punt p0&#34;,color=&#34;Blue&#34;)
+                self.draw_point(location=q0+t2*v,radius=0.5,name=&#34;Punt q0&#34;,color=&#34;Green&#34;)
+                self.draw_point(location=m0,radius=0.5,name=&#34;Punt interseccio 1&#34;)
+                self.draw_point(location=m1,radius=0.5,name=&#34;Punt interseccio 2&#34;)
+                self.draw_point(location=m,radius=0.5,name=&#34;Punt recta perpendicular&#34;,color=&#34;Red&#34;)
         #
         # Referència canònica
         #
@@ -5865,7 +6030,7 @@ u1, u2: vectors</p></div>
         #
         # Punt en referència canònica
         #
-        def punt_referencia_canonica(self,punt=Vector([-4,7,6]),radius=0.1,length=12,name=&#34;Punt p&#34;,coordenades=True,vector=True):
+        def punt_referencia_canonica(self,punt=Vector([-4,7,6]),radius=0.1,length=12,scale=0.06,name=&#34;Punt p&#34;,color=&#34;Black&#34;,coordenades=True,vector=True):
                 &#34;&#34;&#34;
                 Draws a point expressed in the canonical reference
                 Parameters:
@@ -5879,14 +6044,14 @@ u1, u2: vectors</p></div>
 
                    vector: if True, it draws the position vector
                 &#34;&#34;&#34;
-                self.base_canonica(length=length)
+                self.base_canonica(length=length,scale=scale,name=&#34;Referència canònica&#34;)
                 if not isinstance(punt,Vector):
                         punt = Vector(punt)
                 self.draw_point(location=punt,color=&#34;Black&#34;,radius=radius,name=name)
                 if coordenades:
                         self.draw_components(punt,name=&#34;Coordenades en referència canònica&#34;)
                 if vector:
-                        self.draw_vector(punt)
+                        self.draw_vector(vector=punt,name=&#34;Vector de posició refereǹcia canònica&#34;,color=color)
         #
         # Referència no canònica
         #
@@ -5923,7 +6088,7 @@ u1, u2: vectors</p></div>
         #
         # Punt en referencia no canònica
         #
-        def punt_referencia_no_canonica(self,punt=Vector([5,6,-5]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),length=12,scale=0.04,radius=0.1,name=&#34;Punt p&#34;,vector=True):
+        def punt_referencia_no_canonica(self,punt=Vector([5,6,-5]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),color=&#34;Black&#34;,length=12,scale=0.04,radius=0.1,name=&#34;Punt p&#34;,vector=True):
                 &#34;&#34;&#34;
                 Draws a point expressed in the reference {o,u1,u2,u3} with origin in the point origin and sets the default
                 origin and default base to them
@@ -5948,11 +6113,11 @@ u1, u2: vectors</p></div>
                 self.draw_point(location=punt,color=&#34;Black&#34;,radius=radius,name=name)
                 self.draw_components(punt,scale=0.015,name=&#34;Coordenades en referència R&#39;&#34;)
                 if vector:
-                        self.draw_vector(punt)
+                        self.draw_vector(vector=punt,name=&#34;Vector de posició referència R&#39;&#34;)
         #
         # Canvi de coordenades
         #
-        def canvi_coordenades(self,punt=Vector([8,-6,7]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),canonica=False,length=12,radius=0.1):
+        def canvi_coordenades(self,punt=Vector([8,-6,7]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),canonica=False,scale=0.06,length=12,radius=0.1):
                 &#34;&#34;&#34;
                 Draw the coordinates of a point in the canonical reference and in the reference {o;u1,u2,u3}. Sets the default
                 origin and default base to them
@@ -5967,13 +6132,20 @@ u1, u2: vectors</p></div>
 
                         length: length of the axis
                 &#34;&#34;&#34;
+                self.set_origin(origin)
+                self.set_base([u1,u2,u3])
                 if canonica:
-                        self.punt_referencia_canonica(punt=punt,length=length,radius=radius)
+                        p = punt
+                        p1 = self.coordinates_en_referencia(punt)
                 else:
-                        self.set_colors([&#34;Magenta&#34;,&#34;Yellow&#34;,&#34;Cyan&#34;])
-                        self.punt_referencia_no_canonica(punt=punt,origin=origin,u1=u1,u2=u2,u3=u3,length=length,radius=radius)
                         p = self.coordinates_en_canonica(punt)
+                        p1 = punt
                 self.reset()
+                ## self.punt_referencia_canonica(punt=p,length=length,scale=scale,radius=radius)
+                self.set_colors([&#34;Magenta&#34;,&#34;Yellow&#34;,&#34;AzureBlueDark&#34;])
+                self.punt_referencia_no_canonica(punt=p1,origin=origin,u1=u1,u2=u2,u3=u3,length=length,scale=scale,radius=radius)
+                self.reset()
+                self.draw_vector(vector=p,name=&#34;Vector de posició en referència canònica&#34;,color=&#34;White&#34;)
                 self.draw_components(p,color=&#34;Magenta&#34;,name=&#34;Coordenades en referència canònica&#34;)
         #
         # El·lipse
@@ -6114,7 +6286,7 @@ u1, u2: vectors</p></div>
         #
         # Hiperboloide d&#39;una fulla de revolució
         #
-        def hiperboloide_una_fulla_revolucio(self,a=3,b=2,pmax=8,direccio=&#39;Z&#39;,punt=None):
+        def hiperboloide_una_fulla_revolucio(self,a=3,b=2,pmax=8,direccio=&#39;Z&#39;,plane=&#39;XZ&#39;,punt=None):
                 &#34;&#34;&#34;
                 Draws an animation showing an one sheet hyperboloid of revolution
                         a, b: semiaxis of the initial hyperbole
@@ -6125,20 +6297,28 @@ u1, u2: vectors</p></div>
                                   &#39;Y&#39;, the initial hyperbole is in the plane YX and rotates around the Y axis
                                       &#39;Z&#39;, the initial hyperbole is in the plane ZX and rotates around the Z axis
 
+                        plane: plane containing the initial hyperbole. It can be &#39;XY&#39;, &#39;XZ&#39; or &#39;YZ&#39;
+
                         punt: if it&#39;s a value between 0 and pi, the animation shows a rotating point
                 &#34;&#34;&#34;
-                if direccio == &#39;X&#39; or direccio == &#39;x&#39;:
-                        F = lambda t: (t,0,a*math.sqrt(1+t**2/b**2))
-                elif direccio == &#39;Y&#39; or direccio == &#39;y&#39;:
+                plane = plane.upper()
+                direccio = direccio.upper()
+                if plane not in (&#39;XY&#39;,&#39;XZ&#39;,&#39;YZ&#39;):
+                        return None
+                if direccio not in (&#39;X&#39;,&#39;Y&#39;,&#39;Z&#39;):
+                        return None
+                if plane == &#39;XY&#39;:
                         F = lambda t: (a*math.sqrt(1+t**2/b**2),t,0)
-                else:
+                elif plane == &#39;XZ&#39;:
                         F = lambda t: (a*math.sqrt(1+t**2/b**2),0,t)
+                else:
+                        F = lambda t: (0,a*math.sqrt(1+t**2/b**2),t)
                 self.base_canonica()
                 self.animate_revolution_surface(F,tmin=-pmax,tmax=pmax,steps=128,axis=direccio,point=punt)
         #
         # Hiperboloide de dues fulles de revolució
         #
-        def hiperboloide_dues_fulles_revolucio(self,a=3,b=2,pmax=8,direccio=&#39;Z&#39;,punt=None):
+        def hiperboloide_dues_fulles_revolucio(self,a=3,b=2,pmax=8,direccio=&#39;Z&#39;,plane=&#39;XZ&#39;,punt=None):
                 &#34;&#34;&#34;
                 Draws an animation showing a two sheet hyperboloid of revolution
                         a, b: semiaxis of the initial hyperbole
@@ -6148,18 +6328,37 @@ u1, u2: vectors</p></div>
                         direccio: &#39;X&#39;, the initial hyperbole is in the plane YX and rotates around the X axis
                                   &#39;Y&#39;, the initial hyperbole is in the plane ZY and rotates around the Y axis
                                       &#39;Z&#39;, the initial hyperbole is in the plane XZ and rotates around the Z axis
+                        
+                        plane: plane containing the initial hyperbole. It can be &#39;XY&#39;, &#39;XZ&#39; or &#39;YZ&#39;
 
                         punt: if it&#39;s a value between 0 and pi, the animation shows a rotating point
                 &#34;&#34;&#34;
-                if direccio == &#39;X&#39; or direccio == &#39;x&#39;:
-                        s = &#39;Z&#39;
+                plane = plane.upper()
+                direccio = direccio.upper()
+                if plane not in (&#39;XY&#39;,&#39;XZ&#39;,&#39;YZ&#39;):
+                        return None
+                if direccio not in (&#39;X&#39;,&#39;Y&#39;,&#39;Z&#39;):
+                        return None
+                if plane == &#39;XY&#39;:
                         F = lambda t: (a*math.sqrt(1+t**2/b**2),t,0)
-                elif direccio == &#39;Y&#39; or direccio == &#39;y&#39;:
-                        F = lambda t: (0,a*math.sqrt(1+t**2/b**2),t)
-                        s = &#39;Z&#39;
+                elif plane == &#39;XZ&#39;:
+                        F = lambda t: (a*math.sqrt(1+t**2/b**2),0,t)
                 else:
-                        F = lambda t: (t,0,a*math.sqrt(1+t**2/b**2))
+                        F = lambda t: (0,a*math.sqrt(1+t**2/b**2),t)
+
+                if direccio == &#39;X&#39;:
+                        if plane == &#39;YZ&#39;:
+                                return None
+                        s = &#39;Z&#39;
+                elif direccio == &#39;Y&#39;:
+                        if plane == &#39;XZ&#39;:
+                                return None
+                        s = &#39;Y&#39;
+                else:
+                        if plane == &#39;XY&#39;:
+                                return None
                         s = &#39;X&#39;
+
                 self.base_canonica()
                 self.animate_revolution_surface(F,tmin=0,tmax=pmax,steps=128,axis=direccio,symmetry=s,point=punt)
         #
@@ -6389,7 +6588,7 @@ u1, u2: vectors</p></div>
 
                 color: color of the cylinder
 
-                circlecolor: color of the two circles of a bounded cylinder 
+                circlecolor: color of the two circles of a bounded cylinder
                 &#34;&#34;&#34;
                 if not isinstance(centre,Vector):
                         centre = Vector(centre)
@@ -6405,12 +6604,12 @@ u1, u2: vectors</p></div>
                         u = eix
                 else:
                         u = Vector(eix)
-                
+
                 u1 = u.orthogonal().normalized()
                 u2 = u.normalized().cross(u1)
                 center1 = centre + height/2 * u.normalized()
                 center2 = centre - height/2 * u.normalized()
-                
+
                 c1, d1 = self.draw_circle(center=center1,radius=radi,u1=u1,u2=u2,axis=False,zaxis=False,steps=128,thickness=0.02,name=&#34;Circumferències&#34;,fillcolor=color,color=circlecolor)
                 c2, d2 = self.draw_circle(center=center2,radius=radi,u1=u1,u2=u2,axis=False,zaxis=False,steps=128,thickness=0.02,name=&#34;Circumferència 2&#34;,fillcolor=color,color=circlecolor)
                 _, _, cil = self.elliptic_cylinder(o=centre,a2=radi**2,b2=radi**2,u1=u1,u2=u2,principal=False,canonica=False,zmax=height/2,color=color,thickness=0.01,name=&#34;Cilindre&#34;)
@@ -6499,7 +6698,7 @@ u1, u2: vectors</p></div>
         #
         # Rotació d&#39;un ortoedre
         #
-        def rotacio_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([8,5,4]),eix=&#39;Z&#39;,opacity=1):
+        def rotacio_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([8,5,4]),eix=&#39;Z&#39;,angle=360,stop=0,opacity=1):
                 &#34;&#34;&#34;
                 Draws an animation of an orthohedron rotating around a vectorial line
                 Parameters:
@@ -6517,11 +6716,11 @@ u1, u2: vectors</p></div>
                 if not isinstance(costats,Vector):
                         costats = Vector(costats)
                 ortoedre = self.draw_cube(origin=centre,scale=costats,color=&#34;AzureBlueDark&#34;,opacity=opacity,thickness=0.015,scalelines=0.025,linecolor=&#34;Orange&#34;,name=&#34;Ortoedre&#34;)
-                self.rotate_object(ortoedre,axis=eix,draw=False)
+                self.rotate_object(ortoedre,axis=eix,angle=angle,stop=stop,draw=False)
         #
         # Rotació d&#39;un vector
         #
-        def rotacio_vector(self,vector=Vector([6,8,5]),eix=Vector([1,1,1]),adaptada=False):
+        def rotacio_vector(self,vector=Vector([6,8,5]),eix=Vector([1,1,1]),angle=360,stop=0,adaptada=False):
                 &#34;&#34;&#34;
                 Draws an animation of a vector rotating around a vectorial line
                 Parameters:
@@ -6548,13 +6747,13 @@ u1, u2: vectors</p></div>
                 if l &lt; 18:
                         l = 18
                 if adaptada:
-                        self.base_adaptada(axis=eix,length=l)
+                        self.base_adaptada(axis=eix,length=l,scale=0.1)
                 self.base_canonica(length=l)
-                self.rotate_vector(vector,eix,length=l)
-    # 
+                self.rotate_vector(vector,eix,length=l,angle=angle,stop=stop)
+    #
         # Rotació d&#39;un punt al voltant d&#39;un eix
         #
-        def rotacio_punt(self,punt=Vector([6,8,5]),origen=Vector([4,3,0]),eix=Vector([1,1,1]),vectors=True):
+        def rotacio_punt(self,punt=Vector([6,8,5]),origen=Vector([4,3,0]),angle=360,eix=Vector([1,1,1]),length=None,stop=0,vectors=True):
                 &#34;&#34;&#34;
                 Draws an animation of a point rotating around an afine line
                 Parameters:
@@ -6562,7 +6761,7 @@ u1, u2: vectors</p></div>
 
                         origen: point of the affine line
 
-                        eix: axis of rotation, given by a vector or by X, Y or Z 
+                        eix: axis of rotation, given by a vector or by X, Y or Z
                 &#34;&#34;&#34;
                 if not isinstance(punt,Vector):
                         punt = Vector(punt)
@@ -6581,10 +6780,10 @@ u1, u2: vectors</p></div>
                         origen = Vector(origen)
                 e = (punt-origen).project(u)
                 l = e.length
-                if l &lt; 18:
-                        l = 18
+                if length is not None:
+                        l = length
                 self.base_canonica(length=l)
-                self.rotate_point(punt,origen,u,length=l,vectors=vectors)
+                self.rotate_point(punt,origen,u,angle=angle,length=l,stop=stop,vectors=vectors)
         #
         # Rotació d&#39;un ortoedre a partir dels angles d&#39;Euler
         #
@@ -6734,7 +6933,7 @@ u1, u2: vectors</p></div>
                         u = eix
                 else:
                         u = Vector(eix)
-                
+
                 w1 = u.normalized()
                 w2 = u.orthogonal().normalized()
                 w3 = w1.cross(w2)
@@ -6758,7 +6957,7 @@ u1, u2: vectors</p></div>
         #
         # Rotation or helical motion of a point
         #
-        def moviment_helicoidal_punt(self,punt=Vector([0,0,0]),origen=Vector([-3,-3,-4]),eix=&#39;Z&#39;,rounds=5,translacio=2,vectors=True,reverse=False):
+        def moviment_helicoidal_punt(self,punt=Vector([0,0,0]),origen=Vector([-3,-3,-4]),eix=&#39;Z&#39;,rounds=5,angle=360,stop=0,translacio=2,vectors=True,length=15,reverse=False):
                 &#34;&#34;&#34;
                 Draws an animation of the helical motion of an orthohedron around an affine line
                 Parameters:
@@ -6785,6 +6984,9 @@ u1, u2: vectors</p></div>
                         u = eix
                 else:
                         u = Vector(eix)
+
+                if angle &lt; 360:
+                        rounds = 1
                 self.base_canonica()
                 if not isinstance(punt,Vector):
                         punt = Vector(punt)
@@ -6794,26 +6996,28 @@ u1, u2: vectors</p></div>
                 obj = self.draw_point(radius=0.2,location=punt,name=&#34;Red&#34;,color=&#34;Red&#34;)
                 obj2 = None
                 if vectors:
-                        self.set_origin(origen)
-                        self.draw_vector(punt-origen,name=&#34;VBlack&#34;,color=&#34;Black&#34;)
-                        obj2 = self.draw_vector(punt-origen,name=&#34;VRed&#34;,color=&#34;Red&#34;)
+                        self.draw_vector(origin=origen,vector=punt-origen,name=&#34;VBlack&#34;,color=&#34;Black&#34;)
+                        obj2 = self.draw_vector(origin=origen,vector=punt-origen,name=&#34;VRed&#34;,color=&#34;Red&#34;)
                 if obj2 is None:
                         if reverse:
-                                self.rotate_object(obj,axis=-u,origin=origen,translation=translacio,rounds=rounds,draw=True)
+                                self.rotate_object(obj,axis=-u,origin=origen,translation=translacio,angle=angle,stop=stop,length=length,rounds=rounds,draw=True)
                         else:
-                                self.rotate_object(obj,axis=u,origin=origen,translation=translacio,rounds=rounds,draw=True)
+                                self.rotate_object(obj,axis=u,origin=origen,translation=translacio,angle=angle,stop=stop,length=length,rounds=rounds,draw=True)
                 else:
                         if reverse:
-                                self.rotate_objects([obj,obj2],axis=-u,origin=origen,translation=translacio,rounds=rounds,draw=True)
+                                self.rotate_objects([obj,obj2],axis=-u,origin=origen,translation=translacio,angle=angle,stop=stop,length=length,rounds=rounds,draw=True)
                         else:
-                                self.rotate_objects([obj,obj2],axis=u,origin=origen,translation=translacio,rounds=rounds,draw=True)
+                                self.rotate_objects([obj,obj2],axis=u,origin=origen,translation=translacio,angle=angle,stop=stop,length=length,rounds=rounds,draw=True)
                 vec1 = (punt-origen).project(u)
                 center = origen + vec1
                 w1 = (punt-center).normalized()
                 w3 = u.normalized()
                 w2 = w3.cross(w1)
                 radius = (center-punt).length
-                self.curve(lambda t: (radius*math.cos(t),radius*math.sin(t),translacio*t/(2*math.pi)),tmin=-2*rounds*math.pi,tmax=2*rounds*math.pi,steps=128*rounds,thickness=0.005,name=&#34;Hèlix&#34;,color=&#34;Yellow&#34;,o=center,u1=w1,u2=w2)
+                if angle &lt; 360:
+                        self.curve(lambda t: (radius*math.cos(t),radius*math.sin(t),180*translacio*u.length/(angle*math.pi)*t),tmin=0,tmax=2*rounds*math.pi,steps=128,thickness=0.005,name=&#34;Hèlix&#34;,color=&#34;Yellow&#34;,o=center,u1=w1,u2=w2)
+                else:
+                        self.curve(lambda t: (radius*math.cos(t),radius*math.sin(t),translacio*t/(2*math.pi)),tmin=-2*rounds*math.pi,tmax=2*rounds*math.pi,steps=128*rounds,thickness=0.005,name=&#34;Hèlix&#34;,color=&#34;Yellow&#34;,o=center,u1=w1,u2=w2)
                 self.reset()
         #
         # Gir en el pla d&#39;un poligon
@@ -6845,6 +7049,7 @@ u1, u2: vectors</p></div>
         #
         # Quàdriques
         #
+        circumferencia = draw_circle
         ellipsoide = ellipsoid
         hiperboloide_dues_fulles = two_sheets_hyperboloid
         hiperboloide_una_fulla = one_sheet_hyperboloid
@@ -7023,7 +7228,7 @@ u1, u2: vectors</p></div>
         #
         def triangle_esferic_aleatori(self,r=10):
                 &#34;&#34;&#34;
-                Draws a random spheric triangle in a sphere centered at origin with radius r 
+                Draws a random spheric triangle in a sphere centered at origin with radius r
                 Parameters:
                    r: radius of the sphere
                 &#34;&#34;&#34;
@@ -7163,14 +7368,14 @@ u1, u2: vectors</p></div>
 <p>opacity: the opacity</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.animate_revolution_surface"><code class="name flex">
-<span>def <span class="ident">animate_revolution_surface</span></span>(<span>self,<br>fun=None,<br>tmin=0.0,<br>tmax=1.0,<br>steps=256,<br>curvethicknes=0.025,<br>thickness=0.025,<br>frames=3,<br>angle=3,<br>radians=False,<br>axis='Z',<br>symmetry=None,<br>name='Revolution surface',<br>color='AzureBlueDark',<br>point=None)</span>
+<span>def <span class="ident">animate_revolution_surface</span></span>(<span>self,<br>fun=None,<br>tmin=0.0,<br>tmax=1.0,<br>steps=256,<br>curvethicknes=0.025,<br>thickness=0.025,<br>frames=3,<br>angle=3,<br>radians=False,<br>axis='Z',<br>origin=Vector((0.0, 0.0, 0.0)),<br>line=0,<br>canonica=0,<br>symmetry=None,<br>name='Revolution surface',<br>color='AzureBlueDark',<br>point=None)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def animate_revolution_surface(self,fun=None,tmin=0.0,tmax=1.0,steps=256,curvethicknes=0.025,thickness=0.025,frames=3,angle=3,radians=False,axis=&#39;Z&#39;,symmetry=None,name=&#34;Revolution surface&#34;,color=&#34;AzureBlueDark&#34;,point=None):
+<pre><code class="python">def animate_revolution_surface(self,fun=None,tmin=0.0,tmax=1.0,steps=256,curvethicknes=0.025,thickness=0.025,frames=3,angle=3,radians=False,axis=&#39;Z&#39;,origin=Vector([0,0,0]),line=0,canonica=0,symmetry=None,name=&#34;Revolution surface&#34;,color=&#34;AzureBlueDark&#34;,point=None):
         &#34;&#34;&#34;
         Draws and animates a revolution surface from a curve
         Parameters:
@@ -7188,6 +7393,8 @@ u1, u2: vectors</p></div>
 
            axis: axis of revolution. It must be &#39;X&#39;, &#39;Y&#39; or &#39;Z&#39;
 
+           origin: point of the axis of revolution
+
            symmetry: symmetry used to draw the curve
 
            name: name of the surface
@@ -7196,7 +7403,6 @@ u1, u2: vectors</p></div>
 
            point: if not None draw three points and a cercle. Must be a float between tmax and tmin
         &#34;&#34;&#34;
-
         if radians:
                 angle *= 180/math.pi
         stepsr = int(360/angle) + 1
@@ -7204,16 +7410,25 @@ u1, u2: vectors</p></div>
         if fun is None:
                 return None
 
+        def myfun(t):
+                return Vector(fun(t)) - origin
+
+        if not isinstance(origin,Vector):
+                origin = Vector(origin)
+
         if axis == &#39;X&#39;:
                 r = Rotation(angle,Vector([1,0,0]))
+                d0 = Vector([1,0,0])
                 d1 = Vector([0,1,0])
                 d2 = Vector([0,0,1])
         elif axis == &#39;Y&#39;:
                 r = Rotation(angle,Vector([0,1,0]))
+                d0 = Vector([0,1,0])
                 d1 = Vector([0,0,1])
                 d2 = Vector([1,0,0])
         elif axis == &#39;Z&#39;:
                 r = Rotation(angle,Vector([0,0,1]))
+                d0 = Vector([0,0,1])
                 d1 = Vector([1,0,0])
                 d2 = Vector([0,1,0])
         else:
@@ -7228,19 +7443,30 @@ u1, u2: vectors</p></div>
                         return None
                 if tp &lt; tmin or tp &gt; tmax:
                         tp = random.uniform(tmin,tmax)
-                zp = Vector(fun(tp))
+                zp = Vector(myfun(tp))
                 e = d1.cross(d2)
                 z0 = zp.project(e)
 
-        p2 = self.curve(fun,tmin=tmin,tmax=tmax,steps=steps,thickness=curvethicknes,color=&#34;Red&#34;,symmetry=symmetry,name=&#34;Rotating curve&#34;)
-        p1 = self.curve(fun,tmin=tmin,tmax=tmax,steps=steps,thickness=1.05*curvethicknes,color=&#34;Blue&#34;,symmetry=symmetry,name=&#34;Curve&#34;)
-        obj = self.simple_curve(fun,tmin=tmin,tmax=tmax,steps=steps,name=&#34;Surface of revolution&#34;,symmetry=symmetry)
+        if line &gt; 0:
+                self.draw_line(start=-line*d0,end=line*d0,scale=0.1,name=&#34;Eix de rotació&#34;)
+
+        if canonica &gt; 0:
+                self.set_origin(-origin)
+                self.draw_base_axis(axis=canonica,positive=False,scale=0.05,name=&#34;Referència canònica&#34;)
+                self.set_origin()
+
+
+        p2 = self.curve(myfun,tmin=tmin,tmax=tmax,steps=steps,thickness=curvethicknes,color=&#34;Red&#34;,symmetry=symmetry,name=&#34;Rotating curve&#34;)
+        p1 = self.curve(myfun,tmin=tmin,tmax=tmax,steps=steps,thickness=1.05*curvethicknes,color=&#34;Blue&#34;,symmetry=symmetry,name=&#34;Curve&#34;)
+        obj = self.simple_curve(myfun,tmin=tmin,tmax=tmax,steps=steps,name=name,symmetry=symmetry)
+
         if point is not None:
                 m1 = self.draw_point(radius=0.1,location=zp,name=&#34;Punt p0&#34;,color=&#34;Red&#34;)
-                m2 = self.draw_point(radius=0.1,location=zp,name=&#34;Punt p1&#34;,color=&#34;Black&#34;)
+                m2 = self.draw_point(radius=0.2,location=zp,name=&#34;Punt p1&#34;,color=&#34;Black&#34;)
                 m3 = self.draw_point(radius=0.1,location=z0,name=&#34;Punt p2&#34;,color=&#34;Blue&#34;)
                 l1 = self.draw_line(start=z0,end=zp,scale=0.04,name=&#34;Línia 1&#34;,color=&#34;Black&#34;)
                 l2 = self.draw_line(start=z0,end=zp,scale=0.03,name=&#34;Línia 2&#34;,color=&#34;Red&#34;)
+                l1 = self.join([l1,m2])
                 self.draw_circle(center=z0,u1=d1,u2=d2,radius=(zp-z0).length,steps=128,thickness=0.005,name=&#34;Circle&#34;,color=&#34;Cyan&#34;)
 
         m = obj.modifiers.new(name=&#34;SubSurf&#34;, type=&#39;SUBSURF&#39;)
@@ -7263,8 +7489,9 @@ u1, u2: vectors</p></div>
         p2.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
         if point is not None:
                 l1.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
-                m2.keyframe_insert(data_path=&#34;location&#34;,index=-1)
+                # m2.keyframe_insert(data_path=&#34;location&#34;,index=-1)
         fn = frames + self.frame
+        w = Vector([-1,0,3])
         for i in range(0,stepsr):
                 bpy.context.scene.frame_set(fn)
                 p2.rotation_quaternion.rotate(r.quaternion)
@@ -7275,13 +7502,18 @@ u1, u2: vectors</p></div>
                 if point is not None:
                         l1.rotation_quaternion.rotate(r.quaternion)
                         l1.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
-                        m2.location.rotate(r.quaternion)
-                        m2.keyframe_insert(data_path=&#34;location&#34;,index=-1)
+                        #m2.location.rotate(r.quaternion)
+                        # m2.location = m2.location + w
+                        #m2.keyframe_insert(data_path=&#34;location&#34;,index=-1)
                 fn += frames
         self.frame = fn - frames
         bpy.context.scene.frame_end = self.frame
+        bpy.context.view_layer.update()
+        self.reset()
         bpy.context.scene.frame_set(0)
-        bpy.context.view_layer.update()</code></pre>
+        bpy.ops.object.select_all(action=&#39;SELECT&#39;)
+        bpy.ops.transform.translate(value=origin)
+        bpy.ops.object.select_all(action=&#39;DESELECT&#39;)</code></pre>
 </details>
 <div class="desc"><p>Draws and animates a revolution surface from a curve</p>
 <h2 id="parameters">Parameters</h2>
@@ -7292,6 +7524,7 @@ u1, u2: vectors</p></div>
 <p>angle: step angle of the revolution</p>
 <p>radians: if True, angle must be in radians</p>
 <p>axis: axis of revolution. It must be 'X', 'Y' or 'Z'</p>
+<p>origin: point of the axis of revolution</p>
 <p>symmetry: symmetry used to draw the curve</p>
 <p>name: name of the surface</p>
 <p>color: color of the surface</p>
@@ -7329,7 +7562,9 @@ u1, u2: vectors</p></div>
         u2 = u1.orthogonal().normalized()
         u3 = u1.cross(u2)
         self.set_base([u1,u2,u3])
+        self.set_colors([&#34;Magenta&#34;,&#34;Yellow&#34;,&#34;Cyan&#34;])
         self.draw_base_axis(axis=length,positive=False,scale=scale,name=name)
+        self.set_colors()
         self.reset()</code></pre>
 </details>
 <div class="desc"><p>Draws an ortonormal base from vector axis with origin in the point origin and sets the default
@@ -7514,7 +7749,7 @@ origin and default base to them</p>
 
                 name: name of the base
 
-                preserve: 
+                preserve:
         &#34;&#34;&#34;
         if not isinstance(origin,Vector):
                 origin = Vector(origin)
@@ -7575,14 +7810,14 @@ origin and default base to them</p>
 <p>length: length of the axis</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.canvi_coordenades"><code class="name flex">
-<span>def <span class="ident">canvi_coordenades</span></span>(<span>self,<br>punt=Vector((8.0, -6.0, 7.0)),<br>origin=Vector((-2.0, 3.0, 3.0)),<br>u1=Vector((-0.3333333432674408, -0.6666666865348816, 0.6666666865348816)),<br>u2=Vector((0.6666666865348816, 0.3333333432674408, 0.6666666865348816)),<br>u3=Vector((-0.6666666865348816, 0.6666666865348816, 0.3333333432674408)),<br>canonica=False,<br>length=12,<br>radius=0.1)</span>
+<span>def <span class="ident">canvi_coordenades</span></span>(<span>self,<br>punt=Vector((8.0, -6.0, 7.0)),<br>origin=Vector((-2.0, 3.0, 3.0)),<br>u1=Vector((-0.3333333432674408, -0.6666666865348816, 0.6666666865348816)),<br>u2=Vector((0.6666666865348816, 0.3333333432674408, 0.6666666865348816)),<br>u3=Vector((-0.6666666865348816, 0.6666666865348816, 0.3333333432674408)),<br>canonica=False,<br>scale=0.06,<br>length=12,<br>radius=0.1)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def canvi_coordenades(self,punt=Vector([8,-6,7]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),canonica=False,length=12,radius=0.1):
+<pre><code class="python">def canvi_coordenades(self,punt=Vector([8,-6,7]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),canonica=False,scale=0.06,length=12,radius=0.1):
         &#34;&#34;&#34;
         Draw the coordinates of a point in the canonical reference and in the reference {o;u1,u2,u3}. Sets the default
         origin and default base to them
@@ -7597,13 +7832,20 @@ origin and default base to them</p>
 
                 length: length of the axis
         &#34;&#34;&#34;
+        self.set_origin(origin)
+        self.set_base([u1,u2,u3])
         if canonica:
-                self.punt_referencia_canonica(punt=punt,length=length,radius=radius)
+                p = punt
+                p1 = self.coordinates_en_referencia(punt)
         else:
-                self.set_colors([&#34;Magenta&#34;,&#34;Yellow&#34;,&#34;Cyan&#34;])
-                self.punt_referencia_no_canonica(punt=punt,origin=origin,u1=u1,u2=u2,u3=u3,length=length,radius=radius)
                 p = self.coordinates_en_canonica(punt)
+                p1 = punt
         self.reset()
+        ## self.punt_referencia_canonica(punt=p,length=length,scale=scale,radius=radius)
+        self.set_colors([&#34;Magenta&#34;,&#34;Yellow&#34;,&#34;AzureBlueDark&#34;])
+        self.punt_referencia_no_canonica(punt=p1,origin=origin,u1=u1,u2=u2,u3=u3,length=length,scale=scale,radius=radius)
+        self.reset()
+        self.draw_vector(vector=p,name=&#34;Vector de posició en referència canònica&#34;,color=&#34;White&#34;)
         self.draw_components(p,color=&#34;Magenta&#34;,name=&#34;Coordenades en referència canònica&#34;)</code></pre>
 </details>
 <div class="desc"><p>Draw the coordinates of a point in the canonical reference and in the reference {o;u1,u2,u3}. Sets the default
@@ -7638,7 +7880,7 @@ origin and default base to them</p>
 
         color: color of the cylinder
 
-        circlecolor: color of the two circles of a bounded cylinder 
+        circlecolor: color of the two circles of a bounded cylinder
         &#34;&#34;&#34;
         if not isinstance(centre,Vector):
                 centre = Vector(centre)
@@ -7654,12 +7896,12 @@ origin and default base to them</p>
                 u = eix
         else:
                 u = Vector(eix)
-        
+
         u1 = u.orthogonal().normalized()
         u2 = u.normalized().cross(u1)
         center1 = centre + height/2 * u.normalized()
         center2 = centre - height/2 * u.normalized()
-        
+
         c1, d1 = self.draw_circle(center=center1,radius=radi,u1=u1,u2=u2,axis=False,zaxis=False,steps=128,thickness=0.02,name=&#34;Circumferències&#34;,fillcolor=color,color=circlecolor)
         c2, d2 = self.draw_circle(center=center2,radius=radi,u1=u1,u2=u2,axis=False,zaxis=False,steps=128,thickness=0.02,name=&#34;Circumferència 2&#34;,fillcolor=color,color=circlecolor)
         _, _, cil = self.elliptic_cylinder(o=centre,a2=radi**2,b2=radi**2,u1=u1,u2=u2,principal=False,canonica=False,zmax=height/2,color=color,thickness=0.01,name=&#34;Cilindre&#34;)
@@ -7972,6 +8214,7 @@ Parameters:</p>
         &#34;&#34;&#34;
         axis1 = None
         axis2 = None
+        coef = 1.0
         q = self.vectors_to_quaternion(u1,u2)
         u = Quaternion([1,0,0,0])
         orig = [0,0,0]
@@ -8069,6 +8312,60 @@ Parameters:</p>
 <p>pmax = maximum value of the independent variable</p>
 <p>hmax = height of the cylindrer</p></div>
 </dd>
+<dt id="LinearAlgebra.LinearAlgebra.circumferencia"><code class="name flex">
+<span>def <span class="ident">circumferencia</span></span>(<span>self,<br>center=[0, 0, 0],<br>u1=Vector((1.0, 0.0, 0.0)),<br>u2=Vector((0.0, 1.0, 0.0)),<br>axis=False,<br>zaxis=False,<br>radius=1,<br>steps=128,<br>thickness=0.01,<br>name='Circle',<br>color='White',<br>fillcolor=None,<br>change=False)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def draw_circle(self,center=[0,0,0],u1=Vector([1,0,0]),u2=Vector([0,1,0]),axis=False,zaxis=False,radius=1,steps=128,thickness=0.01,name=&#34;Circle&#34;,color=&#34;White&#34;,fillcolor=None,change=False):
+        &#34;&#34;&#34;
+        Draws a circle of center &#39;center&#39; and radius &#39;radius&#39; in the plane determined by vectors u1 and u2
+        Parameters:
+           center: center of the circle
+
+           u1, u2: vectors to construct the basis {v1, v2, v3}
+
+           axis: if True draws the axis of the reference R&#39;
+
+           zaxis: if True draws the z&#39; axis
+
+           radius: radius of the circle
+
+           steps: number of steps
+
+           thickness: thickness of the curve
+
+           name: name of the curve
+
+           color: color of the curve
+
+           change: if True, set the reference self.orifin, self.base to {o; v1, v2, v3}
+        &#34;&#34;&#34;
+        d = None
+        if fillcolor is not None:
+                d = self.draw_disk(center=center,radius=radius,u1=u1,u2=u2,thickness=0.5*thickness,name=&#34;Disc&#34;,color=fillcolor)
+        c = self.draw_curve(lambda t: (radius*math.cos(t),radius*math.sin(t),0),tmin=0.0,tmax=2*math.pi,axis=axis,zaxis=zaxis,steps=steps,thickness=thickness,name=name,color=color,o=center,u1=u1,u2=u2)
+        if change:
+                self.set_origin(center)
+                self.set_base([u1,u2],orthonormal=True)
+        return c, d</code></pre>
+</details>
+<div class="desc"><p>Draws a circle of center 'center' and radius 'radius' in the plane determined by vectors u1 and u2</p>
+<h2 id="parameters">Parameters</h2>
+<p>center: center of the circle</p>
+<p>u1, u2: vectors to construct the basis {v1, v2, v3}</p>
+<p>axis: if True draws the axis of the reference R'</p>
+<p>zaxis: if True draws the z' axis</p>
+<p>radius: radius of the circle</p>
+<p>steps: number of steps</p>
+<p>thickness: thickness of the curve</p>
+<p>name: name of the curve</p>
+<p>color: color of the curve</p>
+<p>change: if True, set the reference self.orifin, self.base to {o; v1, v2, v3}</p></div>
+</dd>
 <dt id="LinearAlgebra.LinearAlgebra.clear"><code class="name flex">
 <span>def <span class="ident">clear</span></span>(<span>self)</span>
 </code></dt>
@@ -8086,6 +8383,40 @@ Parameters:</p>
                 bpy.data.objects.remove(obj)</code></pre>
 </details>
 <div class="desc"><p>Clears and removes all the elements</p></div>
+</dd>
+<dt id="LinearAlgebra.LinearAlgebra.components_en_canonica"><code class="name flex">
+<span>def <span class="ident">components_en_canonica</span></span>(<span>self, vector=None)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def components_en_canonica(self,vector=None):
+        &#34;&#34;&#34;
+        Returns the components of the vector &#39;point&#39; in the base determined by
+        self.rotation and the basis self.base
+        Parameters:
+           vector: components of the vector in the base self.rotation + self.base
+        &#34;&#34;&#34;
+        if vector is None:
+                return Vector([0,0,0])
+        if isinstance(vector,Vector):
+                u = vector
+        else:
+                u = Vector(vector)
+        if self.rotation is not None:
+                mat = self.rotation.quaternion.to_matrix()
+                u = mat @ u
+        mat = Matrix(self.base)
+        mat.transpose()
+        u = mat @ u
+        return u</code></pre>
+</details>
+<div class="desc"><p>Returns the components of the vector 'point' in the base determined by
+self.rotation and the basis self.base</p>
+<h2 id="parameters">Parameters</h2>
+<p>vector: components of the vector in the base self.rotation + self.base</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.components_in_base"><code class="name flex">
 <span>def <span class="ident">components_in_base</span></span>(<span>self, vector=None, base=None)</span>
@@ -8773,7 +9104,7 @@ the symmetric curve or curves from the parameter 'symmetry'</p>
         base = self.base
         if not zaxis:
                 base = self.base[0:2]
-        
+
         for vec in base:
                 #
                 # Draw the stem
@@ -9736,17 +10067,17 @@ in the XY plane</p>
                 else:
                         vp = v0
                 if not units:
-                        v = self.draw_vector(vp,color=&#34;Red&#34;,scale=0.035,head_height=0.3)
+                        v = self.draw_vector(vector=vp,color=&#34;Red&#34;,scale=0.035,head_height=0.3)
                         v.scale.z *= l / 5.0
                 else:
-                        v = self.draw_vector(vp,color=&#34;Red&#34;,scale=0.035,head_height=0.2)
+                        v = self.draw_vector(vector=vp,color=&#34;Red&#34;,scale=0.035,head_height=0.2)
                 v.keyframe_insert(data_path=&#34;location&#34;,index=-1)
                 v.keyframe_insert(data_path=&#34;scale&#34;,index=-1)
                 v.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
         if acceleration:
                 l = a0.length
                 ap = 5*a0.normalized()
-                a = self.draw_vector(ap,color=&#34;Green&#34;,scale=0.035,head_height=0.2)
+                a = self.draw_vector(vector=ap,color=&#34;Green&#34;,scale=0.035,head_height=0.2)
                 a.scale.z *= l / 5.0
                 a.keyframe_insert(data_path=&#34;location&#34;,index=-1)
                 a.keyframe_insert(data_path=&#34;scale&#34;,index=-1)
@@ -9758,10 +10089,10 @@ in the XY plane</p>
                 else:
                         np = n0
                 if not units:
-                        n = self.draw_vector(np,color=&#34;Red&#34;,scale=0.035,head_height=0.2)
+                        n = self.draw_vector(vector=np,color=&#34;Red&#34;,scale=0.035,head_height=0.2)
                         n.scale.z *= l / 5.0
                 else:
-                        n = self.draw_vector(np,color=&#34;Red&#34;,scale=0.035,head_height=0.1)
+                        n = self.draw_vector(vector=np,color=&#34;Red&#34;,scale=0.035,head_height=0.1)
                 n.keyframe_insert(data_path=&#34;location&#34;,index=-1)
                 n.keyframe_insert(data_path=&#34;scale&#34;,index=-1)
                 n.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
@@ -10815,7 +11146,7 @@ Only normal or base can be not None</p>
 <p>thickness: thickness of the plane</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.draw_plane_surface"><code class="name flex">
-<span>def <span class="ident">draw_plane_surface</span></span>(<span>self,<br>origin=None,<br>normal=None,<br>base=None,<br>sizex=10,<br>sizey=10,<br>vectors=False,<br>scalelines=0.05,<br>scalevector=0.03,<br>color='AzureBlueDark',<br>linecolor='BlueDarkDull',<br>vectorcolor='Black',<br>name='Plane',<br>opacity=1.0,<br>thickness=0.0)</span>
+<span>def <span class="ident">draw_plane_surface</span></span>(<span>self,<br>origin=None,<br>normal=None,<br>base=None,<br>sizex=10,<br>sizey=10,<br>vectors=False,<br>scalelines=0.05,<br>scalevector=0.03,<br>color='AzureBlueDark',<br>linecolor='BlueDarkDull',<br>vectorcolor='Black',<br>name='Plane',<br>opacity=1.0,<br>thickness=0.01)</span>
 </code></dt>
 <dd>
 <details class="source">
@@ -10823,7 +11154,7 @@ Only normal or base can be not None</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def draw_plane_surface(self,origin=None,normal=None,base=None,sizex=10,sizey=10,vectors=False,scalelines=0.05,scalevector=0.03,
-                                        color=&#34;AzureBlueDark&#34;,linecolor=&#34;BlueDarkDull&#34;,vectorcolor=&#34;Black&#34;,name=&#34;Plane&#34;,opacity=1.0,thickness=0.0):
+                                        color=&#34;AzureBlueDark&#34;,linecolor=&#34;BlueDarkDull&#34;,vectorcolor=&#34;Black&#34;,name=&#34;Plane&#34;,opacity=1.0,thickness=0.01):
         &#34;&#34;&#34;
         Draws a plane with normal vector or base vectors. It passes through the point origin.
         Only normal or base can be not None
@@ -10926,9 +11257,9 @@ Only normal or base can be not None</p>
         op = Vector(self.origin)
         if origin is not None:
                 if isinstance(origin,Vector):
-                        op = op + origin
+                        op = op + mat @ origin
                 else:
-                        op = op + Vector(origin)
+                        op = op + mat @ Vector(origin)
         obj.location = o
         obj.rotation_mode = &#39;QUATERNION&#39;
         if self.rotation is not None:
@@ -11165,7 +11496,12 @@ Only normal or base can be not None</p>
         if thickness &gt; 0.0:
                 modifier = obj.modifiers.new(name=&#34;Solidify&#34;, type=&#39;SOLIDIFY&#39;)
                 modifier.thickness = thickness
-                modifier.offset = 0.0
+                modifier.offset = 1.0
+        modifier = obj.modifiers.new(name=&#34;SubSurf&#34;, type=&#39;SUBSURF&#39;)
+        modifier.levels = 4
+        modifier.subdivision_type = &#39;SIMPLE&#39;
+        c = Colors.color(color)
+        self.add_material(obj,c.name,c.r,c.g,c.b,opacity)
 
         ps = [op + points[i][0] * u1 + points[i][1] * u2 for i in range(len(points))]
         lines = None
@@ -11183,8 +11519,6 @@ Only normal or base can be not None</p>
                 vecs = self.draw_vectors(ps,color=vectors,scale=scalevectors)
                 self.set_origin(old)
 
-        c = Colors.color(color)
-        self.add_material(obj,c.name,c.r,c.g,c.b,opacity)
 
         if lines is not None:
                 obj = self.join([obj,lines])
@@ -11197,7 +11531,6 @@ Only normal or base can be not None</p>
                 obj.location.rotate(self.rotation.quaternion)
         bpy.ops.object.shade_smooth()
         bpy.context.view_layer.objects.active = None
-
         return obj</code></pre>
 </details>
 <div class="desc"><p>Draws a polygon</p>
@@ -11631,14 +11964,14 @@ Only normal or base can be not None</p>
 <p>thickness: thickness of the tetrahedron</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.draw_triangle"><code class="name flex">
-<span>def <span class="ident">draw_triangle</span></span>(<span>self,<br>origin=[0, 0, 0],<br>u1=[1, 0, 0],<br>u2=[0, 1, 0],<br>points=[[0, 0], [1, 0], [0, 1]],<br>scalelines=0.075,<br>color='AzureBlueMedium',<br>linecolor='OrangeObscureDull',<br>name='Triangle',<br>opacity=1.0,<br>thickness=0.0)</span>
+<span>def <span class="ident">draw_triangle</span></span>(<span>self,<br>origin=[0, 0, 0],<br>u1=[1, 0, 0],<br>u2=[0, 1, 0],<br>points=[[0, 0], [1, 0], [0, 1]],<br>scalelines=0.075,<br>color='AzureBlueMedium',<br>linecolor='OrangeObscureDull',<br>name='Triangle',<br>opacity=1.0,<br>thickness=0.01)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def draw_triangle(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color=&#34;AzureBlueMedium&#34;,linecolor=&#34;OrangeObscureDull&#34;,name=&#34;Triangle&#34;,opacity=1.0,thickness=0.0):
+<pre><code class="python">def draw_triangle(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],points=[[0,0],[1,0],[0,1]],scalelines=0.075,color=&#34;AzureBlueMedium&#34;,linecolor=&#34;OrangeObscureDull&#34;,name=&#34;Triangle&#34;,opacity=1.0,thickness=0.01):
         &#34;&#34;&#34;
         Draws a triangle. It&#39;s a polygon with three vertices
         Parameters:
@@ -11784,7 +12117,7 @@ Only normal or base can be not None</p>
         Parameters:
 
            origin: point of the line
-        
+
            vector: components of the vector
 
            canonica: if True, the components are in the canonical basis, else they are in the basis self.base. Finally,
@@ -11829,10 +12162,11 @@ Only normal or base can be not None</p>
                 mat.transpose()
                 v = mat @ vec
 
+        lon =  (v - o).length
         if head_height is None:
-                head_height = 0.15*(v - o).length
-        if head_height &gt; 0.15:
-                head_height = 0.15
+                head_height = 0.03*lon
+        if head_height &gt; 0.25:
+                head_height = 0.25
 
         if arrow:
                 t = bpy.data.objects.get(&#34;Arrow_stem&#34;)
@@ -11840,7 +12174,7 @@ Only normal or base can be not None</p>
                 obj.name = name
                 obj.data = obj.data.copy()
                 obj.location = o
-                obj.scale = (scale,scale,(v - o).length - 2 * head_height)
+                obj.scale = (scale,scale,lon - 2 * head_height)
                 obj.rotation_mode = &#39;QUATERNION&#39;
                 obj.rotation_quaternion = (v - o).to_track_quat(&#39;Z&#39;,&#39;Y&#39;)
                 if color is not None:
@@ -11855,7 +12189,7 @@ Only normal or base can be not None</p>
                 obj2.data = obj2.data.copy()
                 obj2.name = &#34;Arrow&#34;
                 obj2.location =  v - 2 * head_height * v / v.length
-                obj2.scale = (2*scale,2*scale,head_height)
+                obj2.scale = (1.5*scale,1.5*scale,head_height)
                 obj2.rotation_mode = &#39;QUATERNION&#39;
                 obj2.rotation_quaternion = (v - o).to_track_quat(&#39;Z&#39;,&#39;Y&#39;)
                 if color is not None:
@@ -11872,7 +12206,7 @@ Only normal or base can be not None</p>
                 t = bpy.data.objects.get(&#34;Arrow_stem&#34;)
                 obj3 = t.copy()
                 if not arrow:
-                        obj3.name = &#34;Line&#34;
+                        obj3.name = name
                 else:
                         obj3.name = &#34;Generated&#34;
                 obj3.data = obj3.data.copy()
@@ -11988,7 +12322,7 @@ generated by the vector</p></div>
                                 if not isinstance(v,Vector):
                                         v = Vector(v)
                                 self.set_origin(o)
-                                vec = self.draw_vector(v,color=color,name=f&#34;Vector{count}&#34;,scale=scale,head_height=head_height)
+                                vec = self.draw_vector(vector=v,color=color,name=f&#34;Vector{count}&#34;,scale=scale,head_height=head_height)
                                 if vec is not None:
                                         vectors.append(vec)
                                 z += zstep
@@ -12806,14 +13140,14 @@ a, b: semiaxis of the initial ellipse</p>
 <p>preserve: Keep self.origin and self.base as the principal reference</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.hiperboloide_dues_fulles_revolucio"><code class="name flex">
-<span>def <span class="ident">hiperboloide_dues_fulles_revolucio</span></span>(<span>self, a=3, b=2, pmax=8, direccio='Z', punt=None)</span>
+<span>def <span class="ident">hiperboloide_dues_fulles_revolucio</span></span>(<span>self, a=3, b=2, pmax=8, direccio='Z', plane='XZ', punt=None)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def hiperboloide_dues_fulles_revolucio(self,a=3,b=2,pmax=8,direccio=&#39;Z&#39;,punt=None):
+<pre><code class="python">def hiperboloide_dues_fulles_revolucio(self,a=3,b=2,pmax=8,direccio=&#39;Z&#39;,plane=&#39;XZ&#39;,punt=None):
         &#34;&#34;&#34;
         Draws an animation showing a two sheet hyperboloid of revolution
                 a, b: semiaxis of the initial hyperbole
@@ -12823,18 +13157,37 @@ a, b: semiaxis of the initial ellipse</p>
                 direccio: &#39;X&#39;, the initial hyperbole is in the plane YX and rotates around the X axis
                           &#39;Y&#39;, the initial hyperbole is in the plane ZY and rotates around the Y axis
                               &#39;Z&#39;, the initial hyperbole is in the plane XZ and rotates around the Z axis
+                
+                plane: plane containing the initial hyperbole. It can be &#39;XY&#39;, &#39;XZ&#39; or &#39;YZ&#39;
 
                 punt: if it&#39;s a value between 0 and pi, the animation shows a rotating point
         &#34;&#34;&#34;
-        if direccio == &#39;X&#39; or direccio == &#39;x&#39;:
-                s = &#39;Z&#39;
+        plane = plane.upper()
+        direccio = direccio.upper()
+        if plane not in (&#39;XY&#39;,&#39;XZ&#39;,&#39;YZ&#39;):
+                return None
+        if direccio not in (&#39;X&#39;,&#39;Y&#39;,&#39;Z&#39;):
+                return None
+        if plane == &#39;XY&#39;:
                 F = lambda t: (a*math.sqrt(1+t**2/b**2),t,0)
-        elif direccio == &#39;Y&#39; or direccio == &#39;y&#39;:
-                F = lambda t: (0,a*math.sqrt(1+t**2/b**2),t)
-                s = &#39;Z&#39;
+        elif plane == &#39;XZ&#39;:
+                F = lambda t: (a*math.sqrt(1+t**2/b**2),0,t)
         else:
-                F = lambda t: (t,0,a*math.sqrt(1+t**2/b**2))
+                F = lambda t: (0,a*math.sqrt(1+t**2/b**2),t)
+
+        if direccio == &#39;X&#39;:
+                if plane == &#39;YZ&#39;:
+                        return None
+                s = &#39;Z&#39;
+        elif direccio == &#39;Y&#39;:
+                if plane == &#39;XZ&#39;:
+                        return None
+                s = &#39;Y&#39;
+        else:
+                if plane == &#39;XY&#39;:
+                        return None
                 s = &#39;X&#39;
+
         self.base_canonica()
         self.animate_revolution_surface(F,tmin=0,tmax=pmax,steps=128,axis=direccio,symmetry=s,point=punt)</code></pre>
 </details>
@@ -12845,6 +13198,8 @@ a, b: semiaxis of the initial hyperbole</p>
     direccio: 'X', the initial hyperbole is in the plane YX and rotates around the X axis
               'Y', the initial hyperbole is in the plane ZY and rotates around the Y axis
                   'Z', the initial hyperbole is in the plane XZ and rotates around the Z axis
+
+    plane: plane containing the initial hyperbole. It can be 'XY', 'XZ' or 'YZ'
 
     punt: if it's a value between 0 and pi, the animation shows a rotating point
 </code></pre></div>
@@ -12936,14 +13291,14 @@ a, b: semiaxis of the initial hyperbole</p>
 <p>preserve: Keep self.origin and self.base as the principal reference</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.hiperboloide_una_fulla_revolucio"><code class="name flex">
-<span>def <span class="ident">hiperboloide_una_fulla_revolucio</span></span>(<span>self, a=3, b=2, pmax=8, direccio='Z', punt=None)</span>
+<span>def <span class="ident">hiperboloide_una_fulla_revolucio</span></span>(<span>self, a=3, b=2, pmax=8, direccio='Z', plane='XZ', punt=None)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def hiperboloide_una_fulla_revolucio(self,a=3,b=2,pmax=8,direccio=&#39;Z&#39;,punt=None):
+<pre><code class="python">def hiperboloide_una_fulla_revolucio(self,a=3,b=2,pmax=8,direccio=&#39;Z&#39;,plane=&#39;XZ&#39;,punt=None):
         &#34;&#34;&#34;
         Draws an animation showing an one sheet hyperboloid of revolution
                 a, b: semiaxis of the initial hyperbole
@@ -12954,14 +13309,22 @@ a, b: semiaxis of the initial hyperbole</p>
                           &#39;Y&#39;, the initial hyperbole is in the plane YX and rotates around the Y axis
                               &#39;Z&#39;, the initial hyperbole is in the plane ZX and rotates around the Z axis
 
+                plane: plane containing the initial hyperbole. It can be &#39;XY&#39;, &#39;XZ&#39; or &#39;YZ&#39;
+
                 punt: if it&#39;s a value between 0 and pi, the animation shows a rotating point
         &#34;&#34;&#34;
-        if direccio == &#39;X&#39; or direccio == &#39;x&#39;:
-                F = lambda t: (t,0,a*math.sqrt(1+t**2/b**2))
-        elif direccio == &#39;Y&#39; or direccio == &#39;y&#39;:
+        plane = plane.upper()
+        direccio = direccio.upper()
+        if plane not in (&#39;XY&#39;,&#39;XZ&#39;,&#39;YZ&#39;):
+                return None
+        if direccio not in (&#39;X&#39;,&#39;Y&#39;,&#39;Z&#39;):
+                return None
+        if plane == &#39;XY&#39;:
                 F = lambda t: (a*math.sqrt(1+t**2/b**2),t,0)
-        else:
+        elif plane == &#39;XZ&#39;:
                 F = lambda t: (a*math.sqrt(1+t**2/b**2),0,t)
+        else:
+                F = lambda t: (0,a*math.sqrt(1+t**2/b**2),t)
         self.base_canonica()
         self.animate_revolution_surface(F,tmin=-pmax,tmax=pmax,steps=128,axis=direccio,point=punt)</code></pre>
 </details>
@@ -12972,6 +13335,8 @@ a, b: semiaxis of the initial hyperbole</p>
     direccio: 'X', the initial hyperbole is in the plane XZ and rotates around the X axis
               'Y', the initial hyperbole is in the plane YX and rotates around the Y axis
                   'Z', the initial hyperbole is in the plane ZX and rotates around the Z axis
+
+    plane: plane containing the initial hyperbole. It can be 'XY', 'XZ' or 'YZ'
 
     punt: if it's a value between 0 and pi, the animation shows a rotating point
 </code></pre></div>
@@ -13234,7 +13599,7 @@ a, b: semiaxis of the initial hyperbole</p>
                 u = eix
         else:
                 u = Vector(eix)
-        
+
         w1 = u.normalized()
         w2 = u.orthogonal().normalized()
         w3 = w1.cross(w2)
@@ -13337,14 +13702,14 @@ if translation = 0.0, it's a rotation motion</p>
 <p>aligned: if True, aligns the orthohedron with the axis of rotation</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.moviment_helicoidal_punt"><code class="name flex">
-<span>def <span class="ident">moviment_helicoidal_punt</span></span>(<span>self,<br>punt=Vector((0.0, 0.0, 0.0)),<br>origen=Vector((-3.0, -3.0, -4.0)),<br>eix='Z',<br>rounds=5,<br>translacio=2,<br>vectors=True,<br>reverse=False)</span>
+<span>def <span class="ident">moviment_helicoidal_punt</span></span>(<span>self,<br>punt=Vector((0.0, 0.0, 0.0)),<br>origen=Vector((-3.0, -3.0, -4.0)),<br>eix='Z',<br>rounds=5,<br>angle=360,<br>stop=0,<br>translacio=2,<br>vectors=True,<br>length=15,<br>reverse=False)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def moviment_helicoidal_punt(self,punt=Vector([0,0,0]),origen=Vector([-3,-3,-4]),eix=&#39;Z&#39;,rounds=5,translacio=2,vectors=True,reverse=False):
+<pre><code class="python">def moviment_helicoidal_punt(self,punt=Vector([0,0,0]),origen=Vector([-3,-3,-4]),eix=&#39;Z&#39;,rounds=5,angle=360,stop=0,translacio=2,vectors=True,length=15,reverse=False):
         &#34;&#34;&#34;
         Draws an animation of the helical motion of an orthohedron around an affine line
         Parameters:
@@ -13371,6 +13736,9 @@ if translation = 0.0, it's a rotation motion</p>
                 u = eix
         else:
                 u = Vector(eix)
+
+        if angle &lt; 360:
+                rounds = 1
         self.base_canonica()
         if not isinstance(punt,Vector):
                 punt = Vector(punt)
@@ -13380,26 +13748,28 @@ if translation = 0.0, it's a rotation motion</p>
         obj = self.draw_point(radius=0.2,location=punt,name=&#34;Red&#34;,color=&#34;Red&#34;)
         obj2 = None
         if vectors:
-                self.set_origin(origen)
-                self.draw_vector(punt-origen,name=&#34;VBlack&#34;,color=&#34;Black&#34;)
-                obj2 = self.draw_vector(punt-origen,name=&#34;VRed&#34;,color=&#34;Red&#34;)
+                self.draw_vector(origin=origen,vector=punt-origen,name=&#34;VBlack&#34;,color=&#34;Black&#34;)
+                obj2 = self.draw_vector(origin=origen,vector=punt-origen,name=&#34;VRed&#34;,color=&#34;Red&#34;)
         if obj2 is None:
                 if reverse:
-                        self.rotate_object(obj,axis=-u,origin=origen,translation=translacio,rounds=rounds,draw=True)
+                        self.rotate_object(obj,axis=-u,origin=origen,translation=translacio,angle=angle,stop=stop,length=length,rounds=rounds,draw=True)
                 else:
-                        self.rotate_object(obj,axis=u,origin=origen,translation=translacio,rounds=rounds,draw=True)
+                        self.rotate_object(obj,axis=u,origin=origen,translation=translacio,angle=angle,stop=stop,length=length,rounds=rounds,draw=True)
         else:
                 if reverse:
-                        self.rotate_objects([obj,obj2],axis=-u,origin=origen,translation=translacio,rounds=rounds,draw=True)
+                        self.rotate_objects([obj,obj2],axis=-u,origin=origen,translation=translacio,angle=angle,stop=stop,length=length,rounds=rounds,draw=True)
                 else:
-                        self.rotate_objects([obj,obj2],axis=u,origin=origen,translation=translacio,rounds=rounds,draw=True)
+                        self.rotate_objects([obj,obj2],axis=u,origin=origen,translation=translacio,angle=angle,stop=stop,length=length,rounds=rounds,draw=True)
         vec1 = (punt-origen).project(u)
         center = origen + vec1
         w1 = (punt-center).normalized()
         w3 = u.normalized()
         w2 = w3.cross(w1)
         radius = (center-punt).length
-        self.curve(lambda t: (radius*math.cos(t),radius*math.sin(t),translacio*t/(2*math.pi)),tmin=-2*rounds*math.pi,tmax=2*rounds*math.pi,steps=128*rounds,thickness=0.005,name=&#34;Hèlix&#34;,color=&#34;Yellow&#34;,o=center,u1=w1,u2=w2)
+        if angle &lt; 360:
+                self.curve(lambda t: (radius*math.cos(t),radius*math.sin(t),180*translacio*u.length/(angle*math.pi)*t),tmin=0,tmax=2*rounds*math.pi,steps=128,thickness=0.005,name=&#34;Hèlix&#34;,color=&#34;Yellow&#34;,o=center,u1=w1,u2=w2)
+        else:
+                self.curve(lambda t: (radius*math.cos(t),radius*math.sin(t),translacio*t/(2*math.pi)),tmin=-2*rounds*math.pi,tmax=2*rounds*math.pi,steps=128*rounds,thickness=0.005,name=&#34;Hèlix&#34;,color=&#34;Yellow&#34;,o=center,u1=w1,u2=w2)
         self.reset()</code></pre>
 </details>
 <div class="desc"><p>Draws an animation of the helical motion of an orthohedron around an affine line</p>
@@ -13608,6 +13978,7 @@ if translation = 0.0, it's a rotation motion</p></div>
         &#34;&#34;&#34;
         axis1 = None
         axis2 = None
+        coef = 1.0
         q = self.vectors_to_quaternion(u1,u2)
         u = Quaternion([1,0,0,0])
         orig = [0,0,0]
@@ -13933,6 +14304,77 @@ a: The constant of the initial parabola</p>
 <p>a, b: constants the defines he hyperbolic paraboloid</p>
 <p>xmax, ymax: maximun values of the x and y coordinates</p></div>
 </dd>
+<dt id="LinearAlgebra.LinearAlgebra.perpendicular_comuna_a_dues_rectes"><code class="name flex">
+<span>def <span class="ident">perpendicular_comuna_a_dues_rectes</span></span>(<span>self,<br>p0=Vector((1.0, 1.0, 1.0)),<br>u=Vector((1.0, 0.0, 0.0)),<br>q0=Vector((-1.0, 2.0, -2.0)),<br>v=Vector((0.0, 0.0, 1.0)),<br>sizex=60,<br>sizey=80,<br>length=5,<br>t1=0,<br>t2=0,<br>head_height=0.1)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def perpendicular_comuna_a_dues_rectes(self,p0=Vector([1,1,1]),u=Vector([1,0,0]),q0=Vector([-1,2,-2]),v=Vector([0,0,1]),sizex=60,sizey=80,length=5,t1=0,t2=0,head_height=0.1):
+        &#34;&#34;&#34;
+        Draws the straigth line perpendicular to a given two non parallel lines
+        Parameters:
+           p0: point of the first line
+
+           u: director vector of the first line
+
+           q0: point of the second line
+
+           v: director vector of the second line
+
+           sizex, sizey: sizes of the rectangle
+
+           length: length og the vectors
+
+           t1, t2: displacement of the points p0 and q0
+        &#34;&#34;&#34;
+        if not isinstance(p0,Vector):
+                p0 = Vector(p0)
+        if not isinstance(q0,Vector):
+                q0 = Vector(q0)
+        if not isinstance(u,Vector):
+                u = Vector(u)
+        if not isinstance(v,Vector):
+                v = Vector(v)
+
+        w = u.cross(v)
+        if w.length == 0:
+                return None
+        pq = q0 - p0
+        mat = Matrix([u,v,w])
+        mat.transpose()
+        mat.invert()
+        pq1 = mat @ pq
+
+        m0 = p0 + pq1.x * u
+        m1 = m0 + pq1.z * w
+        m = (m0 + m1)/2
+        u.normalize()
+        v.normalize()
+        w.normalize()
+        self.draw_vector(origin=p0+t1*u,vector=length*u,axis=30,scale=0.15,head_height=head_height,color=&#34;Blue&#34;,name=&#34;Recta  1&#34;,positive=False)
+        self.draw_vector(origin=q0+t2*v,vector=length*v,axis=30,scale=0.15,head_height=head_height,color=&#34;Green&#34;,name=&#34;Recta  2&#34;,positive=False)
+        self.draw_vector(origin=m,vector=length*w,axis=sizex/2+10,scale=0.15,head_height=head_height,color=&#34;Red&#34;,name=&#34;Recta perpendicular comuna&#34;,positive=False)
+        self.rectangle(origin=m,u1=w,u2=u,sizex=sizex,sizey=sizey,name=&#34;Pla P&#34;,opacity=1)
+        self.rectangle(origin=m,u1=w,u2=v,sizex=sizex,sizey=sizey,color=&#34;CyanAzureDark&#34;,name=&#34;Pla Q&#34;,opacity=1)
+        self.draw_point(location=p0+t1*u,radius=0.5,name=&#34;Punt p0&#34;,color=&#34;Blue&#34;)
+        self.draw_point(location=q0+t2*v,radius=0.5,name=&#34;Punt q0&#34;,color=&#34;Green&#34;)
+        self.draw_point(location=m0,radius=0.5,name=&#34;Punt interseccio 1&#34;)
+        self.draw_point(location=m1,radius=0.5,name=&#34;Punt interseccio 2&#34;)
+        self.draw_point(location=m,radius=0.5,name=&#34;Punt recta perpendicular&#34;,color=&#34;Red&#34;)</code></pre>
+</details>
+<div class="desc"><p>Draws the straigth line perpendicular to a given two non parallel lines</p>
+<h2 id="parameters">Parameters</h2>
+<p>p0: point of the first line</p>
+<p>u: director vector of the first line</p>
+<p>q0: point of the second line</p>
+<p>v: director vector of the second line</p>
+<p>sizex, sizey: sizes of the rectangle</p>
+<p>length: length og the vectors</p>
+<p>t1, t2: displacement of the points p0 and q0</p></div>
+</dd>
 <dt id="LinearAlgebra.LinearAlgebra.pla_afi"><code class="name flex">
 <span>def <span class="ident">pla_afi</span></span>(<span>self,<br>punt=Vector((0.0, 0.0, 0.0)),<br>normal=None,<br>v1=Vector((3.0, 2.0, 1.0)),<br>v2=Vector((1.0, -2.0, 0.5)),<br>canonica=False,<br>name='Pla afí',<br>length=15,<br>color='Cyan',<br>sizex=25,<br>sizey=20,<br>opacity=0.9,<br>elements=True)</span>
 </code></dt>
@@ -13963,6 +14405,9 @@ a: The constant of the initial parabola</p>
 
                 opacicity: opacity of the plane
         &#34;&#34;&#34;
+        if not isinstance(punt,Vector):
+                punt = Vector(punt)
+        punt = self.components_en_canonica(punt)
         if canonica:
                 if length &gt; 15:
                         self.base_canonica(length=length,scale=0.08)
@@ -13978,7 +14423,7 @@ a: The constant of the initial parabola</p>
                 self.set_origin(punt)
                 self.draw_point(color=&#34;Blue&#34;)
                 if normal is not None:
-                        self.draw_vector(normal,color=&#34;Blue&#34;)
+                        self.draw_vector(vector=normal,color=&#34;Blue&#34;)
                 else:
                         self.draw_vectors(vectors=[v1,v2],canonica=canonica,color=&#34;Blue&#34;)
                 self.set_origin()</code></pre>
@@ -13996,14 +14441,14 @@ a: The constant of the initial parabola</p>
 <p>opacicity: opacity of the plane</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.pla_vectorial"><code class="name flex">
-<span>def <span class="ident">pla_vectorial</span></span>(<span>self,<br>v1=Vector((3.0, 2.0, 1.0)),<br>v2=Vector((1.0, -2.0, 0.5)),<br>canonica=False,<br>length=15,<br>color='Cyan',<br>sizex=25,<br>sizey=20,<br>opacity=0.8)</span>
+<span>def <span class="ident">pla_vectorial</span></span>(<span>self,<br>v1=Vector((3.0, 2.0, 1.0)),<br>v2=Vector((1.0, -2.0, 0.5)),<br>canonica=False,<br>length=15,<br>color='Cyan',<br>sizex=25,<br>sizey=20,<br>opacity=0.8,<br>thickness=0.01)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def pla_vectorial(self,v1=Vector([3,2,1]),v2=Vector([1,-2,0.5]),canonica=False,length=15,color=&#34;Cyan&#34;,sizex=25,sizey=20,opacity=0.8):
+<pre><code class="python">def pla_vectorial(self,v1=Vector([3,2,1]),v2=Vector([1,-2,0.5]),canonica=False,length=15,color=&#34;Cyan&#34;,sizex=25,sizey=20,opacity=0.8,thickness=0.01):
         &#34;&#34;&#34;
         Draws the plane generated by two vectors
         Parameters:
@@ -14018,6 +14463,8 @@ a: The constant of the initial parabola</p>
                 sizex, sizey: size of the plane
 
                 opacicity: opacity of the plane
+
+                thickness: thickness of the plane
         &#34;&#34;&#34;
         if canonica:
                 if length &gt; 15:
@@ -14025,7 +14472,7 @@ a: The constant of the initial parabola</p>
                 else:
                         self.base_canonica(length=length)
         self.draw_vectors([v1,v2],color=&#34;Blue&#34;)
-        self.draw_plane_surface(base=[v1,v2],color=color,sizex=sizex,sizey=sizey,opacity=opacity)</code></pre>
+        self.draw_plane_surface(base=[v1,v2],color=color,sizex=sizex,sizey=sizey,opacity=opacity,thickness=thickness)</code></pre>
 </details>
 <div class="desc"><p>Draws the plane generated by two vectors</p>
 <h2 id="parameters">Parameters</h2>
@@ -14034,7 +14481,8 @@ a: The constant of the initial parabola</p>
 <p>length: length of the axis x, y and z</p>
 <p>color: color of the plane</p>
 <p>sizex, sizey: size of the plane</p>
-<p>opacicity: opacity of the plane</p></div>
+<p>opacicity: opacity of the plane</p>
+<p>thickness: thickness of the plane</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.posicio_relativa_tres_plans"><code class="name flex">
 <span>def <span class="ident">posicio_relativa_tres_plans</span></span>(<span>self,<br>punts=None,<br>normals=None,<br>colors=None,<br>canonica=True,<br>length=25,<br>sizex=45,<br>sizey=40,<br>opacity=1.0,<br>elements=False)</span>
@@ -14165,14 +14613,14 @@ a: The constant of the initial parabola</p>
 <p>canonica: if True, draws the x, y and z axis</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.projeccio_ortogonal_simetric_pla_vectorial"><code class="name flex">
-<span>def <span class="ident">projeccio_ortogonal_simetric_pla_vectorial</span></span>(<span>self,<br>vector=Vector((7.0, -1.0, 12.0)),<br>v1=Vector((3.0, -1.0, 1.0)),<br>v2=Vector((1.0, 0.5, 0.5)),<br>sizex=None,<br>sizey=None,<br>canonica=True)</span>
+<span>def <span class="ident">projeccio_ortogonal_simetric_pla_vectorial</span></span>(<span>self,<br>vector=Vector((7.0, -1.0, 12.0)),<br>v1=Vector((3.0, -1.0, 1.0)),<br>v2=Vector((1.0, 0.5, 0.5)),<br>sizex=None,<br>sizey=None,<br>color='AzureBlueDark',<br>canonica=True,<br>orthogonal=False,<br>orthonormal=False,<br>thickness=0.01)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def projeccio_ortogonal_simetric_pla_vectorial(self,vector=Vector([7,-1,12]),v1=Vector([3,-1,1]),v2=Vector([1,0.5,0.5]),sizex=None,sizey=None,canonica=True):
+<pre><code class="python">def projeccio_ortogonal_simetric_pla_vectorial(self,vector=Vector([7,-1,12]),v1=Vector([3,-1,1]),v2=Vector([1,0.5,0.5]),sizex=None,sizey=None,color=&#34;AzureBlueDark&#34;,canonica=True,orthogonal=False,orthonormal=False,thickness=0.01):
         &#34;&#34;&#34;
         Draws the otoghonal projection and the symmetric of a vector with respecte a plane
         Parameters:
@@ -14183,6 +14631,8 @@ a: The constant of the initial parabola</p>
                 sizex, sizey: size of the plane
 
                 canonica: if True, draws the x, y and z axis
+
+                thickness:
         &#34;&#34;&#34;
         if not isinstance(vector,Vector):
                 vector = Vector(vector)
@@ -14190,46 +14640,70 @@ a: The constant of the initial parabola</p>
                 v1 = Vector(v1)
         if not isinstance(v2,Vector):
                 v2 = Vector(v2)
-        self.draw_vector(vector)
+        self.draw_vector(vector=vector)
         w = v1.cross(v2)
         vp = vector - vector.project(w)
-        self.draw_vector(vp,color=&#34;Red&#34;)
+        self.draw_vector(vector=vp,color=&#34;Red&#34;,name=&#34;Projecció ortogonal&#34;)
         if sizex is None:
                 sizex = 4*vp.length
         if sizey is None:
-                sizey = 4*vp.length     
-        self.pla_vectorial(v1,v2,sizex=sizex,sizey=sizey,canonica=canonica,color=&#34;AzureLightHard&#34;)
+                sizey = 4*vp.length
+        if orthogonal:
+                u1 = v1
+                u2 = v2
+                u2 = u1.dot(u1)*u2 - u2.dot(u1)*u1
+                self.draw_vectors(vectors=(u1,u2),name=&#34;Base ortogonal&#34;,color=&#34;Green&#34;)
+        if orthonormal:
+                u1 = v1
+                u2 = v2
+                u2 = u1.dot(u1)*u2 - u2.dot(u1)*u1
+                u1.normalize()
+                u2.normalize()
+                self.draw_vectors(vectors=(u1,u2),name=&#34;Base ortonormal&#34;,color=&#34;Orange&#34;)
+                self.set_base([u1,u2,w])
+                vb = self.components_in_base(vector)
+                self.set_base()
+                p1 = vb.x * u1
+                p2 = vb.y * u2
+                l1 = self.draw_line(start=[0,0,0],end=p1,scale=0.04,color=&#34;Orange&#34;,name=&#34;Lines 1&#34;)
+                l2 = self.draw_line(start=[0,0,0],end=p2,scale=0.04,color=&#34;Orange&#34;)
+                l3 = self.draw_line(start=vp,end=p1,scale=0.04,color=&#34;Orange&#34;)
+                l4 = self.draw_line(start=vp,end=p2,scale=0.04,color=&#34;Orange&#34;)
+                l11 = self.join([l1,l2,l3,l4])
+        self.pla_vectorial(v1,v2,sizex=sizex,sizey=sizey,canonica=canonica,color=color,thickness=thickness)
         self.set_origin(vp)
-        self.draw_vector(vector.project(w),scale=0.025,color=&#34;White&#34;)
+        self.draw_vector(vector=vector.project(w),scale=0.025,color=&#34;White&#34;,name=&#34;Vector perpendicular&#34;)
         self.set_origin()
         self.set_base([v1,v2,w])
         vb = self.components_in_base(vector)
         self.set_base()
         p1 = vb.x * v1
         p2 = vb.y * v2
-        self.draw_line(start=[0,0,0],end=p1,scale=0.04,color=&#34;Blue&#34;)
-        self.draw_line(start=[0,0,0],end=p2,scale=0.04,color=&#34;Blue&#34;)
-        self.draw_line(start=vp,end=p1,scale=0.04,color=&#34;Blue&#34;)
-        self.draw_line(start=vp,end=p2,scale=0.04,color=&#34;Blue&#34;)
-        self.draw_vector(2 * vp - vector,color=&#34;Green&#34;)
-        self.draw_line(start=2 * vp - vector,end=vp,scale=0.04,color=&#34;White&#34;)</code></pre>
+        l1 = self.draw_line(start=[0,0,0],end=p1,scale=0.04,color=&#34;Blue&#34;,name=&#34;Lines 2&#34;)
+        l2 = self.draw_line(start=[0,0,0],end=p2,scale=0.04,color=&#34;Blue&#34;)
+        l3 = self.draw_line(start=vp,end=p1,scale=0.04,color=&#34;Blue&#34;)
+        l4 = self.draw_line(start=vp,end=p2,scale=0.04,color=&#34;Blue&#34;)
+        l1 = self.join([l1,l2,l3,l4])
+        self.draw_vector(vector=2 * vp - vector,color=&#34;Green&#34;,name=&#34;Simètric&#34;)
+        self.draw_line(start=2 * vp - vector,end=vp,scale=0.04,color=&#34;White&#34;,name=&#34;Vector perpendicular&#34;)</code></pre>
 </details>
 <div class="desc"><p>Draws the otoghonal projection and the symmetric of a vector with respecte a plane</p>
 <h2 id="parameters">Parameters</h2>
 <p>vector: the initial vector</p>
 <p>v1, v2: generators of the plane</p>
 <p>sizex, sizey: size of the plane</p>
-<p>canonica: if True, draws the x, y and z axis</p></div>
+<p>canonica: if True, draws the x, y and z axis</p>
+<p>thickness:</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.projeccio_ortogonal_simetric_recta_afi"><code class="name flex">
-<span>def <span class="ident">projeccio_ortogonal_simetric_recta_afi</span></span>(<span>self,<br>punt=Vector((6.0, -5.0, 8.0)),<br>p0=Vector((3.0, -2.0, -3.0)),<br>v1=Vector((3.0, -1.0, 1.0)),<br>scale=0.1,<br>radi=0.15,<br>sizex=10,<br>sizey=10,<br>canonica=True)</span>
+<span>def <span class="ident">projeccio_ortogonal_simetric_recta_afi</span></span>(<span>self,<br>punt=Vector((6.0, -5.0, 8.0)),<br>p0=Vector((3.0, -2.0, -3.0)),<br>v1=Vector((3.0, -1.0, 1.0)),<br>scale=0.1,<br>radi=0.15,<br>sizex=10,<br>sizey=10,<br>canonica=True,<br>opacity=1.0)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def projeccio_ortogonal_simetric_recta_afi(self,punt=Vector([6,-5,8]),p0=Vector([3,-2,-3]),v1=Vector([3,-1,1]),scale=0.1,radi=0.15,sizex=10,sizey=10,canonica=True):
+<pre><code class="python">def projeccio_ortogonal_simetric_recta_afi(self,punt=Vector([6,-5,8]),p0=Vector([3,-2,-3]),v1=Vector([3,-1,1]),scale=0.1,radi=0.15,sizex=10,sizey=10,canonica=True,opacity=1.0):
         &#34;&#34;&#34;
         Draws the orthogonal projection and the symmetric of a point with respect an affine line
         Parameters:
@@ -14261,7 +14735,7 @@ a: The constant of the initial parabola</p>
         u = punt - p0
         p1 = p0 + u.project(v1)
         self.draw_point(location=p1,color=&#34;Red&#34;,radius=radi,name=&#34;Projecció ortogonal&#34;)
-        self.draw_plane_surface(origin=p1,normal=v1,name=&#34;Pla perpendicular a la recta&#34;,sizex=sizex,sizey=sizey,color=&#34;AzureBlueMedium&#34;)
+        self.draw_plane_surface(origin=p1,normal=v1,name=&#34;Pla perpendicular a la recta&#34;,sizex=sizex,sizey=sizey,color=&#34;AzureBlueMedium&#34;,opacity=opacity)
         self.draw_point(location=2*p1-punt,color=&#34;Green&#34;,radius=radi,name=&#34;Simètric&#34;)
         self.draw_line(start=punt,end=2*p1-punt,scale=0.04,color=&#34;White&#34;)</code></pre>
 </details>
@@ -14300,14 +14774,12 @@ a: The constant of the initial parabola</p>
                 v1 = Vector(v1)
         if canonica:
                 self.base_canonica(length=length)
-        self.draw_vector(v1,axis=length,positive=False,color=&#34;Blue&#34;,scale=0.066)
-        self.draw_vector(vector)
+        self.draw_vector(vector=v1,axis=length,positive=False,color=&#34;Blue&#34;,scale=0.066)
+        self.draw_vector(vector=vector)
         vp = vector.project(v1)
-        self.draw_vector(vp,color=&#34;Red&#34;)
-        self.set_origin(vp)
-        self.draw_vector(vector - vp,scale=0.025,color=&#34;White&#34;)
-        self.set_origin()
-        self.draw_vector(2 * vp - vector,color=&#34;Green&#34;)
+        self.draw_vector(vector=vp,color=&#34;Red&#34;)
+        self.draw_vector(origin=vp,vector=vector - vp,scale=0.025,color=&#34;White&#34;)
+        self.draw_vector(vector=2 * vp - vector,color=&#34;Green&#34;)
         self.draw_line(start=2 * vp - vector,end=vp,scale=0.04,color=&#34;White&#34;)</code></pre>
 </details>
 <div class="desc"><p>Draws the otoghonal projection and the symmetric of a vector with respecte a line</p>
@@ -14318,14 +14790,14 @@ a: The constant of the initial parabola</p>
 <p>length: length for x, y and z axis and v1 axis</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.punt_referencia_canonica"><code class="name flex">
-<span>def <span class="ident">punt_referencia_canonica</span></span>(<span>self,<br>punt=Vector((-4.0, 7.0, 6.0)),<br>radius=0.1,<br>length=12,<br>name='Punt p',<br>coordenades=True,<br>vector=True)</span>
+<span>def <span class="ident">punt_referencia_canonica</span></span>(<span>self,<br>punt=Vector((-4.0, 7.0, 6.0)),<br>radius=0.1,<br>length=12,<br>scale=0.06,<br>name='Punt p',<br>color='Black',<br>coordenades=True,<br>vector=True)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def punt_referencia_canonica(self,punt=Vector([-4,7,6]),radius=0.1,length=12,name=&#34;Punt p&#34;,coordenades=True,vector=True):
+<pre><code class="python">def punt_referencia_canonica(self,punt=Vector([-4,7,6]),radius=0.1,length=12,scale=0.06,name=&#34;Punt p&#34;,color=&#34;Black&#34;,coordenades=True,vector=True):
         &#34;&#34;&#34;
         Draws a point expressed in the canonical reference
         Parameters:
@@ -14339,14 +14811,14 @@ a: The constant of the initial parabola</p>
 
            vector: if True, it draws the position vector
         &#34;&#34;&#34;
-        self.base_canonica(length=length)
+        self.base_canonica(length=length,scale=scale,name=&#34;Referència canònica&#34;)
         if not isinstance(punt,Vector):
                 punt = Vector(punt)
         self.draw_point(location=punt,color=&#34;Black&#34;,radius=radius,name=name)
         if coordenades:
                 self.draw_components(punt,name=&#34;Coordenades en referència canònica&#34;)
         if vector:
-                self.draw_vector(punt)</code></pre>
+                self.draw_vector(vector=punt,name=&#34;Vector de posició refereǹcia canònica&#34;,color=color)</code></pre>
 </details>
 <div class="desc"><p>Draws a point expressed in the canonical reference</p>
 <h2 id="parameters">Parameters</h2>
@@ -14357,14 +14829,14 @@ a: The constant of the initial parabola</p>
 <p>vector: if True, it draws the position vector</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.punt_referencia_no_canonica"><code class="name flex">
-<span>def <span class="ident">punt_referencia_no_canonica</span></span>(<span>self,<br>punt=Vector((5.0, 6.0, -5.0)),<br>origin=Vector((-2.0, 3.0, 3.0)),<br>u1=Vector((-0.3333333432674408, -0.6666666865348816, 0.6666666865348816)),<br>u2=Vector((0.6666666865348816, 0.3333333432674408, 0.6666666865348816)),<br>u3=Vector((-0.6666666865348816, 0.6666666865348816, 0.3333333432674408)),<br>length=12,<br>scale=0.04,<br>radius=0.1,<br>name='Punt p',<br>vector=True)</span>
+<span>def <span class="ident">punt_referencia_no_canonica</span></span>(<span>self,<br>punt=Vector((5.0, 6.0, -5.0)),<br>origin=Vector((-2.0, 3.0, 3.0)),<br>u1=Vector((-0.3333333432674408, -0.6666666865348816, 0.6666666865348816)),<br>u2=Vector((0.6666666865348816, 0.3333333432674408, 0.6666666865348816)),<br>u3=Vector((-0.6666666865348816, 0.6666666865348816, 0.3333333432674408)),<br>color='Black',<br>length=12,<br>scale=0.04,<br>radius=0.1,<br>name='Punt p',<br>vector=True)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def punt_referencia_no_canonica(self,punt=Vector([5,6,-5]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),length=12,scale=0.04,radius=0.1,name=&#34;Punt p&#34;,vector=True):
+<pre><code class="python">def punt_referencia_no_canonica(self,punt=Vector([5,6,-5]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),color=&#34;Black&#34;,length=12,scale=0.04,radius=0.1,name=&#34;Punt p&#34;,vector=True):
         &#34;&#34;&#34;
         Draws a point expressed in the reference {o,u1,u2,u3} with origin in the point origin and sets the default
         origin and default base to them
@@ -14389,7 +14861,7 @@ a: The constant of the initial parabola</p>
         self.draw_point(location=punt,color=&#34;Black&#34;,radius=radius,name=name)
         self.draw_components(punt,scale=0.015,name=&#34;Coordenades en referència R&#39;&#34;)
         if vector:
-                self.draw_vector(punt)</code></pre>
+                self.draw_vector(vector=punt,name=&#34;Vector de posició referència R&#39;&#34;)</code></pre>
 </details>
 <div class="desc"><p>Draws a point expressed in the reference {o,u1,u2,u3} with origin in the point origin and sets the default
 origin and default base to them</p>
@@ -14446,7 +14918,7 @@ origin and default base to them</p>
         if elements:
                 self.set_origin(punt)
                 self.draw_point(color=color,radius=2 * scale)
-                self.draw_vector(v,color=color)
+                self.draw_vector(vector=v,color=color)
                 self.set_origin()</code></pre>
 </details>
 <div class="desc"><p>Draws the affine line generated by a vector passing through a point</p>
@@ -14484,7 +14956,7 @@ origin and default base to them</p>
 
            name: name of the rectangle
 
-           sizex, sizey: sizes of the rectangle
+           sizex,  sizey: sizes of the rectangle
 
            opacity: opacity of the rectangle
 
@@ -14493,11 +14965,13 @@ origin and default base to them</p>
         if not isinstance(u1,Vector):
                 u1 = Vector(u1)
         if not isinstance(u2,Vector):
-                u2 = Vector(u2) 
+                u2 = Vector(u2)
+        if not isinstance(origin,Vector):
+                origin = Vector(origin)
         u1.normalize()
         u2.normalize()
-        points = [(0,0),(sizex,0),(sizex,sizey),(0,sizey)]      
-        self.draw_polygon(origin=origin,u1=u1,u2=u2,points=points,scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)</code></pre>
+        points = [(0,0),(sizex,0),(sizex,sizey),(0,sizey)]
+        self.draw_polygon(origin=origin-sizex/2*u1-sizex/2*u2,u1=u1,u2=u2,points=points,scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)</code></pre>
 </details>
 <div class="desc"><p>Draws a rectangle</p>
 <h2 id="parameters">Parameters</h2>
@@ -14507,7 +14981,8 @@ origin and default base to them</p>
 <p>color: color of the rectangle</p>
 <p>linecolor: color of the edges</p>
 <p>name: name of the rectangle</p>
-<p>sizex, sizey: sizes of the rectangle</p>
+<p>sizex,
+sizey: sizes of the rectangle</p>
 <p>opacity: opacity of the rectangle</p>
 <p>thickness: thickness of the rectangle</p></div>
 </dd>
@@ -14767,14 +15242,14 @@ vector (1,0,0)</p></div>
 <p>color: color of the surface</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.rotacio_ortoedre"><code class="name flex">
-<span>def <span class="ident">rotacio_ortoedre</span></span>(<span>self,<br>centre=Vector((0.0, 0.0, 0.0)),<br>costats=Vector((8.0, 5.0, 4.0)),<br>eix='Z',<br>opacity=1)</span>
+<span>def <span class="ident">rotacio_ortoedre</span></span>(<span>self,<br>centre=Vector((0.0, 0.0, 0.0)),<br>costats=Vector((8.0, 5.0, 4.0)),<br>eix='Z',<br>angle=360,<br>stop=0,<br>opacity=1)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def rotacio_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([8,5,4]),eix=&#39;Z&#39;,opacity=1):
+<pre><code class="python">def rotacio_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([8,5,4]),eix=&#39;Z&#39;,angle=360,stop=0,opacity=1):
         &#34;&#34;&#34;
         Draws an animation of an orthohedron rotating around a vectorial line
         Parameters:
@@ -14792,7 +15267,7 @@ vector (1,0,0)</p></div>
         if not isinstance(costats,Vector):
                 costats = Vector(costats)
         ortoedre = self.draw_cube(origin=centre,scale=costats,color=&#34;AzureBlueDark&#34;,opacity=opacity,thickness=0.015,scalelines=0.025,linecolor=&#34;Orange&#34;,name=&#34;Ortoedre&#34;)
-        self.rotate_object(ortoedre,axis=eix,draw=False)</code></pre>
+        self.rotate_object(ortoedre,axis=eix,angle=angle,stop=stop,draw=False)</code></pre>
 </details>
 <div class="desc"><p>Draws an animation of an orthohedron rotating around a vectorial line</p>
 <h2 id="parameters">Parameters</h2>
@@ -14896,14 +15371,14 @@ vector (1,0,0)</p></div>
 <p>reverse: if True, shows the rotation with Euler's angles in reverse order</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.rotacio_punt"><code class="name flex">
-<span>def <span class="ident">rotacio_punt</span></span>(<span>self,<br>punt=Vector((6.0, 8.0, 5.0)),<br>origen=Vector((4.0, 3.0, 0.0)),<br>eix=Vector((1.0, 1.0, 1.0)),<br>vectors=True)</span>
+<span>def <span class="ident">rotacio_punt</span></span>(<span>self,<br>punt=Vector((6.0, 8.0, 5.0)),<br>origen=Vector((4.0, 3.0, 0.0)),<br>angle=360,<br>eix=Vector((1.0, 1.0, 1.0)),<br>length=None,<br>stop=0,<br>vectors=True)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def rotacio_punt(self,punt=Vector([6,8,5]),origen=Vector([4,3,0]),eix=Vector([1,1,1]),vectors=True):
+<pre><code class="python">def rotacio_punt(self,punt=Vector([6,8,5]),origen=Vector([4,3,0]),angle=360,eix=Vector([1,1,1]),length=None,stop=0,vectors=True):
         &#34;&#34;&#34;
         Draws an animation of a point rotating around an afine line
         Parameters:
@@ -14911,7 +15386,7 @@ vector (1,0,0)</p></div>
 
                 origen: point of the affine line
 
-                eix: axis of rotation, given by a vector or by X, Y or Z 
+                eix: axis of rotation, given by a vector or by X, Y or Z
         &#34;&#34;&#34;
         if not isinstance(punt,Vector):
                 punt = Vector(punt)
@@ -14930,10 +15405,10 @@ vector (1,0,0)</p></div>
                 origen = Vector(origen)
         e = (punt-origen).project(u)
         l = e.length
-        if l &lt; 18:
-                l = 18
+        if length is not None:
+                l = length
         self.base_canonica(length=l)
-        self.rotate_point(punt,origen,u,length=l,vectors=vectors)</code></pre>
+        self.rotate_point(punt,origen,u,angle=angle,length=l,stop=stop,vectors=vectors)</code></pre>
 </details>
 <div class="desc"><p>Draws an animation of a point rotating around an afine line</p>
 <h2 id="parameters">Parameters</h2>
@@ -14942,14 +15417,14 @@ vector (1,0,0)</p></div>
 <p>eix: axis of rotation, given by a vector or by X, Y or Z</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.rotacio_vector"><code class="name flex">
-<span>def <span class="ident">rotacio_vector</span></span>(<span>self, vector=Vector((6.0, 8.0, 5.0)), eix=Vector((1.0, 1.0, 1.0)), adaptada=False)</span>
+<span>def <span class="ident">rotacio_vector</span></span>(<span>self,<br>vector=Vector((6.0, 8.0, 5.0)),<br>eix=Vector((1.0, 1.0, 1.0)),<br>angle=360,<br>stop=0,<br>adaptada=False)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">    def rotacio_vector(self,vector=Vector([6,8,5]),eix=Vector([1,1,1]),adaptada=False):
+<pre><code class="python">    def rotacio_vector(self,vector=Vector([6,8,5]),eix=Vector([1,1,1]),angle=360,stop=0,adaptada=False):
             &#34;&#34;&#34;
             Draws an animation of a vector rotating around a vectorial line
             Parameters:
@@ -14976,10 +15451,10 @@ vector (1,0,0)</p></div>
             if l &lt; 18:
                     l = 18
             if adaptada:
-                    self.base_adaptada(axis=eix,length=l)
+                    self.base_adaptada(axis=eix,length=l,scale=0.1)
             self.base_canonica(length=l)
-            self.rotate_vector(vector,eix,length=l)
-# </code></pre>
+            self.rotate_vector(vector,eix,length=l,angle=angle,stop=stop)
+#</code></pre>
 </details>
 <div class="desc"><p>Draws an animation of a vector rotating around a vectorial line</p>
 <h2 id="parameters">Parameters</h2>
@@ -14988,14 +15463,14 @@ vector (1,0,0)</p></div>
 <p>adaptada: if True, draws a base adapted to the rotation</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.rotate_euler"><code class="name flex">
-<span>def <span class="ident">rotate_euler</span></span>(<span>self,<br>obj=None,<br>psi=0.0,<br>theta=0.0,<br>phi=0.0,<br>frames=3,<br>axis='ZXZ',<br>amax=15,<br>scaleaxis=0.075,<br>reverse=False,<br>local=False,<br>radians=False,<br>canonica=True,<br>positive=False)</span>
+<span>def <span class="ident">rotate_euler</span></span>(<span>self,<br>obj=None,<br>psi=0.0,<br>theta=0.0,<br>phi=0.0,<br>frames=3,<br>axis='ZXZ',<br>amax=15,<br>scaleaxis=0.075,<br>reverse=False,<br>local=False,<br>stop=0,<br>radians=False,<br>canonica=True,<br>positive=False)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def rotate_euler(self,obj=None,psi=0.0,theta=0.0,phi=0.0,frames=3,axis=&#39;ZXZ&#39;,amax=15,scaleaxis=0.075,reverse=False,local=False,radians=False,canonica=True,positive=False):
+<pre><code class="python">def rotate_euler(self,obj=None,psi=0.0,theta=0.0,phi=0.0,frames=3,axis=&#39;ZXZ&#39;,amax=15,scaleaxis=0.075,reverse=False,local=False,stop=0,radians=False,canonica=True,positive=False):
         &#34;&#34;&#34;
         Rotates an object by the Euler angles psi, theta and phi
         Parameters:
@@ -15005,7 +15480,7 @@ vector (1,0,0)</p></div>
 
            axis: it must be &#39;XYZ&#39;, &#39;XZY&#39;, &#39;YXZ&#39;, &#39;YZX&#39;, &#39;ZXY&#39;, &#39;ZYX&#39;, &#39;XYX&#39;, &#39;XZX&#39;, &#39;YXY&#39;, &#39;YZY&#39;, &#39;ZXZ&#39; or &#39;ZYZ&#39;
 
-           amax: axis valur for draw_base_axis
+           amax: axis value for draw_base_axis
 
            scaleaxis: scale value for draw_base_axis
 
@@ -15013,7 +15488,7 @@ vector (1,0,0)</p></div>
 
            radians: if True, psi, theta and phi must be in radians
 
-           positive: if False and psi, theta or phi are greather than 180 degrees, they rae converted
+           positive: if False and psi, theta or phi are greather than 180 degrees, they are converted
                      to negative angles
         &#34;&#34;&#34;
         def vector_from_axis(axis):
@@ -15129,7 +15604,7 @@ vector (1,0,0)</p></div>
                 fn += frames
 
         self.frame = fn - frames
-        bpy.context.scene.frame_end = self.frame
+        bpy.context.scene.frame_end = self.frame + stop
         bpy.context.scene.frame_set(0)
         bpy.context.view_layer.update()</code></pre>
 </details>
@@ -15138,22 +15613,22 @@ vector (1,0,0)</p></div>
 <p>object: the object</p>
 <p>psi, theta, phi: the Euler angles expressed in degrees</p>
 <p>axis: it must be 'XYZ', 'XZY', 'YXZ', 'YZX', 'ZXY', 'ZYX', 'XYX', 'XZX', 'YXY', 'YZY', 'ZXZ' or 'ZYZ'</p>
-<p>amax: axis valur for draw_base_axis</p>
+<p>amax: axis value for draw_base_axis</p>
 <p>scaleaxis: scale value for draw_base_axis</p>
 <p>local: if True the center of rotation is the location of the object</p>
 <p>radians: if True, psi, theta and phi must be in radians</p>
-<p>positive: if False and psi, theta or phi are greather than 180 degrees, they rae converted
+<p>positive: if False and psi, theta or phi are greather than 180 degrees, they are converted
 to negative angles</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.rotate_object"><code class="name flex">
-<span>def <span class="ident">rotate_object</span></span>(<span>self,<br>obj=None,<br>axis='Z',<br>frames=1,<br>origin=Vector((0.0, 0.0, 0.0)),<br>localaxis=None,<br>localangle=None,<br>translation=0.0,<br>rounds=1,<br>length=25,<br>draw=True)</span>
+<span>def <span class="ident">rotate_object</span></span>(<span>self,<br>obj=None,<br>axis='Z',<br>frames=1,<br>origin=Vector((0.0, 0.0, 0.0)),<br>angle=360,<br>localaxis=None,<br>localangle=None,<br>translation=0.0,<br>rounds=1,<br>stop=0,<br>length=25,<br>draw=True)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def rotate_object(self,obj=None,axis=&#39;Z&#39;,frames=1,origin=Vector([0,0,0]),localaxis=None,localangle=None,translation=0.0,rounds=1,length=25,draw=True):
+<pre><code class="python">def rotate_object(self,obj=None,axis=&#39;Z&#39;,frames=1,origin=Vector([0,0,0]),angle=360,localaxis=None,localangle=None,translation=0.0,rounds=1,stop=0,length=25,draw=True):
         &#34;&#34;&#34;
         Rotates an object around the axis
         Parameters:
@@ -15184,12 +15659,15 @@ to negative angles</p></div>
         else:
                 u = Vector(axis)
 
+        if angle != 360:
+                rounds = 1
+
         line = None
         if localaxis is not None and localangle is not None:
                 old = self.origin
                 self.set_origin(obj.location)
                 l = obj.dimensions.length / 2
-                line = self.draw_vector(localaxis,axis=l,scale=0.1,arrow=False,positive=False,color=&#34;Orange&#34;,name=&#34;Eix rotació local&#34;)
+                line = self.draw_vector(vector=localaxis,axis=l,scale=0.1,arrow=False,positive=False,color=&#34;Orange&#34;,name=&#34;Eix rotació local&#34;)
                 line.select_set(True)
                 bpy.ops.object.origin_set(type=&#39;ORIGIN_CENTER_OF_MASS&#39;, center=&#39;MEDIAN&#39;)
                 line.select_set(False)
@@ -15197,17 +15675,17 @@ to negative angles</p></div>
                 lr = Rotation(localangle,localaxis)
         if draw:
                 self.set_origin(origin)
-                self.draw_vector(u,axis=length,positive=False,color=&#34;White&#34;)
+                self.draw_vector(vector=u,axis=length,positive=False,color=&#34;White&#34;)
                 self.set_origin()
         r = Rotation(1/int(frames),u)
-        axis, angle = r.to_axis_angle()
+        axis, alpha = r.to_axis_angle()
         axis.normalize()
-        t =  translation / (angle * int(frames) * 360) * axis
+        t =  translation / (alpha * int(frames) * int(angle)) * axis
         bpy.context.scene.frame_set(self.frame)
         obj.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
         obj.keyframe_insert(data_path=&#34;location&#34;,index=-1)
         fn = self.frame + 1
-        for i in range(int(frames) * int(rounds) * 360):
+        for i in range(int(frames) * int(rounds) * int(angle)):
                 bpy.context.scene.frame_set(fn)
                 if line is None:
                         obj.rotation_quaternion.rotate(r.quaternion)
@@ -15223,7 +15701,7 @@ to negative angles</p></div>
                 obj.keyframe_insert(data_path=&#34;location&#34;,index=-1)
                 fn += 1
         self.frame = fn - frames
-        bpy.context.scene.frame_end = self.frame
+        bpy.context.scene.frame_end = self.frame + stop
         bpy.context.scene.frame_set(0)
         bpy.context.view_layer.update()</code></pre>
 </details>
@@ -15269,7 +15747,7 @@ to negative angles</p></div>
                 return
 
         self.draw_base_axis(axis = amax,scale=scaleaxis,positive=False,name=&#34;Base canònica&#34;)
-        self.draw_vector(u,scale=0.1,axis=amax,positive=False,color=&#34;White&#34;,name=&#34;Eix rotació&#34;)
+        self.draw_vector(vector=u,scale=0.1,axis=amax,positive=False,color=&#34;White&#34;,name=&#34;Eix rotació&#34;)
 
         num = int(angle)
         alfa = angle / num
@@ -15305,14 +15783,14 @@ to negative angles</p></div>
 <p>local: if True the center of rotation is the location of the object</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.rotate_objects"><code class="name flex">
-<span>def <span class="ident">rotate_objects</span></span>(<span>self,<br>objs=[],<br>axis='Z',<br>angle=None,<br>frames=1,<br>origin=Vector((0.0, 0.0, 0.0)),<br>translation=0,<br>rounds=1,<br>length=25,<br>draw=False)</span>
+<span>def <span class="ident">rotate_objects</span></span>(<span>self,<br>objs=[],<br>axis='Z',<br>angle=None,<br>frames=1,<br>origin=Vector((0.0, 0.0, 0.0)),<br>translation=0,<br>rounds=1,<br>length=25,<br>stop=0,<br>draw=False)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def rotate_objects(self,objs=[],axis=&#39;Z&#39;,angle=None,frames=1,origin=Vector([0,0,0]),translation=0,rounds=1,length=25,draw=False):
+<pre><code class="python">def rotate_objects(self,objs=[],axis=&#39;Z&#39;,angle=None,frames=1,origin=Vector([0,0,0]),translation=0,rounds=1,length=25,stop=0,draw=False):
         &#34;&#34;&#34;
         Rotates an object around the axis
         Parameters:
@@ -15320,6 +15798,13 @@ to negative angles</p></div>
 
            axis: it must be &#39;X&#39;, &#39;Y&#39;, &#39;Z&#39; or a Vector
 
+           angle: angle of rotation
+
+           frames: number of frames between
+
+           origin: origin of rotation
+
+           translation: translation betwwen intial and final positions
         &#34;&#34;&#34;
         if objs is None or (not isinstance(objs,list) and not isinstance(objs,tuple)):
                 return None
@@ -15344,15 +15829,11 @@ to negative angles</p></div>
                 rounds = 1
 
         if draw:
-                self.set_origin(origin)
-                self.draw_vector(u,axis=length,positive=False,color=&#34;White&#34;)
-                self.set_origin()
-
+                self.draw_vector(origin=origin,vector=u,axis=length,positive=False,color=&#34;White&#34;)
         r = Rotation(1/int(frames),u)
         axis, alfa = r.to_axis_angle()
         axis.normalize()
-        r = Rotation(1/int(frames),u)
-        t =  translation / (alfa * int(frames) * 360) * axis
+        t =  translation / (alfa * int(frames) * angle) * u
         bpy.context.scene.frame_set(self.frame)
         for obj in objs:
                 obj.keyframe_insert(data_path=&#34;rotation_quaternion&#34;,index=-1)
@@ -15369,24 +15850,28 @@ to negative angles</p></div>
                         obj.keyframe_insert(data_path=&#34;location&#34;,index=-1)
                 fn += 1
         self.frame = fn - frames
-        bpy.context.scene.frame_end = self.frame
+        bpy.context.scene.frame_end = self.frame + stop
         bpy.context.scene.frame_set(0)
         bpy.context.view_layer.update()</code></pre>
 </details>
 <div class="desc"><p>Rotates an object around the axis</p>
 <h2 id="parameters">Parameters</h2>
 <p>objs: the list of objects</p>
-<p>axis: it must be 'X', 'Y', 'Z' or a Vector</p></div>
+<p>axis: it must be 'X', 'Y', 'Z' or a Vector</p>
+<p>angle: angle of rotation</p>
+<p>frames: number of frames between</p>
+<p>origin: origin of rotation</p>
+<p>translation: translation betwwen intial and final positions</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.rotate_point"><code class="name flex">
-<span>def <span class="ident">rotate_point</span></span>(<span>self, punt=None, origen=Vector((0.0, 0.0, 0.0)), axis='Z', length=25, vectors=True)</span>
+<span>def <span class="ident">rotate_point</span></span>(<span>self,<br>punt=None,<br>origen=Vector((0.0, 0.0, 0.0)),<br>axis='Z',<br>angle=360,<br>length=20,<br>stop=0,<br>vectors=True)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def rotate_point(self,punt=None,origen=Vector([0,0,0]),axis=&#39;Z&#39;,length=25,vectors=True):
+<pre><code class="python">def rotate_point(self,punt=None,origen=Vector([0,0,0]),axis=&#39;Z&#39;,angle=360,length=20,stop=0,vectors=True):
         &#34;&#34;&#34;
         Rotates a point around an affine line
         Parameters:
@@ -15415,12 +15900,12 @@ to negative angles</p></div>
         if not isinstance(origen,Vector):
                 origen = Vector(origen)
 
-        self.draw_point(radius=0.3,location=punt,name=&#34;Blue&#34;,color=&#34;Blue&#34;)
-        obj = self.draw_point(radius=0.3,location=punt,name=&#34;Red&#34;,color=&#34;Red&#34;)
+        self.draw_point(radius=0.2,location=punt,name=&#34;Blue&#34;,color=&#34;Blue&#34;)
+        obj = self.draw_point(radius=0.2,location=punt,name=&#34;Red&#34;,color=&#34;Red&#34;)
         if vectors:
                 self.set_origin(origen)
-                self.draw_vector(punt-origen,name=&#34;VBlack&#34;,color=&#34;Black&#34;)
-                obj2 = self.draw_vector(punt-origen,name=&#34;VRed&#34;,color=&#34;Red&#34;)
+                self.draw_vector(vector=punt-origen,name=&#34;VBlack&#34;,color=&#34;Black&#34;)
+                obj2 = self.draw_vector(vector=punt-origen,name=&#34;VRed&#34;,color=&#34;Red&#34;)
         w1 = u.orthogonal().normalized()
         vec1 = (punt-origen).project(u)
         center = origen + vec1
@@ -15430,10 +15915,11 @@ to negative angles</p></div>
         a = vec1.length
         b = (punt-origen-vec1).length
         p2 = b**2/a**2
+        self.reset()
         if vectors:
-                self.rotate_objects([obj,obj2],u,angle=360,origin=origen,length=length,draw=True)
+                self.rotate_objects([obj,obj2],u,angle=angle,origin=origen,length=length,stop=stop,draw=True)
         else:
-                self.rotate_object(obj,u,origin=origen,length=length)
+                self.rotate_object(obj,u,origin=origen,angle=angle,stop=stop,length=length)
         self.draw_circle(center=center,u1=w1,u2=w2,radius=radius,name=&#34;Circumferència&#34;,steps=128,color=&#34;Yellow&#34;)
         self.cone(o=origen,u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color=&#34;GrayLight&#34;,opacity=0.25,thickness=0.01)
         self.reset()</code></pre>
@@ -15446,14 +15932,14 @@ to negative angles</p></div>
 <p>length: length of the</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.rotate_vector"><code class="name flex">
-<span>def <span class="ident">rotate_vector</span></span>(<span>self, vector=None, axis='Z', length=25)</span>
+<span>def <span class="ident">rotate_vector</span></span>(<span>self, vector=None, axis='Z', length=25, angle=360, stop=0)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def rotate_vector(self,vector=None,axis=&#39;Z&#39;,length=25):
+<pre><code class="python">def rotate_vector(self,vector=None,axis=&#39;Z&#39;,length=25,angle=360,stop=0):
         &#34;&#34;&#34;
         Rotates a vector around the axis
         Parameters:
@@ -15474,9 +15960,8 @@ to negative angles</p></div>
                 u = axis
         else:
                 u = Vector(axis)
-
-        self.draw_vector(vector,color=&#34;Black&#34;)
-        obj = self.draw_vector(vector,color=&#34;Red&#34;)
+        self.draw_vector(vector=vector,color=&#34;Black&#34;,scale=0.1,name=&#34;Vector inicial&#34;)
+        obj = self.draw_vector(vector=vector,color=&#34;Red&#34;,scale=0.1,name=&#34;Vector que gira&#34;)
         w1 = u.orthogonal().normalized()
         vec1 = vector.project(u)
         w3 = vec1.normalized()
@@ -15484,8 +15969,8 @@ to negative angles</p></div>
         a = vec1.length
         b = (vector-vec1).length
         p2 = b**2/a**2
-        self.rotate_object(obj,u,length=length)
-        self.cone(u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color=&#34;GrayLight&#34;,opacity=0.1,thickness=0.01)</code></pre>
+        self.rotate_object(obj,u,angle=angle,stop=stop,length=length)
+        self.cone(u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color=&#34;GrayLight&#34;,opacity=0.7,thickness=0.04)</code></pre>
 </details>
 <div class="desc"><p>Rotates a vector around the axis</p>
 <h2 id="parameters">Parameters</h2>
@@ -15992,14 +16477,14 @@ the variables for the equation
 <p>punt: if it's a float value, draws a moving poing</p></div>
 </dd>
 <dt id="LinearAlgebra.LinearAlgebra.triangle"><code class="name flex">
-<span>def <span class="ident">triangle</span></span>(<span>self,<br>vertices=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],<br>scalelines=0.075,<br>color='AzureBlueMedium',<br>linecolor='Blue',<br>name='Triangle',<br>baricentre=False,<br>factors=(2, 2, -2),<br>ortocentre=False,<br>opacity=1.0,<br>thickness=0.0)</span>
+<span>def <span class="ident">triangle</span></span>(<span>self,<br>vertices=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],<br>scalelines=0.075,<br>color='AzureBlueMedium',<br>linecolor='Blue',<br>name='Triangle',<br>baricentre=False,<br>factors=(2, 2, -2),<br>ortocentre=False,<br>circumcentre=False,<br>opacity=1.0,<br>radius=0.03)</span>
 </code></dt>
 <dd>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def triangle(self,vertices=[[0,0,0],[1,0,0],[0,1,0]],scalelines=0.075,color=&#34;AzureBlueMedium&#34;,linecolor=&#34;Blue&#34;,name=&#34;Triangle&#34;,baricentre=False,factors=(2,2,-2),ortocentre=False,opacity=1.0,thickness=0.0):
+<pre><code class="python">def triangle(self,vertices=[[0,0,0],[1,0,0],[0,1,0]],scalelines=0.075,color=&#34;AzureBlueMedium&#34;,linecolor=&#34;Blue&#34;,name=&#34;Triangle&#34;,baricentre=False,factors=(2,2,-2),ortocentre=False,circumcentre=False,opacity=1.0,radius=0.03):
         &#34;&#34;&#34;
         Draws a triangle from the vertices
         Parameters:
@@ -16025,23 +16510,42 @@ the variables for the equation
         if ortocentre:
                 u1 = v[1]-v[0]
                 u2 = v[2]-v[0]
-                u3 = v[2] - v[1] 
-                p0 = v[1] - u1.project(u3) 
-                self.draw_line(start=v[0],end=v[0]+factors[0]*(p0-v[0]),scale=0.05,name=&#34;Altura 1&#34;,color=&#34;White&#34;)
-                p1 = v[2] - u3.project(u2) 
-                self.draw_line(start=v[1],end=v[1]+factors[1]*(p1-v[1]),scale=0.05,name=&#34;Altura 2&#34;,color=&#34;White&#34;)
-                p2 = v[0] + u2.project(u1) 
-                self.draw_line(start=v[2],end=v[2]+factors[2]*(p2-v[2]),scale=0.05,name=&#34;Altura 3&#34;,color=&#34;White&#34;)
-                
+                u3 = v[2] - v[1]
+                p0 = v[1] - u1.project(u3)
+                self.draw_line(start=v[0],end=v[0]+factors[0]*(p0-v[0]),scale=scalelines,name=&#34;Altura 1&#34;,color=&#34;White&#34;)
+                p1 = v[2] - u3.project(u2)
+                self.draw_line(start=v[1],end=v[1]+factors[1]*(p1-v[1]),scale=scalelines,name=&#34;Altura 2&#34;,color=&#34;White&#34;)
+                p2 = v[0] + u2.project(u1)
+                self.draw_line(start=v[2],end=v[2]+factors[2]*(p2-v[2]),scale=scalelines,name=&#34;Altura 3&#34;,color=&#34;White&#34;)
+
+        if circumcentre:
+                u1 = v[1] - v[0]
+                u2 = v[2] - v[0]
+                u3 = v[2] - v[1]
+                w = u1.cross(u2)
+                w.normalize()
+                w01 = w.cross(u1)
+                w02 = w.cross(u2)
+                w12 = w.cross(u3)
+                m12 = (v[2] + v[1])/2
+                m01 = (v[0] + v[1])/2
+                m02 = (v[2] + v[0])/2
+                self.draw_line(start=m01,end=m01+factors[0]*w01,scale=scalelines,name=&#34;Mediatriu 1&#34;,color=&#34;White&#34;)
+                self.draw_line(start=m02,end=m02+factors[1]*w02,scale=scalelines,name=&#34;Mediatriu 2&#34;,color=&#34;White&#34;)
+                self.draw_line(start=m12,end=m12+factors[2]*w12,scale=scalelines,name=&#34;Mediatriu 3&#34;,color=&#34;White&#34;)
+                p1 = self.draw_point(radius=radius,location=m01,name=&#34;Punt mitjà 1&#34;)
+                p2 = self.draw_point(radius=radius,location=m02,name=&#34;Punt mitjà 2&#34;)
+                p3 = self.draw_point(radius=radius,location=m12,name=&#34;Punt mitjà 3&#34;)
+
         if baricentre:
                 m01 = (v[0]+v[1])/2
                 m02 = (v[0]+v[2])/2
                 m12 = (v[1]+v[2])/2
                 m = (v[0]+v[1]+v[2])/3
-                self.draw_line(start=v[0],end=m12,scale=0.05,name=&#34;Mitjana 1&#34;,color=&#34;White&#34;)
-                self.draw_line(start=v[1],end=m02,scale=0.05,name=&#34;Mitjana 2&#34;,color=&#34;White&#34;)
-                self.draw_line(start=v[2],end=m01,scale=0.05,name=&#34;Mitjana 2&#34;,color=&#34;White&#34;)
-        self.draw_triangle(origin=v[0],u1=v[1]-v[0],u2=v[2]-v[0],scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)</code></pre>
+                self.draw_line(start=v[0],end=m12,scale=scalelines,name=&#34;Mitjana 1&#34;,color=&#34;White&#34;)
+                self.draw_line(start=v[1],end=m02,scale=scalelines,name=&#34;Mitjana 2&#34;,color=&#34;White&#34;)
+                self.draw_line(start=v[2],end=m01,scale=scalelines,name=&#34;Mitjana 2&#34;,color=&#34;White&#34;)
+        self.draw_triangle(origin=v[0],u1=v[1]-v[0],u2=v[2]-v[0],scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=0.01)</code></pre>
 </details>
 <div class="desc"><p>Draws a triangle from the vertices</p>
 <h2 id="parameters">Parameters</h2>
@@ -16101,7 +16605,7 @@ s3: azimuthal angle of the third point</p></div>
 </summary>
 <pre><code class="python">def triangle_esferic_aleatori(self,r=10):
         &#34;&#34;&#34;
-        Draws a random spheric triangle in a sphere centered at origin with radius r 
+        Draws a random spheric triangle in a sphere centered at origin with radius r
         Parameters:
            r: radius of the sphere
         &#34;&#34;&#34;
@@ -16119,7 +16623,7 @@ s3: azimuthal angle of the third point</p></div>
         print(s1,s2,s3)
         self.triangle_esferic(r=r,p1=p1,s1=s1,p2=p2,s2=s2,p3=p3,s3=s3)</code></pre>
 </details>
-<div class="desc"><p>Draws a random spheric triangle in a sphere centered at origin with radius r </p>
+<div class="desc"><p>Draws a random spheric triangle in a sphere centered at origin with radius r</p>
 <h2 id="parameters">Parameters</h2>
 <p>r: radius of the sphere</p></div>
 </dd>
@@ -16232,7 +16736,7 @@ s3: azimuthal angle of the third point</p></div>
         self.base_canonica(length=length)
         if not isinstance(vector,Vector):
                 vector = Vector(vector)
-        self.draw_vector(vector,name=name)
+        self.draw_vector(vector=vector,name=name)
         if components:
                 self.draw_components(vector,name=&#34;Components en base canònica&#34;)</code></pre>
 </details>
@@ -16273,7 +16777,7 @@ s3: azimuthal angle of the third point</p></div>
                 vector = Vector(vector)
         if canonica:
                 vector = self.coordinates_en_referencia(vector)
-        self.draw_vector(vector,scale=0.06,head_height=0.25)
+        self.draw_vector(vector=vector,scale=0.06,head_height=0.25)
         self.draw_components(vector,scale=0.015,name=&#34;Components en base B&#39;&#34;)
         if not preserve:
                 self.set_origin()
@@ -16913,7 +17417,9 @@ returned in degrees</p></div>
 <li><code><a title="LinearAlgebra.LinearAlgebra.cilindre_hiperbolic_simple" href="#LinearAlgebra.LinearAlgebra.cilindre_hiperbolic_simple">cilindre_hiperbolic_simple</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.cilindre_parabolic" href="#LinearAlgebra.LinearAlgebra.cilindre_parabolic">cilindre_parabolic</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.cilindre_parabolic_simple" href="#LinearAlgebra.LinearAlgebra.cilindre_parabolic_simple">cilindre_parabolic_simple</a></code></li>
+<li><code><a title="LinearAlgebra.LinearAlgebra.circumferencia" href="#LinearAlgebra.LinearAlgebra.circumferencia">circumferencia</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.clear" href="#LinearAlgebra.LinearAlgebra.clear">clear</a></code></li>
+<li><code><a title="LinearAlgebra.LinearAlgebra.components_en_canonica" href="#LinearAlgebra.LinearAlgebra.components_en_canonica">components_en_canonica</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.components_in_base" href="#LinearAlgebra.LinearAlgebra.components_in_base">components_in_base</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.con" href="#LinearAlgebra.LinearAlgebra.con">con</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.con_cilindre_elliptic" href="#LinearAlgebra.LinearAlgebra.con_cilindre_elliptic">con_cilindre_elliptic</a></code></li>
@@ -16994,6 +17500,7 @@ returned in degrees</p></div>
 <li><code><a title="LinearAlgebra.LinearAlgebra.paraboloide_elliptic_simple" href="#LinearAlgebra.LinearAlgebra.paraboloide_elliptic_simple">paraboloide_elliptic_simple</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.paraboloide_hiperbolic" href="#LinearAlgebra.LinearAlgebra.paraboloide_hiperbolic">paraboloide_hiperbolic</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.paraboloide_hiperbolic_simple" href="#LinearAlgebra.LinearAlgebra.paraboloide_hiperbolic_simple">paraboloide_hiperbolic_simple</a></code></li>
+<li><code><a title="LinearAlgebra.LinearAlgebra.perpendicular_comuna_a_dues_rectes" href="#LinearAlgebra.LinearAlgebra.perpendicular_comuna_a_dues_rectes">perpendicular_comuna_a_dues_rectes</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.pla_afi" href="#LinearAlgebra.LinearAlgebra.pla_afi">pla_afi</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.pla_vectorial" href="#LinearAlgebra.LinearAlgebra.pla_vectorial">pla_vectorial</a></code></li>
 <li><code><a title="LinearAlgebra.LinearAlgebra.posicio_relativa_tres_plans" href="#LinearAlgebra.LinearAlgebra.posicio_relativa_tres_plans">posicio_relativa_tres_plans</a></code></li>

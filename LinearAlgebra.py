@@ -1187,6 +1187,29 @@ class LinearAlgebra():
 	#
 	#
 	#
+	def components_en_canonica(self,vector=None):
+		"""
+		Returns the components of the vector 'point' in the base determined by
+		self.rotation and the basis self.base
+		Parameters:
+		   vector: components of the vector in the base self.rotation + self.base
+		"""
+		if vector is None:
+			return Vector([0,0,0])
+		if isinstance(vector,Vector):
+			u = vector
+		else:
+			u = Vector(vector)
+		if self.rotation is not None:
+			mat = self.rotation.quaternion.to_matrix()
+			u = mat @ u
+		mat = Matrix(self.base)
+		mat.transpose()
+		u = mat @ u
+		return u
+	#
+	#
+	#
 	def coordinates_en_referencia(self,point=None):
 		"""
 		Returns the coordinates of the point 'point' in the reference determined by
@@ -2592,9 +2615,9 @@ class LinearAlgebra():
 		op = Vector(self.origin)
 		if origin is not None:
 			if isinstance(origin,Vector):
-				op = op + origin
+				op = op + mat @ origin
 			else:
-				op = op + Vector(origin)
+				op = op + mat @ Vector(origin)
 		obj.location = o
 		obj.rotation_mode = 'QUATERNION'
 		if self.rotation is not None:
@@ -4055,6 +4078,7 @@ class LinearAlgebra():
 		"""
 		axis1 = None
 		axis2 = None
+		coef = 1.0
 		q = self.vectors_to_quaternion(u1,u2)
 		u = Quaternion([1,0,0,0])
 		orig = [0,0,0]
@@ -4971,7 +4995,7 @@ class LinearAlgebra():
 	#
 	# Rotation of a point
 	#
-	def rotate_point(self,punt=None,origen=Vector([0,0,0]),axis='Z',angle=360,length=25,stop=0,vectors=True):
+	def rotate_point(self,punt=None,origen=Vector([0,0,0]),axis='Z',angle=360,length=20,stop=0,vectors=True):
 		"""
 		Rotates a point around an affine line
 		Parameters:
@@ -5015,6 +5039,7 @@ class LinearAlgebra():
 		a = vec1.length
 		b = (punt-origen-vec1).length
 		p2 = b**2/a**2
+		self.reset()
 		if vectors:
 			self.rotate_objects([obj,obj2],u,angle=angle,origin=origen,length=length,stop=stop,draw=True)
 		else:
@@ -5271,12 +5296,12 @@ class LinearAlgebra():
 		r = Rotation(1/int(frames),u)
 		axis, alpha = r.to_axis_angle()
 		axis.normalize()
-		t =  translation / (alpha * int(frames) * angle) * axis
+		t =  translation / (alpha * int(frames) * int(angle)) * axis
 		bpy.context.scene.frame_set(self.frame)
 		obj.keyframe_insert(data_path="rotation_quaternion",index=-1)
 		obj.keyframe_insert(data_path="location",index=-1)
 		fn = self.frame + 1
-		for i in range(int(frames) * int(rounds) * angle):
+		for i in range(int(frames) * int(rounds) * int(angle)):
 			bpy.context.scene.frame_set(fn)
 			if line is None:
 				obj.rotation_quaternion.rotate(r.quaternion)
@@ -5730,6 +5755,9 @@ class LinearAlgebra():
 
 			opacicity: opacity of the plane
 		"""
+		if not isinstance(punt,Vector):
+			punt = Vector(punt)
+		punt = self.components_en_canonica(punt)
 		if canonica:
 			if length > 15:
 				self.base_canonica(length=length,scale=0.08)
@@ -6834,7 +6862,7 @@ class LinearAlgebra():
     #
 	# Rotació d'un punt al voltant d'un eix
 	#
-	def rotacio_punt(self,punt=Vector([6,8,5]),origen=Vector([4,3,0]),angle=360,eix=Vector([1,1,1]),stop=0,vectors=True):
+	def rotacio_punt(self,punt=Vector([6,8,5]),origen=Vector([4,3,0]),angle=360,eix=Vector([1,1,1]),length=None,stop=0,vectors=True):
 		"""
 		Draws an animation of a point rotating around an afine line
 		Parameters:
@@ -6861,8 +6889,8 @@ class LinearAlgebra():
 			origen = Vector(origen)
 		e = (punt-origen).project(u)
 		l = e.length
-		if l < 18:
-			l = 18
+		if length is not None:
+			l = length
 		self.base_canonica(length=l)
 		self.rotate_point(punt,origen,u,angle=angle,length=l,stop=stop,vectors=vectors)
 	#
@@ -7130,6 +7158,7 @@ class LinearAlgebra():
 	#
 	# Quàdriques
 	#
+	circumferencia = draw_circle
 	ellipsoide = ellipsoid
 	hiperboloide_dues_fulles = two_sheets_hyperboloid
 	hiperboloide_una_fulla = one_sheet_hyperboloid
