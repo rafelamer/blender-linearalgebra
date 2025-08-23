@@ -59,14 +59,46 @@ cd "C:\Program Files\Blender Foundation\Blender 4.5\4.5\python"
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py 
 .\bin\python.exe get-pip.py 
 .\Scripts\pip3.exe install sympy
+del get-pip.py 
 ```
 
 ## Instal·lació de LinearAlgebra.py
 
 Podeu trobar tota la informació d'aquesta llibreria al repositori de Github 
 [LinearAlgebra](https://github.com/rafelamer/blender-linearalgebra). La manera més senzilla d'obtenir tots
-els fitxers del repositori és descarregar-se un fitxer compromit 
+els fitxers del repositori és descarregar-se el fitxer compromit 
 [linearalgebra-main.zip](https://github.com/rafelamer/blender-linearalgebra/archive/refs/heads/main.zip).
 
+Un cop descarregat, s'ha de descomprimir o extreure. Cliqueu-lo amb el botó dret del ratilí i escolliu
+l'opció *Extraer todo*. Us recomano que el descomprimiu a la carpeta *Documents* o *Documentos" i que, un cop 
+descomprimida, li canvieu el nom a *blender-linearalgebra*.
+
+L'últim pas d'aquest procés consisteix en copiar el fitxer *LinearAlgebra.py* a la carpeta adeqüada. 
+
+### Windows
+
+El podeu copiar a la carpeta
+```
+C:\Program Files\Blender Foundation\Blender 4.5\4.5\python
+```
+
+### Linux
+
+El podeu copiar a la carpeta
+```
+$HOME/.config/blender/4.5/scripts/addons/modules
+```
+
+### MacOS
+
+
+# Utilització de Blender
+
+Abans de començar a utilitzar el Blender, podeu mirar un video a Youtube sobre els conceptes bàsics d'aquest programa
+[Aprèn Blender 3D](https://www.youtube.com/watch?v=4Pb6IOiHINE).
+
+A continuació, obrim el *Blender* i veurem la seva interfície
+
+<img src="/images/interficie-blender.jpg" width="400">
 
 
