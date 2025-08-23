@@ -107,5 +107,9 @@ i ara anem al menú  *Edit -> Preferences*
 </p>
 i marquem l'opció *Allow Online Access*.
 
-
-
+Finalment, a la mateixa finestra de preferències, marquem la pestanya *Get Extensions* i escrivim
+la busquem (al costat de la lupa) per la paraula **Extra**. Instal·lem les extensions *Extra Mesh Objects*
+i *Extra Curve Objects*.
+<p align="center">
+<img src="/images/extensions-blender.jpg" width="400">
+</p>
