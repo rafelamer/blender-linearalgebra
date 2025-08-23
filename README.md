@@ -113,3 +113,8 @@ i *Extra Curve Objects*.
 <p align="center">
 <img src="/images/extensions-blender.jpg" width="400">
 </p>
+
+# Utilització
+
+Ara ja podeu anar a la carpeta *Examples* del repositori que us heu descarregar i fer doble clic sobre
+qualsevol dels fitxers.
