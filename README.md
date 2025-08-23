@@ -92,13 +92,24 @@ $HOME/.config/blender/4.5/scripts/addons/modules
 ### MacOS
 
 
-# Utilització de Blender
+# Configuració de Blender
 
 Abans de començar a utilitzar el Blender, podeu mirar un video a Youtube sobre els conceptes bàsics d'aquest programa
 [Aprèn Blender 3D](https://www.youtube.com/watch?v=4Pb6IOiHINE).
 
-A continuació, obrim el *Blender* i veurem la seva interfície
+A continuació, obrim el *Blender* i veiem la seva interfície
 
+<div style="text-align: center;">
 <img src="/images/interficie-blender.jpg" width="800">
+</div>
+
+i ara anem al menú  *Edit -> Preferences*
+
+<div style="text-align: center;">
+<img src="/images/preferencies-blender.jpg" width="400">
+</div>
+
+i marquem l'opció *Allow Online Access*.
+
 
 
