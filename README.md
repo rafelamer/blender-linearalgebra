@@ -58,9 +58,15 @@ de comandes **CMD** o **Símbolo de sistema** com a administrador i executarem e
 cd "C:\Program Files\Blender Foundation\Blender 4.5\4.5\python"
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py 
 .\bin\python.exe get-pip.py 
-..\Scripts\pip3.10.exe install sympy
-
+.\Scripts\pip3.exe install sympy
 ```
+
+## Instal·lació de LinearAlgebra.py
+
+Podeu trobar tota la informació d'aquesta llibreria al repositori de Github 
+[LinearAlgebra](https://github.com/rafelamer/blender-linearalgebra). La manera més senzilla d'obtenir tots
+els fitxers del repositori és descarregar-se un fitxer compromit 
+[linearalgebra-main.zip](https://github.com/rafelamer/blender-linearalgebra/archive/refs/heads/main.zip).
 
 
 
