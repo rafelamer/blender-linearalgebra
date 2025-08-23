@@ -99,6 +99,6 @@ Abans de començar a utilitzar el Blender, podeu mirar un video a Youtube sobre 
 
 A continuació, obrim el *Blender* i veurem la seva interfície
 
-<img src="/images/interficie-blender.jpg" width="400">
+<img src="/images/interficie-blender.jpg" width="800">
 
 
