@@ -98,17 +98,13 @@ Abans de començar a utilitzar el Blender, podeu mirar un video a Youtube sobre 
 [Aprèn Blender 3D](https://www.youtube.com/watch?v=4Pb6IOiHINE).
 
 A continuació, obrim el *Blender* i veiem la seva interfície
-
-<div style="text-align: center;">
+<p align="center">
 <img src="/images/interficie-blender.jpg" width="800">
-</div>
-
+</p>
 i ara anem al menú  *Edit -> Preferences*
-
-<div style="text-align: center;">
+<p align="center">
 <img src="/images/preferencies-blender.jpg" width="400">
-</div>
-
+</p>
 i marquem l'opció *Allow Online Access*.
 
 
