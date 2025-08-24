@@ -11,7 +11,7 @@ Blender és un programari lliure i gratuït dedicat a l'edició tridimensional s
 l'edició i la texturització de materials, la il·luminació i el render, l'animació d'objectes i personatges, 
 els efectes visuals, la composició per nodes, la simulació de fluids i partícules, eines 2D en l'espai 3D.
 
-Algunes funcions de la llibreria *LinearAlgebra.py* fan servir la llibreria de Python [Sympy](https://www.sympy.org).
+Algunes funcions de la llibreria *LinearAlgebra.py* fan servir la llibreria de Python [Sympy](https://www.sympy.org){:target="_blank"}.
 Si *Sympy* no està instal·lada, aquestes funcions fallaran. 
 
 ## Instal·lació de Blender
@@ -43,7 +43,7 @@ sudo apt install python3-sympy
 ### Windows o MacOS
 
 Si utilitzer Windows o MacOS, us heu de descarregar el programa d'instal·lació des de la web de 
-[Blender](https://www.blender.org/download/). La versió actual és la 4.5.2. Un cop descarregat, cal
+[Blender](https://www.blender.org/download/){:target="_blank"}. La versió actual és la 4.5.2. Un cop descarregat, cal
 procedir amb la manera habitual d'instal·lació de programes per a Windows o MacOS.
 
 El Blender per a Windows o MacOS porta integrat el Python, per tant, no cal una instal·lació apart. 
@@ -67,7 +67,7 @@ del get-pip.py
 Podeu trobar tota la informació d'aquesta llibreria al repositori de Github 
 [LinearAlgebra](https://github.com/rafelamer/blender-linearalgebra). La manera més senzilla d'obtenir tots
 els fitxers del repositori és descarregar-se el fitxer compromit 
-[linearalgebra-main.zip](https://github.com/rafelamer/blender-linearalgebra/archive/refs/heads/main.zip).
+[linearalgebra-main.zip](https://github.com/rafelamer/blender-linearalgebra/archive/refs/heads/main.zip){:target="_blank"}.
 
 Un cop descarregat, s'ha de descomprimir o extreure. Cliqueu-lo amb el botó dret del ratilí i escolliu
 l'opció *Extraer todo*. Us recomano que el descomprimiu a la carpeta *Documents* o *Documentos" i que, un cop 
@@ -95,7 +95,7 @@ $HOME/.config/blender/4.5/scripts/addons/modules
 # Configuració de Blender
 
 Abans de començar a utilitzar el Blender, podeu mirar un video a Youtube sobre els conceptes bàsics d'aquest programa
-[Aprèn Blender 3D](https://www.youtube.com/watch?v=4Pb6IOiHINE).
+[Aprèn Blender 3D](https://www.youtube.com/watch?v=4Pb6IOiHINE){:target="_blank"}.
 
 A continuació, obrim el *Blender* i veiem la seva interfície
 <p align="center">
