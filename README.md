@@ -11,7 +11,7 @@ Blender és un programari lliure i gratuït dedicat a l'edició tridimensional s
 l'edició i la texturització de materials, la il·luminació i el render, l'animació d'objectes i personatges, 
 els efectes visuals, la composició per nodes, la simulació de fluids i partícules, eines 2D en l'espai 3D.
 
-Algunes funcions de la llibreria *LinearAlgebra.py* fan servir la llibreria de Python [Sympy]{:target="_blank"}(https://www.sympy.org).
+Algunes funcions de la llibreria *LinearAlgebra.py* fan servir la llibreria de Python [Sympy] (https://docs.sympy.org/latest/index.html){:target="_blank"}.
 Si *Sympy* no està instal·lada, aquestes funcions fallaran. 
 
 ## Instal·lació de Blender
