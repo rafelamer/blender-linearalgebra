@@ -69,7 +69,7 @@ els fitxers del repositori és descarregar-se el fitxer compromit
 [linearalgebra-main.zip](https://github.com/rafelamer/blender-linearalgebra/archive/refs/heads/main.zip).
 
 Un cop descarregat, s'ha de descomprimir o extreure. Cliqueu-lo amb el botó dret del ratilí i escolliu
-l'opció *Extraer todo*. Us recomano que el descomprimiu a la carpeta *Documents* o *Documentos" i que, un cop 
+l'opció *Extraer todo*. Us recomano que el descomprimiu a la carpeta *Documents* o *Documentos* i que, un cop 
 descomprimida, li canvieu el nom a *blender-linearalgebra*.
 
 L'últim pas d'aquest procés consisteix en copiar el fitxer *LinearAlgebra.py* a la carpeta adeqüada. 
