@@ -4,15 +4,15 @@ Aquest repositori conté una llibreria en Python, LinearAlgebra.py, per a
 modelar, representar i animar objectes matemàtics en 3D relacionats amb 
 l'Àlgebra Lineal i la Geometria amb el programa [Blender](https://www.blender.org/).
 
-Tal com es pot veure a la [Viquipèdia](https://ca.wikipedia.org/wiki/Blender),
-Blender és un programari lliure i gratuït dedicat a l'edició tridimensional sota llicència GNU GPL.
+Tal com es pot veure a la 
+<a href="https://ca.wikipedia.org/wiki/Blender" target="_blank">Viquipèdia</a>, Blender és un programari lliure i gratuït dedicat a l'edició tridimensional sota llicència GNU GPL.
 És multiplataforma, empra OpenGL i Vulkan per a la interfície gràfica i està escrit en C, C++ i Python.
 És desenvolupat per la Fundació Blender i una àmplia comunitat de voluntaris i inclou eines per al modelatge en 3D, 
 l'edició i la texturització de materials, la il·luminació i el render, l'animació d'objectes i personatges, 
 els efectes visuals, la composició per nodes, la simulació de fluids i partícules, eines 2D en l'espai 3D.
 
 Algunes funcions de la llibreria *LinearAlgebra.py* fan servir la llibreria de Python 
-<a href="https://docs.sympy.org/latest/index.html" target="_blank">Sympy</a>
+<a href="https://docs.sympy.org/latest/index.html" target="_blank">Sympy</a>.
 Si *Sympy* no està instal·lada, aquestes funcions fallaran. 
 
 ## Instal·lació de Blender
