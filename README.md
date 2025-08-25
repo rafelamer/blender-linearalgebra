@@ -11,7 +11,8 @@ l'edició i la texturització de materials, la il·luminació i el render, l'ani
 els efectes visuals, la composició per nodes, la simulació de fluids i partícules, eines 2D en l'espai 3D.
 
 Algunes funcions de la llibreria *LinearAlgebra.py* fan servir la llibreria de Python [Sympy](https://docs.sympy.org/latest/index.html).
-Si *Sympy* no està instal·lada, aquestes funcions fallaran. 
+Si *Sympy* no està instal·lada, aquestes funcions fallaran. Només són les relacionades amb tangents a corbes a l'espai i el tríedre
+de Frenet. Si no penseu modificar el fitxer *Examples/triedre_frenet.blend*, no cal que la instal·leu.
 
 ## Instal·lació de Blender
 
