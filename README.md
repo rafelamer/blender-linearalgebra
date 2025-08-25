@@ -66,7 +66,7 @@ del get-pip.py
 Podeu trobar tota la informació d'aquesta llibreria al repositori de Github 
 [LinearAlgebra](https://github.com/rafelamer/blender-linearalgebra). La manera més senzilla d'obtenir tots
 els fitxers del repositori és descarregar-se el fitxer compromit 
-[linearalgebra-main.zip](https://github.com/rafelamer/blender-linearalgebra/archive/refs/heads/main.zip).
+[blender-linearalgebra-main.zip](https://github.com/rafelamer/blender-linearalgebra/archive/refs/heads/main.zip).
 
 Un cop descarregat, s'ha de descomprimir o extreure. Cliqueu-lo amb el botó dret del ratilí i escolliu
 l'opció *Extraer todo*. Us recomano que el descomprimiu a la carpeta *Documents* o *Documentos* i que, un cop 
@@ -80,6 +80,10 @@ El podeu copiar a la carpeta
 ```
 C:\Program Files\Blender Foundation\Blender 4.5\4.5\python
 ```
+o a 
+```
+%USERPROFILE%\AppData\Roaming\Blender Foundation\Blender\4.5\
+```
 
 ### Linux
 
@@ -89,7 +93,10 @@ $HOME/.config/blender/4.5/scripts/addons/modules
 ```
 
 ### MacOS
-
+El podeu copiar a la carpeta
+```
+/Users/$USER/Library/Application Support/Blender/4.5/
+```
 
 # Configuració de Blender
 
