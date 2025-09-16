@@ -1379,12 +1379,12 @@ class LinearAlgebra():
 			#
 			obj3 = None
 			if axis != 0:
-				v = axis * Vector(vec)
+				v = axis * v/v.length
 				t = bpy.data.objects.get("Arrow_stem")
 				obj3 = t.copy()
 				obj3.name = "Line"
 				obj3.data = obj3.data.copy()
-				obj3.location = op - v
+				obj3.location = op - v/v.length
 				obj3.scale = (scale / 2,scale / 2,(2 * v).length)
 				obj3.rotation_mode = 'QUATERNION'
 				obj3.rotation_quaternion = v.to_track_quat('Z','Y')
@@ -5699,7 +5699,7 @@ class LinearAlgebra():
 		"""
 		self.vector_base_canonica(vector=vector,length=length)
 		self.set_colors(["Magenta","Yellow","Cyan"])
-		self.base_no_canonica(u1=u1,u2=u2,u3=u3,length=length)
+		self.base_no_canonica(u1=u1,u2=u2,u3=u3,length=length,preserve=True)
 		v = self.components_in_base(vector)
 		self.draw_components(v,color="White",name="Components en la base B'")
 	#
