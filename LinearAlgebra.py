@@ -6286,11 +6286,11 @@ class LinearAlgebra():
 			p = self.coordinates_en_canonica(punt)
 			p1 = punt
 		self.reset()
-		## self.punt_referencia_canonica(punt=p,length=length,scale=scale,radius=radius)
 		self.set_colors(["Magenta","Yellow","AzureBlueDark"])
 		self.punt_referencia_no_canonica(punt=p1,origin=origin,u1=u1,u2=u2,u3=u3,length=length,scale=scale,radius=radius)
 		self.reset()
 		self.draw_vector(vector=p,name="Vector de posició en referència canònica",color="White")
+		self.draw_vector(vector=origin,name="Vector de posició de l'origen de R'",color="GrayDark")
 		self.draw_components(p,color="Magenta",name="Coordenades en referència canònica")
 		if canonica:
 			self.base_canonica(length=length) 
