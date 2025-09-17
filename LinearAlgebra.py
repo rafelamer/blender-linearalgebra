@@ -5950,6 +5950,7 @@ class LinearAlgebra():
 			sizex = 4*vp.length
 		if sizey is None:
 			sizey = 4*vp.length
+		self.pla_vectorial(v1,v2,sizex=sizex,sizey=sizey,canonica=canonica,color=color,thickness=thickness)
 		if orthogonal:
 			u1 = v1
 			u2 = v2
@@ -5972,7 +5973,6 @@ class LinearAlgebra():
 			l3 = self.draw_line(start=vp,end=p1,scale=0.04,color="Orange")
 			l4 = self.draw_line(start=vp,end=p2,scale=0.04,color="Orange")
 			l11 = self.join([l1,l2,l3,l4])
-		self.pla_vectorial(v1,v2,sizex=sizex,sizey=sizey,canonica=canonica,color=color,thickness=thickness)
 		self.set_origin(vp)
 		self.draw_vector(vector=vector.project(w),scale=0.025,color="White",name="Vector perpendicular")
 		self.set_origin()
