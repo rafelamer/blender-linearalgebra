@@ -6292,6 +6292,8 @@ class LinearAlgebra():
 		self.reset()
 		self.draw_vector(vector=p,name="Vector de posició en referència canònica",color="White")
 		self.draw_components(p,color="Magenta",name="Coordenades en referència canònica")
+		if canonica:
+			self.base_canonica(length=length) 
 	#
 	# El·lipse
 	#
