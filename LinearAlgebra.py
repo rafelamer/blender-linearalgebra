@@ -5955,7 +5955,8 @@ class LinearAlgebra():
 			u1 = v1
 			u2 = v2
 			u2 = u1.dot(u1)*u2 - u2.dot(u1)*u1
-			self.draw_vectors(vectors=(u1,u2),name="Base ortogonal",color="Green")
+			self.draw_vectors(vectors=(u1,u2),name="Base ortogonal",color="Magenta")
+			color = "Magenta"	
 		if orthonormal:
 			u1 = v1
 			u2 = v2
@@ -5963,15 +5964,17 @@ class LinearAlgebra():
 			u1.normalize()
 			u2.normalize()
 			self.draw_vectors(vectors=(u1,u2),name="Base ortonormal",color="Orange")
+			color="Orange"
+		if orthonormal or orthogonal:	
 			self.set_base([u1,u2,w])
 			vb = self.components_in_base(vector)
 			self.set_base()
 			p1 = vb.x * u1
 			p2 = vb.y * u2
-			l1 = self.draw_line(start=[0,0,0],end=p1,scale=0.04,color="Orange",name="Lines 1")
-			l2 = self.draw_line(start=[0,0,0],end=p2,scale=0.04,color="Orange")
-			l3 = self.draw_line(start=vp,end=p1,scale=0.04,color="Orange")
-			l4 = self.draw_line(start=vp,end=p2,scale=0.04,color="Orange")
+			l1 = self.draw_line(start=[0,0,0],end=p1,scale=0.04,color=color,name="Lines 1")
+			l2 = self.draw_line(start=[0,0,0],end=p2,scale=0.04,color=color)
+			l3 = self.draw_line(start=vp,end=p1,scale=0.04,color=color)
+			l4 = self.draw_line(start=vp,end=p2,scale=0.04,color=color)
 			l11 = self.join([l1,l2,l3,l4])
 		self.set_origin(vp)
 		self.draw_vector(vector=vector.project(w),scale=0.025,color="White",name="Vector perpendicular")
