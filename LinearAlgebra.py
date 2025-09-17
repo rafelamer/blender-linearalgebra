@@ -5847,7 +5847,7 @@ class LinearAlgebra():
 		l = v.length
 		p0 = punt + size/l * v
 		p1 = punt - size/l * v
-		line = self.draw_line(start=p0,end=p1,scale=0.04,name=name,color=color)
+		line = self.draw_line(start=p0,end=p1,scale=scale,name=name,color=color)
 		if elements:
 			self.set_origin(punt)
 			p = self.draw_point(color=color,radius=2 * scale)
