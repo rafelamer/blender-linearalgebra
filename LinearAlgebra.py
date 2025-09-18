@@ -5768,18 +5768,21 @@ class LinearAlgebra():
 		if normal is not None:
 			if not isinstance(normal,Vector):
 				normal = Vector(normal)
-			self.draw_plane_surface(origin=punt,normal=normal,color=color,sizex=sizex,sizey=sizey,name=name,opacity=opacity)
+			pla = self.draw_plane_surface(origin=punt,normal=normal,color=color,sizex=sizex,sizey=sizey,name=name,opacity=opacity)
 		else:
-			self.draw_plane_surface(origin=punt,base=[v1,v2],color=color,sizex=sizex,sizey=sizey,name=name,opacity=opacity)
+			pla = self.draw_plane_surface(origin=punt,base=[v1,v2],color=color,sizex=sizex,sizey=sizey,name=name,opacity=opacity)
 		if elements:
 			self.set_origin(punt)
 			if radius > 0:
-				self.draw_point(color="Blue",radius=radius)
+				p = self.draw_point(color="Blue",radius=radius)
+				self.join([pla,p])
 			if normal is not None:
-				self.draw_vector(vector=normal,color="Blue")
+				v = self.draw_vector(vector=normal,color="Blue")
 			else:
-				self.draw_vectors(vectors=[v1,v2],canonica=canonica,color="Blue")
+				v = self.draw_vectors(vectors=[v1,v2],canonica=canonica,color="Blue")
 			self.set_origin()
+			self.join([pla,v])
+		return pla
 	#
 	# Posició relativa de tres plans
 	#
@@ -5998,7 +6001,7 @@ class LinearAlgebra():
 	#
 	# Projecció ortogonal i simètric d'un punt sobre un pla afí
 	#
-	def projeccio_ortogonal_simetric_pla_afi(self,punt=Vector([6,-5,8]),p0=Vector([3,-2,-3]),v1=Vector([3,-1,1]),v2=Vector([1,0.5,0.5]),radi=0.15,sizex=35,sizey=30,line=1.8,canonica=True):
+	def projeccio_ortogonal_simetric_pla_afi(self,punt=Vector([6,-5,8]),p0=Vector([3,-2,-3]),v1=Vector([3,-1,1]),v2=Vector([1,0.5,0.5]),radi=0.15,sizex=35,sizey=30,line=1.8,canonica=True,elements=True):
 		"""
 		Draws the orthogonal projection and the symmetric of a point with respect an affine plane
 		Parameters:
@@ -6015,6 +6018,8 @@ class LinearAlgebra():
 			factor: how to draw the perpendicular line
 
 			canonica: if True, draws the x, y and z axis
+
+			elements: if True, draws the point p0 and vectors v1, v2
 		"""
 		if not isinstance(punt,Vector):
 			punt = Vector(punt)
@@ -6026,7 +6031,7 @@ class LinearAlgebra():
 			v2 = Vector(v2)
 		self.draw_point(location=punt,color="Black",radius=radi,name="Punt")
 		w = v1.cross(v2)
-		self.pla_afi(punt=p0,v1=v1,v2=v2,sizex=sizex,sizey=sizey,color="AzureBlueMedium",canonica=canonica,elements=False)
+		self.pla_afi(punt=p0,v1=v1,v2=v2,sizex=sizex,sizey=sizey,color="AzureBlueMedium",canonica=canonica,elements=elements)
 		u = punt - p0
 		up = punt - u.project(w)
 		self.draw_point(location=up,color="Red",radius=radi,name="Projecció ortogonal")
