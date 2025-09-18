@@ -6500,7 +6500,7 @@ class LinearAlgebra():
 		elif plane == 'XZ':
 			F = lambda t: (a*math.sqrt(1+t**2/b**2),0,t)
 		else:
-			F = lambda t: (0,a*math.sqrt(1+t**2/b**2),t)
+			F = lambda t: (0,t,a*math.sqrt(1+t**2/b**2))
 
 		if direccio == 'X':
 			if plane == 'YZ':
@@ -6513,14 +6513,14 @@ class LinearAlgebra():
 		else:
 			if plane == 'XY':
 				return None
-			s = 'X'
+			s = 'Y'
 
 		self.base_canonica()
 		self.animate_revolution_surface(F,tmin=0,tmax=pmax,steps=128,axis=direccio,symmetry=s,point=punt)
 	#
 	# Con de revolució
 	#
-	def con_revolucio(self,a=1.5,pmax=8,direccio='Z',punt=None):
+	def con_revolucio(self,a=1.5,pmax=8,direccio='Z',plane='XZ',punt=None):
 		"""
 		Draws an animation showing a cone of revolution
 			a: slope of the initial straight line
@@ -6531,20 +6531,38 @@ class LinearAlgebra():
 			          'Y', the initial line is in the plane ZY and rotates around the Y axis
 				      'Z', the initial line is in the plane XZ and rotates around the Z axis
 
+			plane: plane containing the initial straight line
+
 			punt: if it's a value between -pmax and pmax, the animation shows a rotating point
 		"""
-		if direccio == 'X' or direccio == 'x':
-			F = lambda t: (a*t,t,0)
-		elif direccio == 'Y' or direccio == 'y':
-			F = lambda t: (0,a*t,t)
+		plane = plane.upper()
+		direccio = direccio.upper()
+		if direccio == 'X':
+			if plane == 'XY':
+				F = lambda t: (a*t,t,0)
+			elif plane == 'XZ':
+				F = lambda t: (a*t,0,t)
+			else:
+				return None
+		elif direccio == 'Y':
+			if plane == 'XY':
+				F = lambda t: (t,a*t,0)
+			elif plane == 'YZ':	
+				F = lambda t: (0,a*t,t)
+			return None
 		else:
-			F = lambda t: (t,0,a*t)
+			if plane == 'XZ':
+				F = lambda t: (t,0,a*t)
+			elif plane == 'YZ':
+				F = lambda t: (0,t,a*t)
+			else:
+				return None
 		self.base_canonica()
 		self.animate_revolution_surface(F,tmin=-pmax,tmax=pmax,steps=128,axis=direccio,point=punt)
 	#
 	# Paraboloide el·líptic de revolució
 	#
-	def paraboloide_elliptic_revolucio(self,a=0.5,pmax=5,direccio='Z',punt=None):
+	def paraboloide_elliptic_revolucio(self,a=0.5,pmax=5,direccio='Z',plane='XZ',punt=None):
 		"""
 		Draws an animation showing an elliptic paraboloid of revolution
 			a: The constant of the initial parabola
@@ -6555,14 +6573,32 @@ class LinearAlgebra():
 			          'Y', the initial parabola is in the plane ZY and rotates around the Y axis
 				      'Z', the initial parabola is in the plane XZ and rotates around the Z axis
 
+			plane: plane containing the initial parabola  
+
 			punt: if it's a value between -pmax and pmax, the animation shows a rotating point
 		"""
-		if direccio == 'X' or direccio == 'x':
-			F = lambda t: (a*t**2,t,0)
-		elif direccio == 'Y' or direccio == 'y':
-			F = lambda t: (0,a*t**2,t)
+		plane = plane.upper()
+		direccio = direccio.upper()
+		if direccio == 'X':
+			if plane == 'XY':
+				F = lambda t: (a*t**2,t,0)
+			elif plane == 'XZ':
+				F = lambda t: (a*t**2,0,t)
+			else:
+				return None
+		elif direccio == 'Y':
+			if plane == 'XY':
+				F = lambda t: (t,a*t**2,0)
+			elif plane == 'YZ':	
+				F = lambda t: (0,a*t**2,t)
+			return None
 		else:
-			F = lambda t: (t,0,a*t**2)
+			if plane == 'XZ':
+				F = lambda t: (t,0,a*t**2)
+			elif plane == 'YZ':
+				F = lambda t: (0,t,a*t**2)
+			else:
+				return None
 		self.base_canonica()
 		self.animate_revolution_surface(F,tmin=0,tmax=pmax,steps=128,axis=direccio,point=punt)
 	#
