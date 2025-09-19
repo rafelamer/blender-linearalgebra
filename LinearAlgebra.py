@@ -4968,7 +4968,7 @@ class LinearAlgebra():
 
 		   axis: it must be 'X', 'Y', 'Z' or a vector
 		"""
-		draw = False
+		draw = True
 		if vector is None:
 			return None
 		if axis == 'X':
@@ -4981,6 +4981,8 @@ class LinearAlgebra():
 			u = axis
 		else:
 			u = Vector(axis)
+		if u == Vector([1,0,0]) or  u == Vector([0,1,0]) or u == Vector([0,0,1]):
+			draw = False
 		self.draw_vector(vector=vector,color="Black",scale=0.1,name="Vector inicial")
 		obj = self.draw_vector(vector=vector,color="Red",scale=0.1,name="Vector que gira")
 		w1 = u.orthogonal().normalized()
@@ -4990,7 +4992,7 @@ class LinearAlgebra():
 		a = vec1.length
 		b = (vector-vec1).length
 		p2 = b**2/a**2
-		self.rotate_object(obj,u,angle=angle,stop=stop,length=length)
+		self.rotate_object(obj,u,angle=angle,stop=stop,length=length,draw=draw)
 		self.cone(u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color="GrayLight",opacity=0.7,thickness=0.04)
 	#
 	# Rotation of a point
@@ -6934,14 +6936,14 @@ class LinearAlgebra():
 			u = eix
 		else:
 			u = Vector(eix)
-		e = vector.project(eix)
+		e = vector.project(u)
 		l = e.length
 		if l < 18:
 			l = 18
 		if adaptada:
-			self.base_adaptada(axis=eix,length=l,scale=0.1)
+			self.base_adaptada(axis=u,length=l,scale=0.1)
 		self.base_canonica(length=l)
-		self.rotate_vector(vector,eix,length=l,angle=angle,stop=stop)
+		self.rotate_vector(vector,u,length=l,angle=angle,stop=stop)
     #
 	# Rotació d'un punt al voltant d'un eix
 	#
@@ -6979,7 +6981,7 @@ class LinearAlgebra():
 	#
 	# Rotació d'un ortoedre a partir dels angles d'Euler
 	#
-	def rotacio_ortoedre_angles_euler(self,centre=Vector([0,0,0]),costats=Vector([8,5,4]),psi=90,theta=60,phi=45,radians=False,opacity=1,eixos='zxz'):
+	def rotacio_ortoedre_angles_euler(self,centre=Vector([0,0,0]),costats=Vector([8,5,4]),psi=90,theta=60,phi=45,frames=2,radians=False,opacity=1,eixos='zxz',stop=0):
 		"""
 		Draws an animation of an orthohedron rotating given the Euler's angles
 		Parameters:
@@ -6994,13 +6996,15 @@ class LinearAlgebra():
 			opacity: opacity of the orthohedron
 
 			eixos: axis of the three rotations
+
+			stop: final interval without motion
 		"""
 		if not isinstance(centre,Vector):
 			centre = Vector(centre)
 		if not isinstance(costats,Vector):
 			costats = Vector(costats)
 		ortoedre = self.draw_cube(origin=centre,scale=costats,color="AzureBlueDark",opacity=opacity,thickness=0.015,scalelines=0.025,linecolor="Orange",name="Ortoedre")
-		self.rotate_euler(ortoedre,psi,theta,phi,radians=radians,axis=eixos)
+		self.rotate_euler(ortoedre,psi,theta,phi,frames=frames,radians=radians,stop=stop,axis=eixos)
 	#
 	# Rotació d'un ortoedre al voltant d'un eix i angles d'Euler
 	#
