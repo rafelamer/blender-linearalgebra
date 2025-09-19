@@ -5325,6 +5325,81 @@ class LinearAlgebra():
 	#
 	#
 	#
+	def scale_object(self,obj=None,sx=1.0,sy=1.0,sz=1.0,steps=100,stop=0):
+		"""
+		Scales an object in the x, y and z directions
+		Parameters:
+		   obj: the object
+
+		   sx, sy, sz: scale factors in the x, y, z directions
+
+		   steps: number of steps
+		"""
+		s = obj.scale.x
+		sx = s * sx
+		h = (sx - s) / steps
+		bpy.context.scene.frame_set(self.frame)
+		obj.keyframe_insert(data_path="scale",index=-1)
+		if h != 0:
+			fn = self.frame
+			for i in range(steps):
+				bpy.context.scene.frame_set(fn)
+				obj.scale.x += h
+				obj.keyframe_insert(data_path="scale",index=-1)
+				fn += 1
+			self.frame = fn
+		
+		s = obj.scale.y
+		sy = s * sy
+		h = (sy - s) / steps
+		bpy.context.scene.frame_set(self.frame)
+		obj.keyframe_insert(data_path="scale",index=-1)
+		if h != 0:
+			fn = self.frame
+			for i in range(steps):
+				bpy.context.scene.frame_set(fn)
+				obj.scale.y += h
+				obj.keyframe_insert(data_path="scale",index=-1)
+				fn += 1
+			self.frame = fn
+
+		s = obj.scale.z
+		sz = s * sz
+		h = (sz - s) / steps
+		bpy.context.scene.frame_set(self.frame)
+		obj.keyframe_insert(data_path="scale",index=-1)
+		if h != 0:
+			fn = self.frame
+			for i in range(steps):
+				bpy.context.scene.frame_set(fn)
+				obj.scale.z += h
+				obj.keyframe_insert(data_path="scale",index=-1)
+				fn += 1
+
+		self.frame = fn
+		bpy.context.scene.frame_end = self.frame + stop
+		bpy.context.scene.frame_set(0)
+		bpy.context.view_layer.update()
+
+	#
+	#
+	#
+	def escalat_esfera(self,radi=5,sx=1.0,sy=1.0,sz=1.0,cmax=10,steps=100,stop=0):
+		"""
+		Scales an sphere in the x, y and z directions
+		Parameters:
+		   radi: radius of the sphere
+
+		   sx, sy, sz: scale factors in the x, y, z directions
+
+		   steps: number of steps
+		"""
+		self.base_canonica(scale=0.09)
+		e = self.esfera(radi=radi,cmax=cmax)
+		self.scale_object(obj=e[2],sx=sx,sy=sy,sz=sz,stop=stop)
+	#
+	#
+	#
 	def draw_frenet_curve(self,fun=None,var=None,tmin=0.0,tmax=1.0,radius=0.1,steps=25,thickness=0.01,name="Curve",color="White",point=True,tangent=False,acceleration=False,normal=False,osculator=False,frenet=False,units=False,sizex=8,sizey=8,axis=10):
 		"""
 		Draws a curve and diferents elements related to the curve
