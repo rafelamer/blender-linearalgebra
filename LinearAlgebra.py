@@ -7139,7 +7139,7 @@ class LinearAlgebra():
 	#
 	# Rotation or helical motion
 	#
-	def moviment_helicoidal_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([3,5,2]),opacity=1,origen=Vector([4,3,0]),eix='Z',rounds=1,translacio=0.0,aligned=False):
+	def moviment_helicoidal_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([3,5,2]),opacity=1,origen=Vector([4,3,0]),eix='Z',angle=90,rounds=1,translacio=0.0,stop=0,aligned=False):
 		"""
 		Draws an animation of the helical motion of an orthohedron around an affine line
 		Parameters:
@@ -7150,6 +7150,10 @@ class LinearAlgebra():
 			origen: point of the affine line
 
 			eix: axis of rotation
+
+			angle:
+
+			rounds:
 
 			opacity: opacity of the orthohedron
 
@@ -7186,7 +7190,7 @@ class LinearAlgebra():
 			x = Vector([1,0,0])
 			quaternion = x.rotation_difference(w1)
 			ortoedre.rotation_quaternion.rotate(quaternion)
-		self.rotate_object(ortoedre,axis=eix,origin=origen,translation=translacio,rounds=rounds)
+		self.rotate_object(ortoedre,axis=eix,origin=origen,translation=translacio,angle=angle,rounds=rounds,stop=stop)
 	#
 	# Rotation or helical motion of a cylinder
 	#
