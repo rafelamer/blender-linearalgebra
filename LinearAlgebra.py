@@ -1490,7 +1490,9 @@ class LinearAlgebra():
 
 		lon =  (v - o).length
 		if head_height is None:
-			head_height = 0.03*lon
+			head_height = 0.05*lon
+			if head_height < 0.2:
+				head_height = 0.2
 		if head_height > 0.25:
 			head_height = 0.25
 
@@ -4756,7 +4758,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def animate_revolution_surface(self,fun=None,tmin=0.0,tmax=1.0,steps=256,curvethicknes=0.025,thickness=0.025,frames=3,angle=3,radians=False,axis='Z',origin=Vector([0,0,0]),line=0,canonica=0,symmetry=None,name="Revolution surface",color="AzureBlueDark",point=None):
+	def animate_revolution_surface(self,fun=None,tmin=0.0,tmax=1.0,steps=256,curvethicknes=0.025,thickness=0.025,frames=3,angle=3,radians=False,axis='Z',origin=Vector([0,0,0]),line=0,canonica=0,symmetry=None,name="Revolution surface",color="AzureBlueDark",point=None,stop=0):
 		"""
 		Draws and animates a revolution surface from a curve
 		Parameters:
@@ -4888,6 +4890,7 @@ class LinearAlgebra():
 				#m2.keyframe_insert(data_path="location",index=-1)
 			fn += frames
 		self.frame = fn - frames
+		self.frame += stop
 		bpy.context.scene.frame_end = self.frame
 		bpy.context.view_layer.update()
 		self.reset()
@@ -4958,7 +4961,8 @@ class LinearAlgebra():
 				obj.keyframe_insert(data_path="location",index=-1)
 			fn += 1
 		self.frame = fn - frames
-		bpy.context.scene.frame_end = self.frame + stop
+		self.frame += stop
+		bpy.context.scene.frame_end = self.frame
 		bpy.context.scene.frame_set(0)
 		bpy.context.view_layer.update()
 	#
@@ -5106,7 +5110,8 @@ class LinearAlgebra():
 				obj.keyframe_insert(data_path="location",index=-1)
 			fn += frames
 		self.frame = fn - frames
-		bpy.context.scene.frame_end = self.frame + stop
+		self.frame += stop
+		bpy.context.scene.frame_end = self.frame
 		bpy.context.scene.frame_set(0)
 		bpy.context.view_layer.update()
 	#
@@ -5246,7 +5251,8 @@ class LinearAlgebra():
 			fn += frames
 
 		self.frame = fn - frames
-		bpy.context.scene.frame_end = self.frame + stop
+		self.frame += stop
+		bpy.context.scene.frame_end = self.frame
 		bpy.context.scene.frame_set(0)
 		bpy.context.view_layer.update()
 	#
@@ -5325,7 +5331,8 @@ class LinearAlgebra():
 			obj.keyframe_insert(data_path="location",index=-1)
 			fn += 1
 		self.frame = fn - frames
-		bpy.context.scene.frame_end = self.frame + stop
+		self.frame += stop
+		bpy.context.scene.frame_end = self.frame
 		bpy.context.scene.frame_set(0)
 		bpy.context.view_layer.update()
 	#
@@ -5383,7 +5390,8 @@ class LinearAlgebra():
 				fn += 1
 
 		self.frame = fn
-		bpy.context.scene.frame_end = self.frame + stop
+		self.frame += stop
+		bpy.context.scene.frame_end = self.frame
 		bpy.context.scene.frame_set(0)
 		bpy.context.view_layer.update()
 	#
@@ -7120,12 +7128,14 @@ class LinearAlgebra():
 			vector = Vector(vector)
 		ortoedre = self.draw_cube(origin=centre,scale=costats,color="AzureBlueDark",opacity=opacity,thickness=0.015,scalelines=0.025,linecolor="Orange",name="Primer ortoedre")
 		if euler is not None:
-			ortoedre2 = self.draw_cube(origin=centre,scale=costats,color="Green",opacity=opacity,thickness=0.015,scalelines=0.025,linecolor="Orange",name="Segon ortoedre")
+			ortoedre2 = self.draw_cube(origin=centre,scale=costats,color="CyanDarkWeak",opacity=opacity,thickness=0.015,scalelines=0.025,linecolor="Orange",name="Segon ortoedre")
 		self.rotate_object_by_axis_angle(obj=ortoedre,axis=vector,angle=angle,frames=frames,stop=stop)
 		if euler is not None:
 			R = Rotation(angle=angle,vector=vector)
 			psi, theta, phi = R.to_euler_angles(axis=euler)
-			self.rotate_euler(ortoedre2,psi=psi,theta=theta,phi=phi,axis=euler,canonica=False,reverse=reverse)
+			self.rotate_euler(ortoedre2,psi=psi,theta=theta,phi=phi,axis=euler,frames=frames,canonica=False,stop=stop,reverse=reverse)
+		
+
 	#
 	# Rotation or helical motion
 	#
