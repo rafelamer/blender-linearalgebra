@@ -1092,7 +1092,11 @@ class LinearAlgebra():
 		if material is None:
 			material = bpy.data.materials.new(material_name)
 		material.use_nodes = True
-		principled_bsdf = material.node_tree.nodes['Principled BSDF']
+		try:
+			principled_bsdf = material.node_tree.nodes['Principled BSDF']
+		except:
+			material.node_tree.nodes.new(type='ShaderNodeBsdfPrincipled')
+			principled_bsdf = material.node_tree.nodes['Principled BSDF']
 		if principled_bsdf is not None:
 			principled_bsdf.inputs['Base Color'].default_value = (r, g, b, opacity)
 			principled_bsdf.inputs['IOR'].default_value = 0.0
@@ -5052,7 +5056,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def rotate_object_by_axis_angle(self,obj=None,axis=Vector([1,0,0]),angle=90,amax=15,frames=1,scaleaxis=0.075,local=False):
+	def rotate_object_by_axis_angle(self,obj=None,axis=Vector([1,0,0]),angle=90,amax=15,frames=1,scaleaxis=0.075,local=False,stop=0):
 		"""
 		Rotates an object around an angle 'angle' around the axis
 		Parameters:
@@ -5067,6 +5071,8 @@ class LinearAlgebra():
 		   scaleaxis: scale value for draw_base_axis
 
 		   local: if True the center of rotation is the location of the object
+
+		   stop:
 		"""
 		if obj is None:
 			return None
@@ -5100,7 +5106,7 @@ class LinearAlgebra():
 				obj.keyframe_insert(data_path="location",index=-1)
 			fn += frames
 		self.frame = fn - frames
-		bpy.context.scene.frame_end = self.frame
+		bpy.context.scene.frame_end = self.frame + stop
 		bpy.context.scene.frame_set(0)
 		bpy.context.view_layer.update()
 	#
@@ -5380,7 +5386,6 @@ class LinearAlgebra():
 		bpy.context.scene.frame_end = self.frame + stop
 		bpy.context.scene.frame_set(0)
 		bpy.context.view_layer.update()
-
 	#
 	#
 	#
@@ -7013,8 +7018,8 @@ class LinearAlgebra():
 			u = Vector(eix)
 		e = vector.project(u)
 		l = e.length
-		if l < 18:
-			l = 18
+		if l < 12:
+			l = 14
 		if adaptada:
 			self.base_adaptada(axis=u,length=l,scale=0.1)
 		self.base_canonica(length=l)
@@ -7083,7 +7088,7 @@ class LinearAlgebra():
 	#
 	# Rotació d'un ortoedre al voltant d'un eix i angles d'Euler
 	#
-	def rotacio_ortoedre_voltant_vector(self,centre=Vector([0,0,0]),costats=Vector([8,5,4]),angle=80,radians=False,vector=Vector([1,-2,1]),opacity=0.7,euler=None,reverse=False):
+	def rotacio_ortoedre_voltant_vector(self,centre=Vector([0,0,0]),costats=Vector([8,5,4]),angle=80,frames=3,stop=0,radians=False,vector=Vector([1,-2,1]),opacity=0.7,euler=None,reverse=False):
 		"""
 		Draws an animation of a vector rotating around a vectorial line
 		Parameters:
@@ -7092,6 +7097,10 @@ class LinearAlgebra():
 			costats: half sides of the orthohedron
 
 			angle: angle of rotation
+
+			frames:
+
+			stop:
 
 			radians: if True the Euler's angles must in radians. If False in degrees
 
@@ -7112,7 +7121,7 @@ class LinearAlgebra():
 		ortoedre = self.draw_cube(origin=centre,scale=costats,color="AzureBlueDark",opacity=opacity,thickness=0.015,scalelines=0.025,linecolor="Orange",name="Primer ortoedre")
 		if euler is not None:
 			ortoedre2 = self.draw_cube(origin=centre,scale=costats,color="Green",opacity=opacity,thickness=0.015,scalelines=0.025,linecolor="Orange",name="Segon ortoedre")
-		self.rotate_object_by_axis_angle(obj=ortoedre,axis=vector,angle=angle,frames=3)
+		self.rotate_object_by_axis_angle(obj=ortoedre,axis=vector,angle=angle,frames=frames,stop=stop)
 		if euler is not None:
 			R = Rotation(angle=angle,vector=vector)
 			psi, theta, phi = R.to_euler_angles(axis=euler)
