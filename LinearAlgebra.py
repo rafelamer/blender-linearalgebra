@@ -4950,7 +4950,7 @@ class LinearAlgebra():
 			obj.keyframe_insert(data_path="rotation_quaternion",index=-1)
 			obj.keyframe_insert(data_path="location",index=-1)
 		fn = self.frame + 1
-		for i in range(int(frames) * int(rounds) * angle):
+		for i in range(int(frames) * int(rounds) * int(angle)):
 			for obj in objs:
 				bpy.context.scene.frame_set(fn)
 				obj.rotation_quaternion.rotate(r.quaternion)
@@ -4960,6 +4960,16 @@ class LinearAlgebra():
 				obj.location = origin + w + t
 				obj.keyframe_insert(data_path="location",index=-1)
 			fn += 1
+		#
+		# Residual angle
+		#
+		final = angle - int(frames) * int(rounds) * int(angle)
+		r = Rotation(final,u)
+		for obj in objs:
+				bpy.context.scene.frame_set(fn)
+				obj.rotation_quaternion.rotate(r.quaternion)
+				obj.keyframe_insert(data_path="rotation_quaternion",index=-1)
+		fn += 1
 		self.frame = fn - frames
 		self.frame += stop
 		bpy.context.scene.frame_end = self.frame
@@ -5255,6 +5265,71 @@ class LinearAlgebra():
 		bpy.context.scene.frame_end = self.frame
 		bpy.context.scene.frame_set(0)
 		bpy.context.view_layer.update()
+	#
+	# Translate object
+	#
+	def translate_object(self,obj=None,vector=Vector([10,10,10]),steps=100,stop=0):
+		"""
+		Translates an object by vector "vector"
+		Parameters:
+		   obj: the object
+
+		   vector: vector of translation
+
+		   steps: steps of the animation
+
+		   stop: frames at the end of animation
+		"""
+		if obj is None:
+			return None
+		if not isinstance(vector,Vector):
+			vector = Vector(vector)
+		if steps < 50:
+			steps = 50
+		t = vector / steps
+		bpy.context.scene.frame_set(self.frame)
+		obj.keyframe_insert(data_path="location",index=-1)
+		fn = self.frame + 1
+		for i in range(steps):
+			bpy.context.scene.frame_set(fn)
+			obj.location += t
+			obj.keyframe_insert(data_path="location",index=-1)
+			fn += 1
+		self.frame = fn
+		self.frame += stop
+		bpy.context.scene.frame_end = self.frame
+		bpy.context.scene.frame_set(0)
+		bpy.context.view_layer.update()
+	#
+	#
+	#
+	def translacio_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([4,2,3]),vector=Vector([10,10,10]),steps=100,length=12,stop=0,opacity=1,original=False):
+		"""
+		Translates an orthohedron by vector "vector"
+		Parameters:
+		   centre: center of the orthohedron
+
+		   costats: half sides of the orthohedron
+
+		   vector: vector of translation
+
+		   steps: steps of the animation
+
+		    lenght: length of the axis of the canonical reference
+
+		   stop: frames at the end of animation
+
+		   opacity: opacity of the orthohedron
+		"""
+		self.base_canonica(length=length)
+		if not isinstance(centre,Vector):
+			centre = Vector(centre)
+		if not isinstance(costats,Vector):
+			costats = Vector(costats)
+		ortoedre = self.draw_cube(origin=centre,scale=costats,color="AzureBlueDark",opacity=opacity,thickness=0.015,scalelines=0.025,linecolor="Orange",name="Ortoedre")
+		if original:
+			ortoedre2 = self.draw_cube(origin=centre,scale=costats,color="CyanDarkWeak",opacity=opacity,thickness=0.015,scalelines=0.025,linecolor="Orange",name="Ortoedre original")
+		self.translate_object(obj=ortoedre,vector=vector,steps=steps,stop=stop)
 	#
 	# Rotate objects or helical motion
 	#
@@ -7139,7 +7214,7 @@ class LinearAlgebra():
 	#
 	# Rotation or helical motion
 	#
-	def moviment_helicoidal_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([3,5,2]),opacity=1,origen=Vector([4,3,0]),eix='Z',angle=90,rounds=1,translacio=0.0,stop=0,aligned=False):
+	def moviment_helicoidal_ortoedre(self,centre=Vector([0,0,0]),costats=Vector([3,5,2]),opacity=1,origen=Vector([4,3,0]),eix='Z',angle=360,frames=1,rounds=1,translacio=0.0,stop=0,aligned=False):
 		"""
 		Draws an animation of the helical motion of an orthohedron around an affine line
 		Parameters:
@@ -7177,7 +7252,7 @@ class LinearAlgebra():
 		w1 = u.normalized()
 		w2 = u.orthogonal().normalized()
 		w3 = w1.cross(w2)
-		self.base_canonica()
+		self.base_canonica(length=u.length*translacio)
 		if not isinstance(centre,Vector):
 			centre = Vector(centre)
 		if not isinstance(costats,Vector):
@@ -7190,7 +7265,7 @@ class LinearAlgebra():
 			x = Vector([1,0,0])
 			quaternion = x.rotation_difference(w1)
 			ortoedre.rotation_quaternion.rotate(quaternion)
-		self.rotate_object(ortoedre,axis=eix,origin=origen,translation=translacio,angle=angle,rounds=rounds,stop=stop)
+		self.rotate_object(ortoedre,axis=eix,origin=origen,translation=translacio,angle=angle,frames=frames,rounds=rounds,stop=stop)
 	#
 	# Rotation or helical motion of a cylinder
 	#
