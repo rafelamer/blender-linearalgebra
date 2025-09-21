@@ -5553,7 +5553,7 @@ class LinearAlgebra():
 		#
 		# Here is sqrt from sympy
 		#
-		Tnorm = math.sqrt(sum([u**2 for u in T]))
+		Tnorm = sqrt(sum([u**2 for u in T]))
 		A = [diff(u,var) for u in T]
 		p0 = Vector([u.subs(var,tmin) for u in fun])
 		v0 = Vector([N(u.subs(var,tmin)) for u in T])
