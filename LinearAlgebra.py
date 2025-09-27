@@ -3382,7 +3382,7 @@ class LinearAlgebra():
 		u1.normalize()
 		u2.normalize()
 		points = [(0,0),(sizex,0),(sizex,sizey),(0,sizey)]
-		self.draw_polygon(origin=origin-sizex/2*u1-sizex/2*u2,u1=u1,u2=u2,points=points,scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)
+		return self.draw_polygon(origin=origin-sizex/2*u1-sizex/2*u2,u1=u1,u2=u2,points=points,scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)
 	#
 	# Draw a list of points
 	#
@@ -5333,7 +5333,7 @@ class LinearAlgebra():
 	#
 	# Rotate objects or helical motion
 	#
-	def rotate_object(self,obj=None,axis='Z',frames=1,origin=Vector([0,0,0]),angle=360,localaxis=None,localangle=None,translation=0.0,rounds=1,stop=0,length=25,draw=True):
+	def rotate_object(self,obj=None,axis='Z',frames=1,origin=Vector([0,0,0]),angle=360,localaxis=None,localangle=None,translation=0.0,rounds=1,stop=0,length=25,draw=True,hides=[]):
 		"""
 		Rotates an object around the axis
 		Parameters:
@@ -5346,6 +5346,8 @@ class LinearAlgebra():
 		   traslation: tranlation by round
 
 		   local: if True the center of rotation is the location of the object
+
+		   hides: show or hide frames in viewport
 		"""
 		if obj is None:
 			return None
@@ -5389,6 +5391,7 @@ class LinearAlgebra():
 		bpy.context.scene.frame_set(self.frame)
 		obj.keyframe_insert(data_path="rotation_quaternion",index=-1)
 		obj.keyframe_insert(data_path="location",index=-1)
+		obj.keyframe_insert(data_path="hide_viewport", index=-1)
 		fn = self.frame + 1
 		for i in range(int(frames) * int(rounds) * int(angle)):
 			bpy.context.scene.frame_set(fn)
@@ -5405,6 +5408,11 @@ class LinearAlgebra():
 				line.keyframe_insert(data_path="location",index=-1)
 			obj.keyframe_insert(data_path="location",index=-1)
 			fn += 1
+		for h in hides:
+			h, f = h
+			obj.hide_viewport = h
+			obj.keyframe_insert(data_path="hide_viewport", frame=f)
+
 		self.frame = fn - frames
 		self.frame += stop
 		bpy.context.scene.frame_end = self.frame
@@ -5413,7 +5421,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def scale_object(self,obj=None,sx=1.0,sy=1.0,sz=1.0,steps=100,stop=0):
+	def scale_object(self,obj=None,sx=1.0,sy=1.0,sz=1.0,steps=100,stop=0,hides=[]):
 		"""
 		Scales an object in the x, y and z directions
 		Parameters:
@@ -5423,47 +5431,52 @@ class LinearAlgebra():
 
 		   steps: number of steps
 		"""
-		s = obj.scale.x
-		sx = s * sx
-		h = (sx - s) / steps
 		bpy.context.scene.frame_set(self.frame)
 		obj.keyframe_insert(data_path="scale",index=-1)
-		if h != 0:
+		obj.keyframe_insert(data_path="hide_viewport", index=-1)
+		fn = self.frame + 1
+		if sx is not None and sx != 1:
+			s = obj.scale.x
+			sx = s * sx
+			h = (sx - s) / steps
 			fn = self.frame
-			for i in range(steps):
+			for i in range(0,steps+1):
 				bpy.context.scene.frame_set(fn)
-				obj.scale.x += h
+				if i != 0: 
+					obj.scale.x += h
 				obj.keyframe_insert(data_path="scale",index=-1)
 				fn += 1
 			self.frame = fn
 		
-		s = obj.scale.y
-		sy = s * sy
-		h = (sy - s) / steps
-		bpy.context.scene.frame_set(self.frame)
-		obj.keyframe_insert(data_path="scale",index=-1)
-		if h != 0:
+		if sy is not None and sy != 1:
+			s = obj.scale.y
+			sy = s * sy
+			h = (sy - s) / steps
 			fn = self.frame
-			for i in range(steps):
+			for i in range(0,steps+1):
 				bpy.context.scene.frame_set(fn)
-				obj.scale.y += h
+				if i != 0:
+					obj.scale.y += h
 				obj.keyframe_insert(data_path="scale",index=-1)
 				fn += 1
 			self.frame = fn
 
-		s = obj.scale.z
-		sz = s * sz
-		h = (sz - s) / steps
-		bpy.context.scene.frame_set(self.frame)
-		obj.keyframe_insert(data_path="scale",index=-1)
-		if h != 0:
+		if sz is not None and sz != 1:
+			s = obj.scale.z
+			sz = s * sz
+			h = (sz - s) / steps
 			fn = self.frame
-			for i in range(steps):
+			for i in range(0,step+1):
 				bpy.context.scene.frame_set(fn)
-				obj.scale.z += h
+				if i != 0:
+					obj.scale.z += h
 				obj.keyframe_insert(data_path="scale",index=-1)
 				fn += 1
 
+		for h in hides:
+			h, f = h
+			obj.hide_viewport = h
+			obj.keyframe_insert(data_path="hide_viewport", frame=f)
 		self.frame = fn
 		self.frame += stop
 		bpy.context.scene.frame_end = self.frame
@@ -5487,6 +5500,62 @@ class LinearAlgebra():
 		self.scale_object(obj=e[2],sx=sx,sy=sy,sz=sz,stop=stop)
 	#
 	#
+	#
+	def gir_rectangle(self,sizex=10,sizey=4,angle=90,cmax=10,steps=100,original=True,opacity=1,stop=0):
+		"""
+		Rotates a rectangle in the plain XY an angle "angle"
+		
+		Parameters:
+
+		   size, sizey: weigth and heigth of the rectangle
+
+		   angle: angle of rotation
+
+		   cmax: size of the canonical base
+
+		   original: if True, draws the original rectangle
+
+		   opacity: opacity of the surface
+
+		   stop: Number the final frames
+		"""
+		self.base_canonica(length=cmax,scale=0.09,zaxis=False)
+		if original:
+			self.draw_plane_surface(normal=[0,0,1],name="Rectangle fix",sizex=sizex,sizey=sizey,opacity=opacity)
+		r1 = self.draw_plane_surface(normal=[0,0,1],name="Rectangle",color="Green",sizex=sizex,sizey=sizey,opacity=opacity)
+		self.rotate_object(obj=r1,axis='Z',frames=1,angle=angle,stop=stop,draw=False)
+	#
+	#
+	#
+	def escalat_rectangle(self,sizex=10,sizey=4,sx=1.0,sy=1.0,cmax=10,steps=100,original=True,opacity=1,stop=0):
+		"""
+		Scales a rectangle in the plain XY in the x and y directions
+		
+		Parameters:
+
+		   size, sizey: weigth and heigth of the rectangle
+
+		   sx, sy: scale factors in the x, y directions
+
+		   cmax: size of the canonical base
+
+		   steps: Number of steps of the animation
+
+		   original: if True, draws the original rectangle
+
+		   steps: number of steps
+
+		   opacity: opacity of the surface
+
+		   stop: Number the final frames
+		"""
+		self.base_canonica(length=cmax,scale=0.09,zaxis=False)
+		if original:
+			self.draw_plane_surface(normal=[0,0,1],name="Rectangle fix",sizex=sizex,sizey=sizey,opacity=opacity)
+		r1 = self.draw_plane_surface(normal=[0,0,1],name="Rectangle",color="Green",sizex=sizex,sizey=sizey,scalelines=0.02,opacity=opacity)
+		self.scale_object(obj=r1,sx=sx,sy=sy,sz=None,stop=stop)
+	#
+	# 
 	#
 	def draw_frenet_curve(self,fun=None,var=None,tmin=0.0,tmax=1.0,radius=0.1,steps=25,thickness=0.01,name="Curve",color="White",point=True,tangent=False,acceleration=False,normal=False,osculator=False,frenet=False,units=False,sizex=8,sizey=8,axis=10):
 		"""
@@ -7209,8 +7278,6 @@ class LinearAlgebra():
 			R = Rotation(angle=angle,vector=vector)
 			psi, theta, phi = R.to_euler_angles(axis=euler)
 			self.rotate_euler(ortoedre2,psi=psi,theta=theta,phi=phi,axis=euler,frames=frames,canonica=False,stop=stop,reverse=reverse)
-		
-
 	#
 	# Rotation or helical motion
 	#
