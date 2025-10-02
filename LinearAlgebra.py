@@ -6505,7 +6505,7 @@ class LinearAlgebra():
 	#
 	# Canvi de coordenades
 	#
-	def canvi_coordenades(self,punt=Vector([8,-6,7]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),canonica=False,scale=0.06,length=12,radius=0.1):
+	def canvi_coordenades(self,punt=Vector([8,-6,7]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),canonica=False,scale=0.06,length=12,radius=0.1,vectors=True):
 		"""
 		Draw the coordinates of a point in the canonical reference and in the reference {o;u1,u2,u3}. Sets the default
 		origin and default base to them
@@ -6519,6 +6519,8 @@ class LinearAlgebra():
 			canonica: if True, the coordinates of punt are in the canonical reference
 
 			length: length of the axis
+
+			vectors: if True draws the position vectors
 		"""
 		self.set_origin(origin)
 		self.set_base([u1,u2,u3])
@@ -6530,13 +6532,14 @@ class LinearAlgebra():
 			p1 = punt
 		self.reset()
 		self.set_colors(["Magenta","Yellow","AzureBlueDark"])
-		self.punt_referencia_no_canonica(punt=p1,origin=origin,u1=u1,u2=u2,u3=u3,length=length,scale=scale,radius=radius)
+		self.punt_referencia_no_canonica(punt=p1,origin=origin,u1=u1,u2=u2,u3=u3,length=length,scale=scale,radius=radius,vector=vectors)
 		self.reset()
-		self.draw_vector(vector=p,name="Vector de posició en referència canònica",color="White")
-		self.draw_vector(vector=origin,name="Vector de posició de l'origen de R'",color="GrayDark")
+		if vectors:
+			self.draw_vector(vector=p,name="Vector de posició en referència canònica",color="White")
+			self.draw_vector(vector=origin,name="Vector de posició de l'origen de R'",color="GrayDark")
 		self.draw_components(p,color="Magenta",name="Coordenades en referència canònica")
 		if canonica:
-			self.base_canonica(length=length) 
+			self.base_canonica(length=length,name="Referència canònica") 
 	#
 	# El·lipse
 	#
