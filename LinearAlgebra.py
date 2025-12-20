@@ -7396,7 +7396,7 @@ class LinearAlgebra():
 	#
 	# Rotation or helical motion of a point
 	#
-	def moviment_helicoidal_punt(self,punt=Vector([0,0,0]),origen=Vector([-3,-3,-4]),eix='Z',rounds=5,angle=360,stop=0,translacio=2,vectors=True,length=15,reverse=False):
+	def moviment_helicoidal_punt(self,punt=Vector([0,0,0]),origen=Vector([-3,-3,-4]),eix='Z',rounds=5,angle=360,stop=0,translacio=2,vectors=True,length=15,curve=True,reverse=False):
 		"""
 		Draws an animation of the helical motion of an orthohedron around an affine line
 		Parameters:
@@ -7408,8 +7408,20 @@ class LinearAlgebra():
 
 			rounds: rounds of the point aroud the axis
 
-			translation: translation of the helical motion (distance by frame)
+			angle: angle of the rotation
+
+			stop: frames to stop at the end of animation
+
+			translacio: translation of the helical motion (distance by frame)
 			             if translation = 0.0, it's a rotation motion
+
+			vectors: if True, draws the vectors
+
+			length:
+
+			curve: if True, draws the helix
+
+			reverse:
 		"""
 		if isinstance(eix,str):
 			eix = eix.strip().upper()
@@ -7453,10 +7465,11 @@ class LinearAlgebra():
 		w3 = u.normalized()
 		w2 = w3.cross(w1)
 		radius = (center-punt).length
-		if angle < 360:
-			self.curve(lambda t: (radius*math.cos(t),radius*math.sin(t),180*translacio*u.length/(angle*math.pi)*t),tmin=0,tmax=2*rounds*math.pi,steps=128,thickness=0.005,name="Hèlix",color="Yellow",o=center,u1=w1,u2=w2)
-		else:
-			self.curve(lambda t: (radius*math.cos(t),radius*math.sin(t),translacio*t/(2*math.pi)),tmin=-2*rounds*math.pi,tmax=2*rounds*math.pi,steps=128*rounds,thickness=0.005,name="Hèlix",color="Yellow",o=center,u1=w1,u2=w2)
+		if curve:
+			if angle < 360:
+				self.curve(lambda t: (radius*math.cos(t),radius*math.sin(t),180*translacio*u.length/(angle*math.pi)*t),tmin=0,tmax=2*rounds*math.pi,steps=128,thickness=0.005,name="Hèlix",color="Yellow",o=center,u1=w1,u2=w2)
+			else:
+				self.curve(lambda t: (radius*math.cos(t),radius*math.sin(t),translacio*t/(2*math.pi)),tmin=-2*rounds*math.pi,tmax=2*rounds*math.pi,steps=128*rounds,thickness=0.005,name="Hèlix",color="Yellow",o=center,u1=w1,u2=w2)
 		self.reset()
 	#
 	# Gir en el pla d'un poligon
@@ -7658,7 +7671,7 @@ class LinearAlgebra():
 		   p3: polar angle of the third point
 		   s3: azimuthal angle of the third point
 		"""
-		es = self.esfera(r2=r**2,canonica=False,principal=False,thickness=0.001,name="Esfera")
+		es = self.esfera(radi=r,name="Esfera")
 		c1 = self.segment_esferic(r=r,p1=p1,s1=s1,p2=p2,s2=s2,name="Costat 1")
 		c2 = self.segment_esferic(r=r,p1=p2,s1=s2,p2=p3,s2=s3,name="Costat 2")
 		c3 = self.segment_esferic(r=r,p1=p3,s1=s3,p2=p1,s2=s1,name="Costat 3")
