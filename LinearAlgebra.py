@@ -1,7 +1,7 @@
 #########################################################################################
 # Filename:   LinearAlgebra.py
 # Author:     Rafel Amer (rafel.amer AT upc.edu)
-# Copyright:  Rafel Amer 2020-2025
+# Copyright:  Rafel Amer 2020-2026
 #
 #             This file contains code from the files add_mesh_3d_function_surface.
 #             and object_utils.py distributed with Blender as add_ons
@@ -2017,7 +2017,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def draw_two_sheets_hyperboloid(self,a=2.0,b=1.0,xmin=0.0,xmax=5.0,steps=50,scale=[1,1,1],color="AzureBlueDark",name="HyperboloidTwoSheets",opacity=1.0,thickness=0.05):
+	def draw_two_sheets_hyperboloid(self,a=2.0,b=1.0,xmin=0.0,xmax=5.0,steps=50,scale=[1,1,1],color="AzureBlueDark",name="TwoSheetHyperboloid",opacity=1.0,thickness=0.05):
 		r"""
 		Draws a two sheet hyperboloid from the hyperbole z = \pm a * math.sqrt(x**2+b) in the XZ plane
 		Parameters:
@@ -3654,7 +3654,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def two_sheets_hyperboloid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,c2=1,principal=True,canonica=True,color="AzureBlueDark",name="TwoSheetParaboloid",xmax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+	def two_sheets_hyperboloid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,c2=1,principal=True,canonica=True,color="AzureBlueDark",name="TwoSheetHyperboloid",xmax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws a two sheets hyperboloid
 		Parameters:
