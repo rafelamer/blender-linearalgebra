@@ -3460,6 +3460,7 @@ class LinearAlgebra():
 		bpy.context.view_layer.objects.active = llista[0]
 		for obj in llista:
 			obj.select_set(True)
+		bpy.ops.object.convert(target='MESH')
 		bpy.ops.object.join()
 		bpy.ops.object.select_all(action='DESELECT')
 		return llista[0]
@@ -4384,7 +4385,8 @@ class LinearAlgebra():
 		if change:
 			self.set_origin(o)
 			self.set_base([u1,u2],orthonormal=True)
-		return self.join(objs)
+		obj = self.join(objs)
+		return obj
 	#
 	#
 	#
