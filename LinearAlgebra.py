@@ -3444,6 +3444,19 @@ class LinearAlgebra():
 		self.scene.collection.objects.link(obj)
 		return obj
 	#
+	# Set the parent of object in a list
+	#
+	def parent(self,llista):
+		"""
+		Set the parent a list of objects
+		Parameters:
+		   llista: list of objects
+		"""
+		if len(llista) < 2:
+			return
+		for obj in llista[1:]:
+			obj.parent = llista[0]
+	#
 	# Join a list a objects
 	#
 	def join(self,llista):
@@ -3460,7 +3473,6 @@ class LinearAlgebra():
 		bpy.context.view_layer.objects.active = llista[0]
 		for obj in llista:
 			obj.select_set(True)
-		bpy.ops.object.convert(target='MESH')
 		bpy.ops.object.join()
 		bpy.ops.object.select_all(action='DESELECT')
 		return llista[0]
@@ -4165,7 +4177,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def draw_curve(self,fun=None,tmin=0.0,tmax=1.0,steps=25,thickness=0.01,name="Curve",color="White",axis=False,zaxis=True,o=Vector([0,0,0]),u1=Vector([1,0,0]),u2=Vector([0,1,0])):
+	def draw_curve(self,fun=None,tmin=0.0,tmax=1.0,steps=25,thickness=0.01,name="Curve",color="White",modifiers=True,axis=False,zaxis=True,o=Vector([0,0,0]),u1=Vector([1,0,0]),u2=Vector([0,1,0])):
 		"""
 		Draws a curve in a reference R' determined by the origin o and basis {v1, v2, v3} constructed from u1 and u2
 		Parameters:
@@ -4182,6 +4194,8 @@ class LinearAlgebra():
 		   name: name of the curve
 
 		   color: color of the curve
+
+		   modifiers: If True apllies the modifiers
 
 		   axis: if True draws the axis of the reference R'
 
@@ -4217,20 +4231,21 @@ class LinearAlgebra():
 		obj = self.objects.new(name,me)
 		bm.to_mesh(me)
 		bm.free()
+		if modifiers:
+			modifier = obj.modifiers.new(type='SKIN',name = 'skin')
+			for v in obj.data.skin_vertices[0].data:
+				v.radius = (thickness,thickness)
 
-		modifier = obj.modifiers.new(type='SKIN',name = 'skin')
-		for v in obj.data.skin_vertices[0].data:
-			v.radius = (thickness,thickness)
-
-		modifier = obj.modifiers.new(name="SubSurf", type='SUBSURF')
-		modifier.levels = 4
-		modifier.subdivision_type = 'SIMPLE'
-		if thickness > 0.0:
-			modifier = obj.modifiers.new(name="Solidify", type='SOLIDIFY')
-			modifier.thickness = thickness
-			modifier.offset = 1.0
-		c = Colors.color(color)
-		self.add_material(obj,c.name,c.r,c.g,c.b,1.0)
+			modifier = obj.modifiers.new(name="SubSurf", type='SUBSURF')
+			modifier.levels = 4
+			modifier.subdivision_type = 'SIMPLE'
+			if thickness > 0.0:
+				modifier = obj.modifiers.new(name="Solidify", type='SOLIDIFY')
+				modifier.thickness = thickness
+				modifier.offset = 1.0
+			c = Colors.color(color)
+			self.add_material(obj,c.name,c.r,c.g,c.b,1.0)
+	
 		self.set_origin(o)
 		self.set_rotation(quaternion=qt)
 		if self.rotation is not None:
@@ -4323,13 +4338,15 @@ class LinearAlgebra():
 		"""
 		if fun is None:
 			return None
-		obj = self.draw_curve(fun,tmin=tmin,tmax=tmax,steps=steps,thickness=thickness,name=name,color=color,axis=axis,zaxis=zaxis,o=o,u1=u1,u2=u2)
-
+		
 		if symmetry is None:
+			obj = self.draw_curve(fun,tmin=tmin,tmax=tmax,steps=steps,thickness=thickness,name=name,color=color,axis=axis,zaxis=zaxis,o=o,u1=u1,u2=u2)
 			if change:
 				self.set_origin(o)
 				self.set_base([u1,u2],orthonormal=True)
 			return obj
+
+		obj = self.draw_curve(fun,tmin=tmin,tmax=tmax,steps=steps,thickness=thickness,name=name,color=color,axis=axis,zaxis=zaxis,o=o,u1=u1,u2=u2)
 		objs = [obj]
 		if isinstance(symmetry,str):
 			symmetry = [symmetry]
@@ -4382,11 +4399,11 @@ class LinearAlgebra():
 					return (-p[0],-p[1],-p[2])
 				obj2 = self.draw_curve(f,tmin=tmin,tmax=tmax,steps=steps,thickness=thickness,name=namem,color=color,axis=axis,zaxis=zaxis,o=o,u1=u1,u2=u2)
 				objs.append(obj2)
+		self.parent(objs)
 		if change:
 			self.set_origin(o)
 			self.set_base([u1,u2],orthonormal=True)
-		obj = self.join(objs)
-		return obj
+		return objs[0]
 	#
 	#
 	#
@@ -7699,4 +7716,4 @@ class LinearAlgebra():
 		s1, s2, s3 = nums[0:3]
 		print(s1,s2,s3)
 		self.triangle_esferic(r=r,p1=p1,s1=s1,p2=p2,s2=s2,p3=p3,s3=s3)
-
+	
