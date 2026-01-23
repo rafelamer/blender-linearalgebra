@@ -31,6 +31,7 @@ import bpy
 import bmesh
 import random
 import numpy as np
+
 try:
 	from sympy import *
 except:
@@ -4177,6 +4178,82 @@ class LinearAlgebra():
 	#
 	#
 	#
+	def draw_curve_tube(self,fun=None,tmin=0.0,tmax=1.0,steps=25,thickness=0.01,resolution=16,name="Curve",color="White",modifiers=True,axis=False,zaxis=True,o=Vector([0,0,0]),u1=Vector([1,0,0]),u2=Vector([0,1,0])):
+		"""
+		Draws a curve in a reference R' determined by the origin o and basis {v1, v2, v3} constructed from u1 and u2
+		Parameters:
+		   fun: the parametric function
+
+		   tmin: minimum value of the parameter
+
+		   tmax: maximum value of the parameter
+
+		   steps: number of steps
+
+		   thickness: thickness of the curve
+
+		   name: name of the curve
+
+		   color: color of the curve
+
+		   modifiers: If True apllies the modifiers
+
+		   axis: if True draws the axis of the reference R'
+
+		   zaxis: if True draws the z' axis
+
+		   o: origin of the reference R'
+
+		   u1, u2: vectors to construct the basis {v1, v2, v3}
+		"""
+		if fun is None:
+			return None
+		qt = self.vectors_to_quaternion(u1,u2)
+		delta = (tmax - tmin) / steps
+		t = tmin
+
+		curve = bpy.data.curves.new('myCurve', type='CURVE')
+		curve.dimensions = '3D'
+		curve.resolution_u = 2
+
+		line = curve.splines.new('POLY')
+		line.points.add(steps)
+
+		for i in range(steps+1):
+			p = fun(t)
+			p.append(1)
+			line.points[i].co = p
+			t += delta
+
+		obj = bpy.data.objects.new(name, curve)
+		self.scene.collection.objects.link(obj)
+		if modifiers:
+			bpy.context.view_layer.objects.active = obj
+			bpy.ops.object.modifier_add_node_group(asset_library_type='ESSENTIALS', asset_library_identifier="", 
+					relative_asset_identifier="nodes/geometry_nodes_essentials.blend/NodeTree/Curve to Tube")
+			modifier = obj.modifiers.new(name="SubSurf", type='SUBSURF')
+			modifier.levels = 4
+			modifier.subdivision_type = 'SIMPLE'
+			c = Colors.color(color)
+			self.add_material(obj,c.name,c.r,c.g,c.b,1.0)
+			obj.modifiers[0]['Socket_5'] = thickness
+			obj.modifiers[0]['Socket_2'] = resolution
+
+		self.set_origin(o)
+		self.set_rotation(quaternion=qt)
+		if self.rotation is not None:
+			obj.rotation_mode = 'QUATERNION'
+			obj.rotation_quaternion.rotate(self.rotation.quaternion)
+			obj.location.rotate(self.rotation.quaternion)
+		if axis:
+			self.draw_base_axis(axis = pmax+3,positive=False,name="Referència escollida",zaxis=zaxis)
+		obj.location = o
+		bpy.ops.object.shade_smooth()
+		bpy.context.view_layer.objects.active = None
+		return obj
+	#
+	#
+	#
 	def draw_curve(self,fun=None,tmin=0.0,tmax=1.0,steps=25,thickness=0.01,name="Curve",color="White",modifiers=True,axis=False,zaxis=True,o=Vector([0,0,0]),u1=Vector([1,0,0]),u2=Vector([0,1,0])):
 		"""
 		Draws a curve in a reference R' determined by the origin o and basis {v1, v2, v3} constructed from u1 and u2
@@ -4235,7 +4312,6 @@ class LinearAlgebra():
 			modifier = obj.modifiers.new(type='SKIN',name = 'skin')
 			for v in obj.data.skin_vertices[0].data:
 				v.radius = (thickness,thickness)
-
 			modifier = obj.modifiers.new(name="SubSurf", type='SUBSURF')
 			modifier.levels = 4
 			modifier.subdivision_type = 'SIMPLE'
