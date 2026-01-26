@@ -4287,31 +4287,24 @@ class LinearAlgebra():
 		qt = self.vectors_to_quaternion(u1,u2)
 		delta = (tmax - tmin) / steps
 		t = tmin
-		bm = bmesh.new()
-		verts = []
 
-		pmax = 0
-		for k in range(steps + 1):
-			p = fun(t)
-			m = max(map(abs,p))
-			if m > pmax:
-				pmax = m
-			verts.append(bm.verts.new(p))
+		curve = bpy.data.curves.new('myCurve', type='CURVE')
+		curve.dimensions = '3D'
+		curve.resolution_u = 2
+
+		line = curve.splines.new('POLY')
+		line.points.add(steps)
+
+		for i in range(steps+1):
+			p = list(fun(t))
+			p.append(1)
+			line.points[i].co = p
 			t += delta
-			if t > tmax:
-				t = tmax
 
-		for i in range(len(verts) - 1):
-			bm.edges.new([verts[i], verts[i+1]])
-
-		me = self.meshes.new('placeholder_mesh')
-		obj = self.objects.new(name,me)
-		bm.to_mesh(me)
-		bm.free()
+		obj = bpy.data.objects.new(name, curve)
+		self.scene.collection.objects.link(obj)
 		if modifiers:
-			modifier = obj.modifiers.new(type='SKIN',name = 'skin')
-			for v in obj.data.skin_vertices[0].data:
-				v.radius = (thickness,thickness)
+			obj.data.bevel_depth = thickness
 			modifier = obj.modifiers.new(name="SubSurf", type='SUBSURF')
 			modifier.levels = 4
 			modifier.subdivision_type = 'SIMPLE'
@@ -4330,7 +4323,6 @@ class LinearAlgebra():
 			obj.location.rotate(self.rotation.quaternion)
 		if axis:
 			self.draw_base_axis(axis = pmax+3,positive=False,name="Referència escollida",zaxis=zaxis)
-		self.scene.collection.objects.link(obj)
 		bpy.ops.object.shade_smooth()
 		obj.location = o
 		bpy.context.view_layer.objects.active = None
