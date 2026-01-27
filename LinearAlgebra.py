@@ -3508,7 +3508,7 @@ class LinearAlgebra():
 	#
 	# Draw an ellpsoid
 	#
-	def ellipsoid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,c2=1,principal=True,canonica=True,color="AzureBlueDark",name="Ellipsoid",cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+	def ellipsoid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,c2=1,scaleaxis=0.1,principal=True,canonica=True,color="AzureBlueDark",name="Ellipsoid",cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws an ellipsoid
 		Parameters:
@@ -3522,6 +3522,8 @@ class LinearAlgebra():
 			   v3 = v1.cross(v2)
 
 		   a2, b2, c2: squares of semi-axes of the ellipsoid. The equation is x'^2/a^2 + y'^2/b^2 + z'^2/c^2 = 1
+
+		   scaleaxis: scale of canonical and principal axes
 
 		   principal: if True, the principal axis are drawn
 
@@ -3552,14 +3554,14 @@ class LinearAlgebra():
 					self.colors = Colors.colors(["White","White","White"])
 				else:
 					self.colors = Colors.colors(["Red","Green","Blue"])
-				self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+				self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,name="Referència canònica")
 				self.colors = Colors.colors(["Red","Green","Blue"])
 		elif canonica and not principal:
-			axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+			axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,name="Referència canònica")
 		self.set_origin(o)
 		self.set_rotation(quaternion=q)
 		if principal:
-			axis2 = self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
+			axis2 = self.draw_base_axis(axis=pmax,scale=scaleaxis,positive=False,name="Referència principal")
 		a = math.sqrt(a2)
 		b = math.sqrt(b2)
 		c = math.sqrt(c2)
@@ -3572,7 +3574,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def sphere(self,o=[0,0,0],r2=1,principal=True,canonica=True,color="AzureBlueDark",name="Sphere",cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+	def sphere(self,o=[0,0,0],r2=1,principal=True,canonica=True,scaleaxis=0.1,color="AzureBlueDark",name="Sphere",cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws a sphere of center 'o' and radius squared equal to 'r2'
 		Parameters:
@@ -3585,6 +3587,8 @@ class LinearAlgebra():
 		   canonica: if True, the canonical axis are drawn
 
 		   color: color of the surface
+
+		   scaleaxis: scale of canonical and principal axes
 
 		   name: name of the sphere
 
@@ -3600,11 +3604,11 @@ class LinearAlgebra():
 		"""
 		u1 = Vector([1,0,0])
 		u2 = Vector([0,1,0])
-		return self.ellipsoid(o=o,u1=u1,u2=u2,a2=r2,b2=r2,c2=r2,principal=principal,canonica=canonica,color=color,name=name,cmax=cmax,pmax=pmax,thickness=thickness,opacity=opacity,preserve=preserve)
+		return self.ellipsoid(o=o,u1=u1,u2=u2,a2=r2,b2=r2,c2=r2,principal=principal,canonica=canonica,color=color,name=name,scaleaxis=scaleaxis,cmax=cmax,pmax=pmax,thickness=thickness,opacity=opacity,preserve=preserve)
 	#
 	#
 	#
-	def one_sheet_hyperboloid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,c2=1,principal=True,canonica=True,color="AzureBlueDark",name="OneSheetHyperboloid",xmax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+	def one_sheet_hyperboloid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,c2=1,scaleaxis=0.1,principal=True,canonica=True,color="AzureBlueDark",name="OneSheetHyperboloid",xmax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws an one sheet hyperboloid
 		Parameters:
@@ -3613,6 +3617,8 @@ class LinearAlgebra():
 		   u1, u2: the principal basis {v1, v2, v3} is constructed from this vectors
 
 		   a2, b2, c2: squares of semi-axes of the hyperboloid. The equation is x'^2/a^2 + y'^2/b^2 - z'^2/c^2 = 1
+
+		   scaleaxis: scale of canonical and principal axes
 
 		   principal: if True, the principal axis are drawn
 
@@ -3645,14 +3651,14 @@ class LinearAlgebra():
 					self.colors = Colors.colors(["White","White","White"])
 				else:
 					self.colors = Colors.colors(["Red","Green","Blue"])
-				axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+				axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,name="Referència canònica")
 				self.colors = Colors.colors(["Red","Green","Blue"])
 		elif canonica and not principal:
-			axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+			axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,name="Referència canònica")
 		self.set_origin(o)
 		self.set_rotation(quaternion=q)
 		if principal:
-			axis2 = self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
+			axis2 = self.draw_base_axis(axis=pmax,scale=scaleaxis,positive=False,name="Referència principal")
 		a = math.sqrt(a2)
 		b = math.sqrt(b2)
 		c = math.sqrt(c2)
@@ -3668,7 +3674,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def two_sheets_hyperboloid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,c2=1,principal=True,canonica=True,color="AzureBlueDark",name="TwoSheetHyperboloid",xmax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+	def two_sheets_hyperboloid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,c2=1,scaleaxis=0.1,principal=True,canonica=True,color="AzureBlueDark",name="TwoSheetHyperboloid",xmax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws a two sheets hyperboloid
 		Parameters:
@@ -3677,6 +3683,8 @@ class LinearAlgebra():
 		   u1, u2: the principal basis {v1, v2, v3} is constructed from this vectors
 
 		   a2, b2, c2: squares of semi-axes of the hyperboloid. The equation is x'^2/a^2 + y'^2/b^2 - z'^2/c^2 = -1
+
+		   scaleaxis: scale of canonical and principal axes
 
 		   principal: if True, the principal axis are drawn
 
@@ -3709,14 +3717,14 @@ class LinearAlgebra():
 					self.colors = Colors.colors(["White","White","White"])
 				else:
 					self.colors = Colors.colors(["Red","Green","Blue"])
-				axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+				axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,name="Referència canònica")
 				self.colors = Colors.colors(["Red","Green","Blue"])
 		elif canonica and not principal:
-			axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+			axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,name="Referència canònica")
 		self.set_origin(o)
 		self.set_rotation(quaternion=q)
 		if principal:
-			axis2 = self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
+			axis2 = self.draw_base_axis(axis=pmax,scale=scaleaxis,positive=False,name="Referència principal")
 		a = math.sqrt(a2)
 		b = math.sqrt(b2)
 		c = math.sqrt(c2)
@@ -3732,7 +3740,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def cone(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,c2=1,half=False,principal=True,canonica=True,color="AzureBlueDark",name="Cone",xmax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+	def cone(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,c2=1,half=False,scaleaxis=0.1,principal=True,canonica=True,color="AzureBlueDark",name="Cone",xmax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws a cone
 		Parameters:
@@ -3743,6 +3751,8 @@ class LinearAlgebra():
 		   a2, b2, c2: squares of semi-axes of the cone. The equation is x'^2/a^2 + y'^2/b^2 - z'^2/c^2 = 0
 
 		   half: if True draws half cone
+
+		   scaleaxis: scale of canonical and principal axes
 
 		   principal: if True, the principal axis are drawn
 
@@ -3775,14 +3785,14 @@ class LinearAlgebra():
 					self.colors = Colors.colors(["White","White","White"])
 				else:
 					self.colors = Colors.colors(["Red","Green","Blue"])
-				axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+				axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,name="Referència canònica")
 				self.colors = Colors.colors(["Red","Green","Blue"])
 		elif canonica and not principal:
-			axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+			axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,name="Referència canònica")
 		self.set_origin(o)
 		self.set_rotation(quaternion=q)
 		if principal:
-			self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
+			self.draw_base_axis(axis=pmax,scale=scaleaxis,positive=False,name="Referència principal")
 		a = math.sqrt(a2)
 		b = math.sqrt(b2)
 		c = math.sqrt(c2)
@@ -3798,7 +3808,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def hyperbolic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color="AzureBlueDark",name="Hyperbolic Cylinder",xmax=None,zmax=15,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+	def hyperbolic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,scaleaxis=0.1,principal=True,canonica=True,color="AzureBlueDark",name="Hyperbolic Cylinder",xmax=None,zmax=15,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws an hyperbolic cylinder
 		Parameters:
@@ -3807,6 +3817,8 @@ class LinearAlgebra():
 		   u1, u2: the principal basis {v1, v2, v3} is constructed from this vectors
 
 		   a2, b2: squares of semi-axes of the hyperbolic cylinder. The equation is x'^2/a^2 - y'^2/b^2 = 1
+
+		   scaleaxis: scale of canonical and principal axes
 
 		   principal: if True, the principal axis are drawn
 
@@ -3843,14 +3855,14 @@ class LinearAlgebra():
 					self.colors = Colors.colors(["White","White","White"])
 				else:
 					self.colors = Colors.colors(["Red","Green","Blue"])
-				axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+				axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,name="Referència canònica")
 				self.colors = Colors.colors(["Red","Green","Blue"])
 		elif canonica and not principal:
-			axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+			axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,name="Referència canònica")
 		self.set_origin(o)
 		self.set_rotation(quaternion=q)
 		if principal:
-			axis2 = self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
+			axis2 = self.draw_base_axis(axis=pmax,scale=scaleaxis,positive=False,name="Referència principal")
 		a = math.sqrt(a2)
 		b = math.sqrt(b2)
 		if xmax is None:
@@ -3865,7 +3877,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def elliptic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color="AzureBlueDark",name="EllipticCylinder",zmax=20,cmax=20,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+	def elliptic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,scaleaxis=0.1,color="AzureBlueDark",name="EllipticCylinder",zmax=20,cmax=20,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws an elliptic cylinder
 		Parameters:
@@ -3878,6 +3890,8 @@ class LinearAlgebra():
 		   principal: if True, the principal axis are drawn
 
 		   canonica: if True, the canonical axis are drawn
+
+		   scaleaxis: scale of canonical and principal axes
 
 		   color: color of the surface
 
@@ -3908,14 +3922,14 @@ class LinearAlgebra():
 					self.colors = Colors.colors(["White","White","White"])
 				else:
 					self.colors = Colors.colors(["Red","Green","Blue"])
-				axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+				axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,name="Referència canònica")
 				self.colors = Colors.colors(["Red","Green","Blue"])
 		elif canonica and not principal:
-			axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+			axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,,name="Referència canònica")
 		self.set_origin(o)
 		self.set_rotation(quaternion=q)
 		if principal:
-			axis2 = self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
+			axis2 = self.draw_base_axis(axis=pmax,scale=scaleaxis,positive=False,name="Referència principal")
 		a = math.sqrt(a2)
 		b = math.sqrt(b2)
 		el = self.draw_elliptic_cylinder(a=1.0,b=1.0,length=2*zmax,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
@@ -3927,7 +3941,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def elliptic_paraboloid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color="AzureBlueDark",name="EllipticParaboloid",xmax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+	def elliptic_paraboloid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,scaleaxis=0.1,color="AzureBlueDark",name="EllipticParaboloid",xmax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws an elliptic paraboloid
 		Parameters:
@@ -3940,6 +3954,8 @@ class LinearAlgebra():
 		   principal: if True, the principal axis are drawn
 
 		   canonica: if True, the canonical axis are drawn
+
+		   scaleaxis: scale of canonical and principal axes
 
 		   color: color of the surface
 
@@ -3968,14 +3984,14 @@ class LinearAlgebra():
 					self.colors = Colors.colors(["White","White","White"])
 				else:
 					self.colors = Colors.colors(["Red","Green","Blue"])
-				axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+				axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,name="Referència canònica")
 				self.colors = Colors.colors(["Red","Green","Blue"])
 		elif canonica and not principal:
-			axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+			axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,name="Referència canònica")
 		self.set_origin(o)
 		self.set_rotation(quaternion=q)
 		if principal:
-			axis2 = self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
+			axis2 = self.draw_base_axis(axis=pmax,scale=scaleaxis,positive=False,name="Referència principal")
 		a = math.sqrt(a2)
 		b = math.sqrt(b2)
 		if xmax is None:
@@ -3990,7 +4006,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def hyperbolic_paraboloid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,principal=True,canonica=True,color="AzureBlueDark",name="HyperbolicParaboloid",xmax=None,ymax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
+	def hyperbolic_paraboloid(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],a2=1,b2=1,scaleaxis=0.1,principal=True,canonica=True,color="AzureBlueDark",name="HyperbolicParaboloid",xmax=None,ymax=None,cmax=15,pmax=15,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws an hyperbolic paraboloid
 		Parameters:
@@ -3999,6 +4015,8 @@ class LinearAlgebra():
 		   u1, u2: the principal basis {v1, v2, v3} is constructed from this vectors
 
 		   a2, b2: squares of semi-axes of the hyperbolic paraboloid. The equation is z = x'^2/a^2 - y'^2/b^2
+
+		   scaleaxis: scale of canonical and principal axes
 
 		   principal: if True, the principal axis are drawn
 
@@ -4043,14 +4061,14 @@ class LinearAlgebra():
 					self.colors = Colors.colors(["White","White","White"])
 				else:
 					self.colors = Colors.colors(["Red","Green","Blue"])
-				axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+				axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,name="Referència canònica")
 				self.colors = Colors.colors(["Red","Green","Blue"])
 		elif canonica and not principal:
-			axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+			axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,name="Referència canònica")
 		self.set_origin(o)
 		self.set_rotation(quaternion=q)
 		if principal:
-			self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
+			self.draw_base_axis(axis=pmax,scale=scaleaxis,positive=False,name="Referència principal")
 		hy.rotation_mode = 'QUATERNION'
 		if self.rotation is not None:
 			hy.rotation_quaternion.rotate(self.rotation.quaternion)
@@ -4064,7 +4082,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def parabolic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],p=1,principal=True,canonica=True,color="AzureBlueDark",name="ParabolicCylinder",xmax=12,ymax=30,cmax=20,pmax=20,thickness=0.02,opacity=1.0,preserve=True):
+	def parabolic_cylinder(self,o=[0,0,0],u1=[1,0,0],u2=[0,1,0],p=1,scaleaxis=0.1,principal=True,canonica=True,color="AzureBlueDark",name="ParabolicCylinder",xmax=12,ymax=30,cmax=20,pmax=20,thickness=0.02,opacity=1.0,preserve=True):
 		"""
 		Draws an hyperbolic paraboloid
 		Parameters:
@@ -4073,6 +4091,8 @@ class LinearAlgebra():
 		   u1, u2: the principal basis {v1, v2, v3} is constructed from this vectors
 
 		   p: Parameter of the cylinder z' = x'^2/(2*p)
+
+		   scaleaxis: scale of canonical and principal axes
 
 		   principal: if True, the principal axis are drawn
 
@@ -4108,14 +4128,14 @@ class LinearAlgebra():
 					self.colors = Colors.colors(["White","White","White"])
 				else:
 					self.colors = Colors.colors(["Red","Green","Blue"])
-				axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+				axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,name="Referència canònica")
 				self.colors = Colors.colors(["Red","Green","Blue"])
 		elif canonica and not principal:
-			axis1 = self.draw_base_axis(axis = cmax,positive=False,name="Referència canònica")
+			axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,name="Referència canònica")
 		self.set_origin(o)
 		self.set_rotation(quaternion=q)
 		if principal:
-			axis2 = self.draw_base_axis(axis = pmax,positive=False,name="Referència principal")
+			axis2 = self.draw_base_axis(axis=pmax,scale=scaleaxis,positive=False,name="Referència principal")
 		coef = 1.0
 		if p < 0:
 			coef = -1
@@ -4220,7 +4240,7 @@ class LinearAlgebra():
 		line.points.add(steps)
 
 		for i in range(steps+1):
-			p = fun(t)
+			p = list(fun(t))
 			p.append(1)
 			line.points[i].co = p
 			t += delta
@@ -4467,7 +4487,109 @@ class LinearAlgebra():
 					return (-p[0],-p[1],-p[2])
 				obj2 = self.draw_curve(f,tmin=tmin,tmax=tmax,steps=steps,thickness=thickness,name=namem,color=color,axis=axis,zaxis=zaxis,o=o,u1=u1,u2=u2)
 				objs.append(obj2)
-		self.parent(objs)
+		self.join(objs)
+		if change:
+			self.set_origin(o)
+			self.set_base([u1,u2],orthonormal=True)
+		return objs[0]
+	#
+	#
+	#
+	def curve_tube(self,fun=None,tmin=0.0,tmax=1.0,steps=25,thickness=0.01,name="Curve",color="White",axis=False,zaxis=True,o=Vector([0,0,0]),u1=Vector([1,0,0]),u2=Vector([0,1,0]),symmetry=None,change=False):
+		"""
+		Draws a curve in a reference R' determined by the origin o and basis {v1, v2, v3} constructed from u1 and u2 and
+		the symmetric curve or curves from the parameter 'symmetry'
+		Parameters:
+		   fun: the parametric function
+
+		   tmin: minimum value of the parameter
+
+		   tmax: maximum value of the parameter
+
+		   steps: number of steps
+
+		   thickness: thickness of the curve
+
+		   name: name of the curve
+
+		   color: color of the curve
+
+		   axis: if True draws the axis of the reference R'
+
+		   zaxis: if True draws the z' axis
+
+		   o: origin of the reference R'
+
+		   u1, u2: vectors to construct the basis {v1, v2, v3}
+
+		   symmetry: list of values in ('XY','XZ','YZ','X','Y','Z','O'). For every value S, draw the symmetric curve respect to S
+
+		   change: if True, set the reference self.origin, self.base to {o; v1, v2, v3}
+		"""
+		if fun is None:
+			return None
+		
+		if symmetry is None:
+			obj = self.draw_curve_tube(fun,tmin=tmin,tmax=tmax,steps=steps,thickness=thickness,name=name,color=color,axis=axis,zaxis=zaxis,o=o,u1=u1,u2=u2)
+			if change:
+				self.set_origin(o)
+				self.set_base([u1,u2],orthonormal=True)
+			return obj
+
+		obj = self.draw_curve_tube(fun,tmin=tmin,tmax=tmax,steps=steps,thickness=thickness,name=name,color=color,axis=axis,zaxis=zaxis,o=o,u1=u1,u2=u2)
+		objs = [obj]
+		if isinstance(symmetry,str):
+			symmetry = [symmetry]
+		elif not isinstance(symmetry,list) and not isinstance(symmetry,tuple):
+			if change:
+				self.set_origin(o)
+				self.set_base([u1,u2],orthonormal=True)
+			return obj
+		for s in symmetry:
+			namem = name + s
+			if s == 'XY':
+				def f(t):
+					p = fun(t)
+					return (p[0],p[1],-p[2])
+				obj2 = self.draw_curve_tube(f,tmin=tmin,tmax=tmax,steps=steps,thickness=thickness,name=namem,color=color,axis=axis,zaxis=zaxis,o=o,u1=u1,u2=u2)
+				objs.append(obj2)
+			if s == 'XZ':
+				def f(t):
+					p = fun(t)
+					return (p[0],-p[1],p[2])
+				obj2 = self.draw_curve_tube(f,tmin=tmin,tmax=tmax,steps=steps,thickness=thickness,name=namem,color=color,axis=axis,zaxis=zaxis,o=o,u1=u1,u2=u2)
+				objs.append(obj2)
+			if s == 'YZ':
+				def f(t):
+					p = fun(t)
+					return (-p[0],p[1],p[2])
+				obj2 = self.draw_curve_tube(f,tmin=tmin,tmax=tmax,steps=steps,thickness=thickness,name=namem,color=color,axis=axis,zaxis=zaxis,o=o,u1=u1,u2=u2)
+				objs.append(obj2)
+			if s == 'X':
+				def f(t):
+					p = fun(t)
+					return (p[0],-p[1],-p[2])
+				obj2 = self.draw_curve_tube(f,tmin=tmin,tmax=tmax,steps=steps,thickness=thickness,name=namem,color=color,axis=axis,zaxis=zaxis,o=o,u1=u1,u2=u2)
+				objs.append(obj2)
+			if s == 'Y':
+				def f(t):
+					p = fun(t)
+					return (-p[0],p[1],-p[2])
+				obj2 = self.draw_curve_tube(f,tmin=tmin,tmax=tmax,steps=steps,thickness=thickness,name=namem,color=color,axis=axis,zaxis=zaxis,o=o,u1=u1,u2=u2)
+				objs.append(obj2)
+			if s == 'Z':
+				def f(t):
+					p = fun(t)
+					return (-p[0],-p[1],p[2])
+				obj2 = self.draw_curve_tube(f,tmin=tmin,tmax=tmax,steps=steps,thickness=thickness,name=namem,color=color,axis=axis,zaxis=zaxis,o=o,u1=u1,u2=u2)
+				objs.append(obj2)
+			if s == 'O':
+				def f(t):
+					p = fun(t)
+					return (-p[0],-p[1],-p[2])
+				obj2 = self.draw_curve_tube(f,tmin=tmin,tmax=tmax,steps=steps,thickness=thickness,name=namem,color=color,axis=axis,zaxis=zaxis,o=o,u1=u1,u2=u2)
+				objs.append(obj2)
+		self.join(objs)
 		if change:
 			self.set_origin(o)
 			self.set_base([u1,u2],orthonormal=True)
