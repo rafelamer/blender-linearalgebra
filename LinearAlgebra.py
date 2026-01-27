@@ -3925,7 +3925,7 @@ class LinearAlgebra():
 				axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,name="Referència canònica")
 				self.colors = Colors.colors(["Red","Green","Blue"])
 		elif canonica and not principal:
-			axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,,name="Referència canònica")
+			axis1 = self.draw_base_axis(axis=cmax,scale=scaleaxis,positive=False,name="Referència canònica")
 		self.set_origin(o)
 		self.set_rotation(quaternion=q)
 		if principal:
