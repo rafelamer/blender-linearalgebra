@@ -6712,6 +6712,150 @@ class LinearAlgebra():
 		if vector:
 			self.draw_vector(vector=punt,name="Vector de posició referència R'")
 	#
+	# Punt en sistema dièdric 
+	#
+	#
+	# Punt en referència canònica
+	#
+	def punt_sistema_diedric(self,punt=Vector([-4,7,6]),radius=0.3,length=25,scale=0.1,name="A",color="Black",planes=True,colorplanes="AzureCyanLight",sizex=35,sizey=50,scalelines=0.03,namelines="Lines"):
+		"""
+		Draws a point in a dihedral system
+		Parameters:
+		   punt: the point to draw
+
+		   length: length of the axis
+
+		   name: name of the point
+
+		   color: color of the point
+
+		   planes: if True, draw the dihedral planes
+
+		   colorplanes: color of the planes
+		   
+		   sizex,sizey: size of the planes
+		   
+		   scalelines: scale of the lines
+		   
+		   namelines: name of the lines
+		"""
+		if length > 0:
+			self.base_canonica(length=length,scale=scale,name="Referència canònica")
+		if not isinstance(punt,Vector):
+			punt = Vector(punt)
+		p = self.draw_point(location=punt,color=color,radius=radius,name=name)
+		if planes:
+			self.pla_afi(normal=[0,0,1],canonica=False,elements=False,name="Pla H",sizex=sizex,sizey=sizey,color=colorplanes,opacity=1)
+			self.pla_afi(normal=[0,1,0],canonica=False,elements=False,name="Pla V",sizex=sizex,sizey=sizey,color=colorplanes,opacity=1)
+
+		list = [[1,0,0],[1,0,1],[1,1,1],[1,1,0]]
+		lines = [[0,1],[1,2],[2,3],[3,0]]
+		vecs = [self.product_components(punt,Vector(x)) for x in list]
+		count = 1	
+		for first, last in lines:
+			this = f"{namelines}{count}"
+			count += 1
+			self.draw_line(start=vecs[first],end=vecs[last],scale=scalelines,name=this,color="Red")
+		list = []
+		for count in range(1,5):
+			obj = bpy.data.objects.get(f"{namelines}{count}")
+			if obj is not None:
+				list.append(obj)
+		
+		ph = self.draw_point(location=vecs[1],color="Red",radius=0.75*radius,name=name+"h")
+		pv = self.draw_point(location=vecs[3],color="Red",radius=0.75*radius,name=name+"v")
+		list.extend([])
+		point = self.join([p,ph,pv]+list)
+		bpy.context.view_layer.objects.active = None
+		return point
+	#
+	#
+	#
+	def recta_sistema_diedric(self,punt=Vector([-4,7,6]),vector=Vector([1,1,1]),length=25,scale=0.1,name="L",color="Black",extrems=True,linescale=0.3,planes=True,colorplanes="AzureCyanLight",sizex=35,sizey=50):
+		"""
+		Draws a line in a dihedral system
+		
+		Parameters:
+		   punt: a point of the line
+
+		   vector: direction of the line 
+
+		   length: length of the axis
+
+		   name: name of the line
+
+		   color: color of the line
+
+		   linescale: scale of the line
+
+		   planes: if True, draw the dihedral planes
+
+		   colorplanes: color of the planes
+		   
+		   sizex,sizey: size of the planes
+
+		   extrems: if True, draw the points at end of line
+		"""
+		if length > 0:
+			self.base_canonica(length=length,scale=scale,name="Referència canònica")
+		if planes:
+			self.pla_afi(normal=[0,0,1],canonica=False,elements=False,name="Pla H",sizex=1.1*sizex,sizey=1.1*sizey,color=colorplanes,opacity=1)
+			self.pla_afi(normal=[0,1,0],canonica=False,elements=False,name="Pla V",sizex=1.1*sizex,sizey=1.1*sizey,color=colorplanes,opacity=1)
+		if not isinstance(punt,Vector):
+			punt = Vector(punt)
+		if not isinstance(vector,Vector):
+			vector = Vector(vector)
+		#
+		# Compute the intesections of the line with the planes of the cubes
+		#
+		start = None
+		end = None
+		K = [sizex/2,sizey/2,sizey/2]
+		for i in (0,1,2):
+			p = punt[i]
+			v = vector[i]
+			k = K[i]
+			if v != 0:
+				t1 = (k-p)/v
+				x1, y1, z1 = punt+t1*vector
+				if x1 >= -K[0] and x1 <= K[0] and y1 >= -K[1] and y1 <= K[1] and z1 >= -K[2] and z1 <= K[2]:
+					if start is None:
+						start = Vector([x1,y1,z1])
+					else:
+						end = Vector([x1,y1,z1])
+				t2 = (-k-p)/v
+				x1, y1, z1 = punt+t2*vector
+				if x1 >= -K[0] and x1 <= K[0] and y1 >= -K[1] and y1 <= K[1] and z1 >= -K[2] and z1 <= K[2]:
+					if start is None:
+						start = Vector([x1,y1,z1])
+					else:
+						end = Vector([x1,y1,z1])
+			if start is not None and end is not None:
+				break
+		self.draw_line(start=start,end=end,scale=linescale,name=name,color=color)
+		s = start.project(Vector([1,0,0])) + start.project(Vector([0,1,0]))
+		e = end.project(Vector([1,0,0])) + end.project(Vector([0,1,0]))
+		self.draw_line(start=s,end=e,scale=linescale,name="LH",color="Blue")
+		s = start.project(Vector([1,0,0])) + start.project(Vector([0,0,1]))
+		e = end.project(Vector([1,0,0])) + end.project(Vector([0,0,1]))
+		self.draw_line(start=s,end=e,scale=linescale,name="LV",color="Blue")
+		if extrems:
+			self.punt_sistema_diedric(punt=start,planes=False,length=0,name="P1")
+			self.punt_sistema_diedric(punt=end,planes=False,length=0,name="P2")
+		else:
+			a, b, c = vector
+			x0, y0, z0 = punt
+			if c != 0:
+				t1 = -z0/c
+				x1, y1, z1 = punt+t1*vector
+				if x1 >= -K[0] and x1 <= K[0] and y1 >= -K[1] and y1 <= K[1]:
+					self.punt_sistema_diedric(punt=Vector([x1,y1,z1]),planes=False,length=0,name="I1")
+			if b != 0:
+				t1 = -y0/b
+				x1, y1, z1 = punt+t1*vector
+				if x1 >= -K[0] and x1 <= K[0] and z1 >= -K[2] and z1 <= K[2]:
+					self.punt_sistema_diedric(punt=Vector([x1,y1,z1]),planes=False,length=0,name="II")
+	#
 	# Canvi de coordenades
 	#
 	def canvi_coordenades(self,punt=Vector([8,-6,7]),origin=Vector([-2,3,3]),u1=1/3*Vector([-1,-2,2]),u2=1/3*Vector([2,1,2]),u3=1/3*Vector([-2,2,1]),canonica=False,scale=0.06,length=12,radius=0.1,vectors=True):
