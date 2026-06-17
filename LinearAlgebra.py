@@ -2968,6 +2968,77 @@ class LinearAlgebra():
 	#
 	#
 	#
+	def tetrahedron_lagrange(self,size=10,scalelines=0.05,degree=4,radius=0.06,name="Tetrahedron",color="Yellow",selected=[1,2,1],planes=True,thickness=0.01,opacity=1.0):
+		"""
+		Draws a tetrahedron and the points and planes of Lagrange polinomials
+		Parameters:
+		   size: size of the tetrahedron
+
+		   scalelines: scale of the edges of the tetrahedron
+
+		   degree: of the Lagrange polynomials
+
+		   radius: radius of the points
+
+		   name: name of the tetrahedron
+
+		   color: color of the points
+
+		   selected: selected point
+
+		   linecolor: color of the edges
+
+		   planes: if True the planes are shown
+
+		   name: name of the tetrahedron
+
+		   opacity: opacity of the planes
+
+		   thickness: thickness of the planes
+		"""
+		self.draw_tetrahedron(u1=[size,0,0],u2=[0,size,0],u3=[0,0,size],name=name,scalelines=scalelines,opacity=0.0)
+		count = 0
+		points = []
+		for i in range(degree+1):
+			for j in range(degree-i+1):
+				for k in range(degree-i-j+1):
+					cl = color
+					if i == selected[0] and j == selected[1] and k == selected[2]:
+						cl = "Red"
+					if count == 0:
+						name = "Points"
+					else:
+						name = f"Point{count}"
+					pt = self.draw_point(radius=radius,location=[size*i/degree,size*j/degree,size*k/degree],color=cl,name=name)
+					cl = color
+					points.append(pt)
+					count += 1
+		obj = self.join(points)
+		if not planes:
+			return obj
+		
+		count = 1
+		for i in range(selected[0]):
+			k = i*size/degree
+			self.triangle(vertices=[[k,0,0],[k,size - k,0],[k,0,size - k]],scalelines=0.0,color="Cyan",name=f"Plane {count}",thickness=thickness,opacity=opacity)
+			count += 1
+		for i in range(selected[1]):
+			k = i*size/degree
+			self.triangle(vertices=[[0,k,0],[size - k,k,0],[0,k,size - k]],scalelines=0.0,color="White",name=f"Plane {count}",thickness=thickness,opacity=opacity)
+			count += 1
+		for i in range(selected[2]):
+			k = i*size/degree
+			self.triangle(vertices=[[0,0,k],[size - k,0,k],[0,size - k,k]],scalelines=0.0,color="Yellow",name=f"Plane {count}",thickness=thickness,opacity=opacity)
+			count += 1
+		for i in range(degree - (selected[0] + selected[1] + selected[2])):
+			k = i*size/degree    
+			self.triangle(vertices=[[0,0,size - k],[size - k,0,0],[0,size - k,0]],scalelines=0.0,color="AzureBlueMedium",name=f"Plane {count}",thickness=thickness,opacity=opacity)
+			count += 1
+		
+		return obj
+	#
+	#
+	#
 	def draw_pyramid(self,origin=[0,0,0],u1=[1,0,0],u2=[0,1,0],u3=[0.5,0.5,1],scalelines=0.025,color="AzureBlueDark",linecolor="OrangeObscureDull",name='Pyramid',opacity=1.0,thickness=0.0):
 		"""
 		Draws a pyramid
@@ -3168,24 +3239,20 @@ class LinearAlgebra():
 		u1 = mat @ u1
 		u2 = mat @ u2
 
-		bpy.ops.curve.simple(Simple_Type='Polygon',Simple_sides=len(points),align='WORLD',location=(0, 0, 0))
-		bpy.context.object.name = name
-		obj = bpy.data.objects.get(name)
-		bpy.ops.object.mode_set(mode='OBJECT')
-
 		baricentre = Vector([0,0,0])
-		verts = obj.data.splines[0].bezier_points
-		for i in range(len(verts)):
-			verts[i].co = op + points[i][0] * u1 + points[i][1] * u2
-			baricentre += verts[i].co
-		baricentre /= len(verts)
-
-		for i in range(len(verts)):
-			verts[i].co -= baricentre
-		obj.location = baricentre
-
-		obj.select_set(True)
-		bpy.ops.object.convert(target='MESH')
+		vertices = [op + points[i][0] * u1 + points[i][1] * u2 for i in range(len(points))]
+		for v in vertices:
+			baricentre += Vector(v)
+		baricentre /= len(vertices)	
+		edges = [[i, (i + 1) % len(vertices)] for i in range(len(vertices))]
+		faces = [list(range(len(vertices)))]
+		mesh_data = bpy.data.meshes.new(name + "_Mesh")
+		obj = bpy.data.objects.new(name, mesh_data)
+		bpy.context.collection.objects.link(obj)
+		mesh_data.from_pydata(vertices, edges, faces)
+		mesh_data.update()
+		## obj.location = baricentre
+		print("Total de cares:", len(obj.data.polygons))
 
 		if thickness > 0.0:
 			modifier = obj.modifiers.new(name="Solidify", type='SOLIDIFY')
@@ -3287,7 +3354,7 @@ class LinearAlgebra():
 	#
 	# Draw a triangle from vertices
 	#
-	def triangle(self,vertices=[[0,0,0],[1,0,0],[0,1,0]],scalelines=0.075,color="AzureBlueMedium",linecolor="Blue",name="Triangle",baricentre=False,factors=(2,2,-2),ortocentre=False,circumcentre=False,opacity=1.0,radius=0.03):
+	def triangle(self,vertices=[[0,0,0],[1,0,0],[0,1,0]],scalelines=0.075,color="AzureBlueMedium",linecolor="Blue",name="Triangle",baricentre=False,factors=(2,2,-2),ortocentre=False,circumcentre=False,opacity=1.0,radius=0.03,thickness=0.05):
 		"""
 		Draws a triangle from the vertices
 		Parameters:
@@ -3348,7 +3415,8 @@ class LinearAlgebra():
 			self.draw_line(start=v[0],end=m12,scale=scalelines,name="Mitjana 1",color="White")
 			self.draw_line(start=v[1],end=m02,scale=scalelines,name="Mitjana 2",color="White")
 			self.draw_line(start=v[2],end=m01,scale=scalelines,name="Mitjana 2",color="White")
-		self.draw_triangle(origin=v[0],u1=v[1]-v[0],u2=v[2]-v[0],scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=0.01)
+		print(f"{color} {thickness}")
+		return self.draw_triangle(origin=v[0],u1=v[1]-v[0],u2=v[2]-v[0],scalelines=scalelines,color=color,linecolor=linecolor,name=name,opacity=opacity,thickness=thickness)
 	#
 	# Draw a rectangle
 	#
