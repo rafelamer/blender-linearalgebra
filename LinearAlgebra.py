@@ -852,6 +852,17 @@ class LinearAlgebra():
 		self.base = [[1,0,0],[0,1,0],[0,0,1]]
 		self.defaultcolor = None
 		self.frame = 0
+		self.steps = None
+	#
+	#
+	#
+	def set_steps(self,_steps):
+		self.steps = _steps
+	#
+	#
+	#
+	def unset_steps(self):
+		self.steps = None
 	#
 	#
 	#
@@ -1834,6 +1845,9 @@ class LinearAlgebra():
 		if f is None:
 			return None
 
+		if self.steps is not None:
+			steps = self.steps
+
 		delta = (tmax - tmin)/steps
 		t = tmin
 		bm = bmesh.new()
@@ -1882,7 +1896,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def draw_elliptic_paraboloid(self,a=0.5,xmin=0.0,xmax=3.0,steps=50,scale=[1,1,1],color="AzureBlueDark",name="EllipticParaboloid",opacity=1.0,thickness=0.05):
+	def draw_elliptic_paraboloid(self,a=0.5,xmin=0.0,xmax=3.0,steps=64,scale=[1,1,1],color="AzureBlueDark",name="EllipticParaboloid",opacity=1.0,thickness=0.05):
 		"""
 		Draws an elliptic paraboloid from the parabola z=a*t^2
 		Parameters:
@@ -1904,6 +1918,8 @@ class LinearAlgebra():
 
 		   thickness: thickness of the surface
 		"""
+		if self.steps is not None:
+			steps = self.steps
 		obj = self.simple_curve(f=lambda t:(t,0,a*t**2),tmin=xmin,tmax=xmax,steps=steps,name=name)
 		modifier = obj.modifiers.new(name="Screw", type='SCREW')
 		modifier.angle = 2 * math.pi
@@ -1958,6 +1974,8 @@ class LinearAlgebra():
 
 		   thickness: thickness of the surface
 		"""
+		if self.steps is not None:
+			steps = self.steps
 		if xmin < math.sqrt(b):
 			xmin = math.sqrt(b)
 		delta = (xmax - xmin) / steps
@@ -2040,6 +2058,8 @@ class LinearAlgebra():
 
 		   thickness: thickness of the surface
 		"""
+		if self.steps is not None:
+			steps = self.steps
 		delta = (xmax - xmin) / steps
 		x = xmax
 		bm = bmesh.new()
@@ -2118,6 +2138,8 @@ class LinearAlgebra():
 
 		   thickness: thickness of the surface
 		"""
+		if self.steps is not None:
+			steps = self.steps
 		delta = (xmax - xmin) / steps
 		x = xmax
 		bm = bmesh.new()
@@ -2197,6 +2219,8 @@ class LinearAlgebra():
 
 		   thickness: thickness of the surface
 		"""
+		if self.steps is not None:
+			steps = self.steps
 		delta = (xmax - xmin) / steps
 		x = xmax
 		bm = bmesh.new()
@@ -2283,6 +2307,8 @@ class LinearAlgebra():
 
 		   thickness: thickness of the surface
 		"""
+		if self.steps is not None:
+			steps = self.steps
 		if xmin < math.sqrt(b):
 			xmin = math.sqrt(b)
 		delta = (xmax-xmin)/steps
@@ -2380,6 +2406,8 @@ class LinearAlgebra():
 
 		   thickness: thickness of the surface
 		"""
+		if self.steps is not None:
+			steps = self.steps
 		if amin < 0.0:
 			amin = 0.0
 		if amax > 2 * math.pi:
@@ -2463,6 +2491,8 @@ class LinearAlgebra():
 
 		   thickness: thickness of the surface
 		"""
+		if self.steps is not None:
+			steps = self.steps
 		equ = lambda x,y: (x,y,a*x**2-b*y**2)
 		obj = self.draw_surface(eq=equ,umin=-xmax,umax=xmax,usteps=steps,vmin=-ymax,vmax=ymax,vsteps=steps,thickness=thickness,opacity=opacity,pmax=0,name="Hyperbolic paraboloid",color="AzureBlueDark",axis=False,o=Vector([0,0,0]),u1=Vector([1,0,0]),u2=Vector([0,1,0]),wrap_u=False,wrap_v=False,close_v=False)
 		obj.scale = scale
@@ -3867,7 +3897,11 @@ class LinearAlgebra():
 		if xmax is None:
 			xmax = 10.0/a + 2
 		xmax /= a
-		co = self.draw_cone(a=1.0,xmin=0.0,xmax=xmax,steps=50,half=half,color=color,scale=[a,b,c],name=name,thickness=thickness,opacity=opacity)
+		if self.steps is not None:
+			steps = self.steps
+		else:
+			steps = 50
+		co = self.draw_cone(a=1.0,xmin=0.0,xmax=xmax,steps=steps,half=half,color=color,scale=[a,b,c],name=name,thickness=thickness,opacity=opacity)
 		if not preserve:
 			self.set_origin()
 			self.set_base()
@@ -3936,7 +3970,11 @@ class LinearAlgebra():
 		if xmax is None:
 			xmax = 5.0/a + 2
 		xmax /= a
-		hy = self.draw_hyperbolic_cylinder(a=1.0,b=1.0,xmin=1.0,xmax=xmax,length=2*zmax,steps=128,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
+		if self.steps is not None:
+			steps = self.steps
+		else:
+			steps = 128
+		hy = self.draw_hyperbolic_cylinder(a=1.0,b=1.0,xmin=1.0,xmax=xmax,length=2*zmax,steps=steps,color=color,name=name,scale=[a,b,1],thickness=thickness,opacity=opacity)
 		if not preserve:
 			self.set_origin()
 			self.set_base()
@@ -4065,7 +4103,11 @@ class LinearAlgebra():
 		if xmax is None:
 			xmax = 10.0/a
 		xmax /= a
-		el = self.draw_elliptic_paraboloid(a=1.0,xmin=0.0,xmax=xmax,steps=50,scale=[a,b,1],color=color,name=name,opacity=opacity,thickness=thickness)
+		if self.steps is not None:
+			steps = self.steps
+		else:
+			steps = 50
+		el = self.draw_elliptic_paraboloid(a=1.0,xmin=0.0,xmax=xmax,steps=steps,scale=[a,b,1],color=color,name=name,opacity=opacity,thickness=thickness)
 		if not preserve:
 			self.set_origin()
 			self.set_base()
@@ -4237,6 +4279,8 @@ class LinearAlgebra():
 		"""
 		if fun is None:
 			return None
+		if self.steps is not None:
+			steps = self.steps
 		delta = (tmax - tmin) / steps
 		t = tmin
 
@@ -4297,6 +4341,8 @@ class LinearAlgebra():
 		if fun is None:
 			return None
 		qt = self.vectors_to_quaternion(u1,u2)
+		if self.steps is not None:
+			steps = self.steps
 		delta = (tmax - tmin) / steps
 		t = tmin
 
@@ -4373,6 +4419,8 @@ class LinearAlgebra():
 		if fun is None:
 			return None
 		qt = self.vectors_to_quaternion(u1,u2)
+		if self.steps is not None:
+			steps = self.steps
 		delta = (tmax - tmin) / steps
 		t = tmin
 
@@ -4494,6 +4542,8 @@ class LinearAlgebra():
 		"""
 		if fun is None:
 			return None
+		if self.steps is not None:
+			steps = self.steps
 		
 		if symmetry is None:
 			obj = self.draw_curve(fun,tmin=tmin,tmax=tmax,steps=steps,thickness=thickness,name=name,color=color,axis=axis,zaxis=zaxis,o=o,u1=u1,u2=u2)
@@ -4596,6 +4646,8 @@ class LinearAlgebra():
 		"""
 		if fun is None:
 			return None
+		if self.steps is not None:
+			steps = self.steps
 		
 		if symmetry is None:
 			obj = self.draw_curve_tube(fun,tmin=tmin,tmax=tmax,steps=steps,thickness=thickness,name=name,color=color,axis=axis,zaxis=zaxis,o=o,u1=u1,u2=u2)
@@ -4692,6 +4744,8 @@ class LinearAlgebra():
 		d = None
 		if fillcolor is not None:
 			d = self.draw_disk(center=center,radius=radius,u1=u1,u2=u2,thickness=0.5*thickness,name="Disc",color=fillcolor)
+		if self.steps is not None:
+			steps = self.steps
 		c = self.draw_curve(lambda t: (radius*math.cos(t),radius*math.sin(t),0),tmin=0.0,tmax=2*math.pi,axis=axis,zaxis=zaxis,steps=steps,thickness=thickness,name=name,color=color,o=center,u1=u1,u2=u2)
 		if change:
 			self.set_origin(center)
@@ -4727,6 +4781,8 @@ class LinearAlgebra():
 		if change:
 			self.set_origin(center)
 			self.set_base([u1,u2],orthonormal=True)
+		if self.steps is not None:
+			steps = self.steps
 		return self.draw_curve(lambda t: (a*math.cos(t),b*math.sin(t),0),tmin=0.0,tmax=2*math.pi,axis=axis,zaxis=zaxis,steps=steps,thickness=thickness,name=name,color=color,o=center,u1=u1,u2=u2)
 	#
 	#
@@ -4760,6 +4816,8 @@ class LinearAlgebra():
 		if change:
 			self.set_origin(vertex)
 			self.set_base([u1,u2],orthonormal=True)
+		if self.steps is not None:
+			steps = self.steps
 		return self.draw_curve(lambda t: (t,a*t**2,0),tmin=-xmax,tmax=xmax,axis=axis,zaxis=zaxis,steps=steps,thickness=thickness,name=name,color=color,o=vertex,u1=u1,u2=u2)
 	#
 	#
@@ -4790,6 +4848,8 @@ class LinearAlgebra():
 
 		   change: if True, set the reference self.origin, self.base to {o; v1, v2, v3}
 		"""
+		if self.steps is not None:
+			steps = self.steps
 		c1 = self.draw_curve(lambda t: (a*math.sqrt(1+t**2/b**2),t,0),tmin=-ymax,tmax=ymax,axis=axis,zaxis=zaxis,steps=steps,thickness=thickness,name=name,color=color,o=center,u1=u1,u2=u2)
 		c2 = self.draw_curve(lambda t: (-a*math.sqrt(1+t**2/b**2),t,0),tmin=-ymax,tmax=ymax,axis=False,zaxis=False,steps=steps,thickness=thickness,name=name,color=color,o=center,u1=u1,u2=u2)
 		self.join([c1,c2])
@@ -5005,6 +5065,8 @@ class LinearAlgebra():
 		"""
 		if fun is None:
 			return None
+		if self.steps is not None:
+			steps = self.steps
 		q = self.vectors_to_quaternion(u1,u2)
 		obj = self.simple_curve(fun,tmin=tmin,tmax=tmax,steps=steps,name=name)
 		m = obj.modifiers.new(name="SubSurf", type='SUBSURF')
@@ -5115,7 +5177,8 @@ class LinearAlgebra():
 			self.draw_base_axis(axis=canonica,positive=False,scale=0.05,name="Referència canònica")
 			self.set_origin()
 
-
+		if self.steps is not None:
+			steps = self.steps
 		p2 = self.curve(myfun,tmin=tmin,tmax=tmax,steps=steps,thickness=curvethicknes,color="Red",symmetry=symmetry,name="Rotating curve")
 		p1 = self.curve(myfun,tmin=tmin,tmax=tmax,steps=steps,thickness=1.05*curvethicknes,color="Blue",symmetry=symmetry,name="Curve")
 		obj = self.simple_curve(myfun,tmin=tmin,tmax=tmax,steps=steps,name=name,symmetry=symmetry)
@@ -5563,6 +5626,8 @@ class LinearAlgebra():
 			vector = Vector(vector)
 		if steps < 50:
 			steps = 50
+		if self.steps is not None:
+			steps = self.steps
 		t = vector / steps
 		bpy.context.scene.frame_set(self.frame)
 		obj.keyframe_insert(data_path="location",index=-1)
@@ -5606,6 +5671,8 @@ class LinearAlgebra():
 		ortoedre = self.draw_cube(origin=centre,scale=costats,color="AzureBlueDark",opacity=opacity,thickness=0.015,scalelines=0.025,linecolor="Orange",name="Ortoedre")
 		if original:
 			ortoedre2 = self.draw_cube(origin=centre,scale=costats,color="CyanDarkWeak",opacity=opacity,thickness=0.015,scalelines=0.025,linecolor="Orange",name="Ortoedre original")
+		if self.steps is not None:
+			steps = self.steps
 		self.translate_object(obj=ortoedre,vector=vector,steps=steps,stop=stop)
 	#
 	# Rotate objects or helical motion
@@ -5708,6 +5775,8 @@ class LinearAlgebra():
 
 		   steps: number of steps
 		"""
+		if self.steps is not None:
+			steps = self.steps
 		bpy.context.scene.frame_set(self.frame)
 		obj.keyframe_insert(data_path="scale",index=-1)
 		obj.keyframe_insert(data_path="hide_viewport", index=-1)
@@ -5772,13 +5841,15 @@ class LinearAlgebra():
 
 		   steps: number of steps
 		"""
+		if self.steps is not None:
+			steps = self.steps
 		self.base_canonica(scale=0.09)
 		e = self.esfera(radi=radi,cmax=cmax)
-		self.scale_object(obj=e[2],sx=sx,sy=sy,sz=sz,stop=stop)
+		self.scale_object(obj=e[2],sx=sx,sy=sy,sz=sz,stop=stop,steps=steps)
 	#
 	#
 	#
-	def gir_rectangle(self,sizex=10,sizey=4,angle=90,cmax=10,steps=100,original=True,opacity=1,stop=0):
+	def gir_rectangle(self,sizex=10,sizey=4,angle=90,cmax=10,original=True,opacity=1,stop=0):
 		"""
 		Rotates a rectangle in the plain XY an angle "angle"
 		
@@ -5804,7 +5875,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def escalat_rectangle(self,sizex=10,sizey=4,sx=1.0,sy=1.0,cmax=10,steps=100,original=True,opacity=1,stop=0):
+	def escalat_rectangle(self,sizex=10,sizey=4,sx=1.0,sy=1.0,cmax=10,original=True,opacity=1,stop=0):
 		"""
 		Scales a rectangle in the plain XY in the x and y directions
 		
@@ -5890,6 +5961,8 @@ class LinearAlgebra():
 			v3 = v1.cross(v2)
 			return Matrix([v1,v2,v3]).transposed().to_quaternion()
 
+		if self.steps is not None:
+			steps = self.steps
 		frames = 1
 		curve = self.draw_curve(_fun_,tmin=tmin,tmax=tmax,steps=steps,thickness=thickness,color=color,axis=False)
 		if not point and not tangent and not osculator and not frenet:
@@ -6988,7 +7061,11 @@ class LinearAlgebra():
 			f2 = Vector([0,-c,0])
 		if canonica:
 			self.referencia_canonica(zaxis=False)
-		self.draw_ellipse(center=center,a=a,b=b,thickness=0.02,steps=128,axis=False)
+		if self.steps is not None:
+			steps = self.steps
+		else:
+			steps = 128
+		self.draw_ellipse(center=center,a=a,b=b,thickness=0.02,steps=steps,axis=False)
 		self.draw_point(radius=0.167,location=(0,0,0),name="Centre",color="White")
 		self.draw_point(radius=0.167,location=f1,name="F1",color="Black")
 		self.draw_point(radius=0.167,location=f2,name="F2",color="Black")
@@ -7067,7 +7144,11 @@ class LinearAlgebra():
 			self.set_base(base=[[0,1,0],[1,0,0],[0,0,-1]])
 			u1 = Vector([0,1,0])
 			u2 = Vector([1,0,0])
-		self.draw_parabola(vertex=vertex,a=1/(2*p),u1=u1,u2=u2,xmax=xmax,thickness=0.02,steps=128,axis=False)
+		if self.steps is not None:
+			steps = self.steps
+		else:
+			steps = 128
+		self.draw_parabola(vertex=vertex,a=1/(2*p),u1=u1,u2=u2,xmax=xmax,thickness=0.02,steps=steps,axis=False)
 		self.reset_rotation()
 		self.draw_point(radius=0.167,location=f,name="Focus",color="Black")
 		self.draw_point(radius=0.167,location=(0,0,0),name="Vèrtex",color="White")
@@ -7096,7 +7177,11 @@ class LinearAlgebra():
 		else:
 			F = lambda t: (b*math.sin(t),0,a*math.cos(t))
 		self.base_canonica()
-		self.animate_revolution_surface(F,tmin=0,tmax=math.pi,steps=128,axis=direccio,point=punt)
+		if self.steps is not None:
+			steps = self.steps
+		else:
+			steps = 128
+		self.animate_revolution_surface(F,tmin=0,tmax=math.pi,steps=steps,axis=direccio,point=punt)
 	#
 	# Hiperboloide d'una fulla de revolució
 	#
