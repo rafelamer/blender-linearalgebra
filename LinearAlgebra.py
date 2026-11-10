@@ -4310,7 +4310,7 @@ class LinearAlgebra():
 	#
 	#
 	#
-	def draw_curve_tube(self,fun=None,tmin=0.0,tmax=1.0,steps=25,thickness=0.01,resolution=16,name="Curve",color="White",modifiers=True,axis=False,zaxis=True,o=Vector([0,0,0]),u1=Vector([1,0,0]),u2=Vector([0,1,0])):
+	def draw_curve_tube(self,fun=None,tmin=0.0,tmax=1.0,steps=25,thickness=0.01,resolution=8,name="Curve",color="White",modifiers=True,axis=False,zaxis=True,o=Vector([0,0,0]),u1=Vector([1,0,0]),u2=Vector([0,1,0])):
 		"""
 		Draws a curve in a reference R' determined by the origin o and basis {v1, v2, v3} constructed from u1 and u2
 		Parameters:
@@ -4363,15 +4363,35 @@ class LinearAlgebra():
 		self.scene.collection.objects.link(obj)
 		if modifiers:
 			bpy.context.view_layer.objects.active = obj
-			bpy.ops.object.modifier_add_node_group(asset_library_type='ESSENTIALS', asset_library_identifier="", 
-					relative_asset_identifier="nodes/geometry_nodes_essentials.blend/NodeTree/Curve to Tube")
+			bpy.ops.object.modifier_add_node_group(
+				asset_library_type='ESSENTIALS', 
+				asset_library_identifier="", 
+				relative_asset_identifier="nodes/geometry_nodes_essentials.blend/NodeTree/Curve to Tube")
+			geo_modifier = obj.modifiers[-1] 
 			modifier = obj.modifiers.new(name="SubSurf", type='SUBSURF')
 			modifier.levels = 4
 			modifier.subdivision_type = 'SIMPLE'
 			c = Colors.color(color)
 			self.add_material(obj,c.name,c.r,c.g,c.b,1.0)
-			obj.modifiers[0]['Socket_5'] = thickness
-			obj.modifiers[0]['Socket_2'] = resolution
+			
+			node_group = geo_modifier.node_group
+			interface = node_group.interface
+			
+			scale_id = None
+			res_id = None
+			for item in interface.items_tree:
+				if item.item_type == 'SOCKET':
+					if item.name == "Scale":
+						scale_id = item.identifier
+					elif item.name == "Resolution":
+						res_id = item.identifier
+			if scale_id is not None:
+				scale_socket = getattr(geo_modifier.properties.inputs, scale_id)
+				scale_socket.value = thickness
+			if res_id is not None:
+				res_socket = getattr(geo_modifier.properties.inputs, res_id)
+				res_socket.value = resolution
+			obj.modifiers.update()
 
 		self.set_origin(o)
 		self.set_rotation(quaternion=qt)
