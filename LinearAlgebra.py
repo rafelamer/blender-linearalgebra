@@ -5371,7 +5371,7 @@ class LinearAlgebra():
 		b = (vector-vec1).length
 		p2 = b**2/a**2
 		self.rotate_object(obj,u,angle=angle,stop=stop,length=length,draw=draw)
-		self.cone(u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color="GrayLight",opacity=0.7,thickness=0.04)
+		self.cone(u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color="GrayPale",opacity=0.7,thickness=0.04)
 	#
 	# Rotation of a point
 	#
@@ -5425,7 +5425,7 @@ class LinearAlgebra():
 		else:
 			self.rotate_object(obj,u,origin=origen,angle=angle,stop=stop,length=length)
 		self.draw_circle(center=center,u1=w1,u2=w2,radius=radius,name="Circumferència",steps=128,color="Yellow")
-		self.cone(o=origen,u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color="GrayLight",opacity=0.25,thickness=0.01)
+		self.cone(o=origen,u1=w1,u2=w2,a2=p2,b2=p2,c2=1,half=True, principal=False,canonica=False,xmax=b,color="GrayPale",opacity=0.25,thickness=0.01)
 		self.reset()
 	#
 	#
@@ -5746,7 +5746,7 @@ class LinearAlgebra():
 			lr = Rotation(localangle,localaxis)
 		if draw:
 			self.set_origin(origin)
-			self.draw_vector(vector=u,axis=length,positive=False,color="White")
+			self.draw_vector(vector=u,axis=length,positive=False,color="White",name="Eix rotació")
 			self.set_origin()
 		r = Rotation(1/int(frames),u)
 		axis, alpha = r.to_axis_angle()
@@ -8149,7 +8149,7 @@ class LinearAlgebra():
 			y = b*math.sin(t)
 			z = math.sqrt(c2*(x**2/a2 + y**2/b2))
 			return (x,y,z)
-		self.cone(a2=a2,b2=b2,c2=c2,principal=False,canonica=True,color="GrayLight",thickness=0.0001,name="Con",xmax=xmax,cmax=xmax+5,opacity=1.0)
+		self.cone(a2=a2,b2=b2,c2=c2,principal=False,canonica=True,color="GrayPale",thickness=0.0001,name="Con",xmax=xmax,cmax=xmax+5,opacity=1.0)
 		self.elliptic_cylinder(o=[x0,0,0],a2=a**2,b2=b**2,principal=False,canonica=False,zmax=2*(zmax+3),thickness=0.01,name="Cilindre")
 		self.curve(F,tmin=0,tmax=2*math.pi,steps=512,thickness=0.05,color="Black",symmetry='XY',name="Corba intersecció")
 	#
