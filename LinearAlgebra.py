@@ -4367,7 +4367,7 @@ class LinearAlgebra():
 				asset_library_type='ESSENTIALS', 
 				asset_library_identifier="", 
 				relative_asset_identifier="nodes/geometry_nodes_essentials.blend/NodeTree/Curve to Tube")
-			geo_modifier = obj.modifiers['Curve to Tube'] 
+			geo_modifier = obj.modifiers.get('Curve to Tube',None) 
 			modifier = obj.modifiers.new(name="SubSurf", type='SUBSURF')
 			modifier.levels = 4
 			modifier.subdivision_type = 'SIMPLE'
